@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4a4a4a;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #333;
+        }
+        button:disabled {
+            background-color: #cccccc;
+        }
+        .result {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Frontend Debug Test</h1>
+        <p>This test will help identify if the issue is with the frontend making API calls.</p>
+        
+        <div class="test-section">
+            <h2>Direct API Call Test</h2>
+            <button onclick="testDirectCall()">Test Direct API Call</button>
+            <div id="direct-call-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Frontend Service Test</h2>
+            <button onclick="testFrontendService()">Test Frontend Service</button>
+            <div id="frontend-service-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Test direct API call
+        async function testDirectCall() {
+            const resultDiv = document.getElementById('direct-call-result');
+            resultDiv.innerHTML = '<div class="result loading">Testing direct API call...</div>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/products');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `<div class="result success">✅ Direct API call successful! Found ${data.count} products.</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ Direct API call failed: ${JSON.stringify(data)}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ Direct API call error: ${error.message}</div>`;
+            }
+        }
+        
+        // Test frontend service (simulating the actual service call)
+        async function testFrontendService() {
+            const resultDiv = document.getElementById('frontend-service-result');
+            resultDiv.innerHTML = '<div class="result loading">Testing frontend service...</div>';
+            
+            try {
+                // Simulate the actual service call from api.js
+                const API_BASE_URL = 'http://localhost:5000/api';
+                
+                const apiRequest = async (url, options = {}) => {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}${url}`, {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...options.headers
+                            },
+                            ...options
+                        });
+                        
+                        const data = await response.json();
+                        return { success: response.ok, ...data };
+                    } catch (error) {
+                        console.error(`API request failed for ${url}:`, error);
+                        return { success: false, message: 'Network error' };
+                    }
+                };
+                
+                const response = await apiRequest('/products');
+                
+                if (response.success) {
+                    resultDiv.innerHTML = `<div class="result success">✅ Frontend service call successful! Found ${response.count} products.</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ Frontend service call failed: ${JSON.stringify(response)}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ Frontend service call error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
