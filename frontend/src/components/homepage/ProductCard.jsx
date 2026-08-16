@@ -130,11 +130,10 @@ export const ProductCard = ({
         {/* Wishlist Heart */}
         <motion.button
           onClick={handleAddToWishlist}
-          className={`absolute top-2.5 right-2.5 w-8 h-8 flex items-center justify-center rounded-full shadow-md transition-all duration-300 z-10 ${
-            isInWishlist(id)
+          className={`absolute top-2.5 right-2.5 w-8 h-8 flex items-center justify-center rounded-full shadow-md transition-all duration-300 z-10 ${isInWishlist(id)
               ? 'text-[#C9A84C] bg-black border border-[#C9A84C]'
               : 'text-[#A39E93] bg-black/80 hover:bg-black hover:text-[#C9A84C] border border-[#26241E]'
-          }`}
+            }`}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           aria-label={isInWishlist(id) ? 'Remove from wishlist' : 'Add to wishlist'}
@@ -164,8 +163,8 @@ export const ProductCard = ({
 
         {/* Title */}
         <div className="mb-1.5">
-          <h3 
-            onClick={handleNavigate} 
+          <h3
+            onClick={handleNavigate}
             className="cursor-pointer font-sans text-xs md:text-sm font-semibold text-[#E8E0CC] line-clamp-2 h-9 leading-tight hover:text-[#FFF5D6] transition-colors duration-200"
           >
             {title}
@@ -204,11 +203,10 @@ export const ProductCard = ({
             {!isSellerOrAdmin && (
               <motion.button
                 onClick={handleAddToCart}
-                className={`w-8 h-8 rounded-full transition-all duration-300 relative overflow-hidden flex items-center justify-center flex-shrink-0 ${
-                  productInCart 
-                    ? 'bg-emerald-600 text-white shadow-md' 
+                className={`w-8 h-8 rounded-full transition-all duration-300 relative overflow-hidden flex items-center justify-center flex-shrink-0 ${productInCart
+                    ? 'bg-emerald-600 text-white shadow-md'
                     : 'bg-gradient-to-r from-[#C9A84C] to-[#9B782B] text-black font-bold shadow-[0_0_10px_rgba(201,168,76,0.3)] hover:scale-105'
-                }`}
+                  }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 disabled={isAdding}

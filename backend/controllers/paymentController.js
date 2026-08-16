@@ -4,8 +4,8 @@ const crypto = require('crypto');
 let razorpayInstance = null;
 const getRazorpay = () => {
   if (razorpayInstance) return razorpayInstance;
-  const key_id = process.env.RAZORPAY_KEY_ID;
-  const key_secret = process.env.RAZORPAY_KEY_SECRET;
+  const key_id = process.env.RAZORPAY_KEY_ID || 'rzp_live_TQMjx3H66VLczL';
+  const key_secret = process.env.RAZORPAY_KEY_SECRET || 'xaSBVRZSTqMcWC3nxfay1w4A';
 
   if (!key_id || !key_secret) {
     throw new Error('Razorpay keys are not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in environment variables.');
@@ -25,9 +25,11 @@ exports.verifyPayment = async (req, res, next) => {
     
     console.log('Verifying payment:', { razorpay_order_id, razorpay_payment_id });
     
+    const key_secret = process.env.RAZORPAY_KEY_SECRET || 'xaSBVRZSTqMcWC3nxfay1w4A';
+
     // Create the expected signature
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .createHmac('sha256', key_secret)
       .update(razorpay_order_id + '|' + razorpay_payment_id)
       .digest('hex');
     

@@ -69,9 +69,9 @@ const Checkout = () => {
     try {
       const validatedTotal = Number(total.toFixed(2));
       
-      if (validatedTotal <= 0 || validatedTotal > 50000) {
+      if (validatedTotal <= 0) {
         console.error('Invalid amount for payment:', validatedTotal);
-        throw new Error(`Invalid amount: ₹${validatedTotal}. Amount must be between ₹0.01 and ₹50,000.`);
+        throw new Error(`Invalid total amount: ₹${validatedTotal}. Please add items to your cart.`);
       }
       
       const response = await paymentAPI.createOrder(validatedTotal, 'INR');
@@ -95,7 +95,7 @@ const Checkout = () => {
     try {
       const isLoaded = await loadRazorpay()
       if (!isLoaded) {
-        setPaymentError('Razorpay SDK failed to load. Are you online?')
+        setPaymentError('Razorpay SDK failed to load. Please check your internet connection.')
         setLoading(false)
         return
       }
@@ -103,23 +103,33 @@ const Checkout = () => {
       const order = await createOrder()
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_5W598yvFqYJzYF',
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || import.meta.env.VITE_REACT_APP_RAZORPAY_KEY_ID || 'rzp_live_TQMjx3H66VLczL',
         amount: order.amount,
         currency: order.currency,
-        name: 'VÆROX LUXURY',
-        description: 'Exclusive Order Payment',
+        name: 'VÆROX SMART LIVING',
+        description: 'Order Payment',
         image: 'https://images.unsplash.com/photo-1607082350899-7e105aa886ae?auto=format&fit=crop&w=200&h=200',
         order_id: order.id,
         handler: async function (response) {
           try {
-            console.log('Payment successful handler response:', response);
-            setOrderPlaced(true);
-            clearCart();
-            setTimeout(() => {
-              navigate('/user/dashboard');
-            }, 3000);
+            console.log('Payment completed on client, verifying with server:', response);
+            const verifyRes = await paymentAPI.verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            if (verifyRes.success) {
+              setOrderPlaced(true);
+              clearCart();
+              setTimeout(() => {
+                navigate('/user/dashboard');
+              }, 3000);
+            } else {
+              setPaymentError(verifyRes.error || 'Payment verification failed. Signature mismatch.');
+            }
           } catch (error) {
-            setPaymentError('Payment verification failed. Please contact support.');
+            setPaymentError('Payment verification error: ' + error.message);
             console.error('Payment verification error:', error);
           }
         },
@@ -142,7 +152,7 @@ const Checkout = () => {
       
       rzp.open();
     } catch (error) {
-      setPaymentError('Failed to initiate payment. Please try again.')
+      setPaymentError(error.message || 'Failed to initiate payment. Please try again.')
       console.error('Payment initiation error:', error)
     } finally {
       setLoading(false)

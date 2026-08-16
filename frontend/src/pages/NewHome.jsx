@@ -380,8 +380,8 @@ const NewHome = () => {
             viewport={{ once: true, margin: '-80px' }}
           >
             {products.map((product) => (
-              <motion.div 
-                key={product.id} 
+              <motion.div
+                key={product.id}
                 variants={fadeUp}
                 className="flex-shrink-0 w-[58vw] sm:w-[38vw] md:w-auto snap-start"
               >

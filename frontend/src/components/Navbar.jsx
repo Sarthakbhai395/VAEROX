@@ -100,19 +100,17 @@ const Navbar = () => {
   }, [isMenuOpen])
 
   // Dynamic CSS helper for desktop nav links
-  const navLinkClass = ({ isActive }) => 
-    `text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 px-4 py-5 border-b-2 ${
-      isActive 
-        ? 'text-[#C9A84C] border-[#C9A84C] bg-[#C9A84C]/10 font-bold' 
-        : 'text-[#E8E0CC]/80 border-transparent hover:text-[#C9A84C] hover:bg-[#C9A84C]/5'
+  const navLinkClass = ({ isActive }) =>
+    `text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 px-4 py-5 border-b-2 ${isActive
+      ? 'text-[#C9A84C] border-[#C9A84C] bg-[#C9A84C]/10 font-bold'
+      : 'text-[#E8E0CC]/80 border-transparent hover:text-[#C9A84C] hover:bg-[#C9A84C]/5'
     }`;
 
   // Dynamic CSS helper for mobile nav links
   const mobileNavLinkClass = ({ isActive }) =>
-    `font-semibold px-5 py-3.5 transition-colors duration-300 block border-l-4 ${
-      isActive
-        ? 'text-white border-[#C9A84C] bg-[#141414]'
-        : 'text-[#E8E0CC]/70 border-transparent hover:text-white hover:bg-[#141414]/50'
+    `font-semibold px-5 py-3.5 transition-colors duration-300 block border-l-4 ${isActive
+      ? 'text-white border-[#C9A84C] bg-[#141414]'
+      : 'text-[#E8E0CC]/70 border-transparent hover:text-white hover:bg-[#141414]/50'
     }`;
 
   return (
@@ -234,8 +232,8 @@ const Navbar = () => {
                     </button>
                   </div>
                 ) : (
-                  <Link 
-                    to="/login" 
+                  <Link
+                    to="/login"
                     className="bg-gradient-to-r from-[#C9A84C] to-[#9B782B] hover:from-[#E2C266] hover:to-[#B5943C] text-black font-extrabold py-2 px-6 rounded-xl transition duration-300 text-xs tracking-[0.2em] uppercase shadow-[0_0_15px_rgba(201,168,76,0.3)]"
                   >
                     Login
@@ -289,7 +287,7 @@ const Navbar = () => {
         {isMenuOpen && (
           <>
             {/* Backdrop */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -299,7 +297,7 @@ const Navbar = () => {
             />
 
             {/* Left Drawer Container */}
-            <motion.div 
+            <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
@@ -321,7 +319,7 @@ const Navbar = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </button>
-                  <button 
+                  <button
                     onClick={() => setIsMenuOpen(false)}
                     className="p-1.5 rounded-lg text-[#E8E0CC]/70 hover:text-white hover:bg-white/10 transition-colors"
                   >
@@ -364,33 +362,30 @@ const Navbar = () => {
               {/* Navigation Links */}
               <div className="flex-grow py-6 px-6 flex flex-col justify-between overflow-y-auto">
                 <div className="flex flex-col items-center space-y-6 pt-4">
-                  <NavLink 
-                    to="/" 
-                    className={({ isActive }) => 
-                      `text-base font-medium tracking-widest uppercase transition-all duration-300 block text-center w-full py-2.5 rounded-xl ${
-                        isActive ? 'text-[#C9A84C] bg-[#C9A84C]/10 font-bold border border-[#C9A84C]/30' : 'text-[#E8E0CC]/80 hover:text-white hover:bg-[#141414]'
+                  <NavLink
+                    to="/"
+                    className={({ isActive }) =>
+                      `text-base font-medium tracking-widest uppercase transition-all duration-300 block text-center w-full py-2.5 rounded-xl ${isActive ? 'text-[#C9A84C] bg-[#C9A84C]/10 font-bold border border-[#C9A84C]/30' : 'text-[#E8E0CC]/80 hover:text-white hover:bg-[#141414]'
                       }`
                     }
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Home
                   </NavLink>
-                  <NavLink 
-                    to="/products" 
-                    className={({ isActive }) => 
-                      `text-base font-medium tracking-widest uppercase transition-all duration-300 block text-center w-full py-2.5 rounded-xl ${
-                        isActive ? 'text-[#C9A84C] bg-[#C9A84C]/10 font-bold border border-[#C9A84C]/30' : 'text-[#E8E0CC]/80 hover:text-white hover:bg-[#141414]'
+                  <NavLink
+                    to="/products"
+                    className={({ isActive }) =>
+                      `text-base font-medium tracking-widest uppercase transition-all duration-300 block text-center w-full py-2.5 rounded-xl ${isActive ? 'text-[#C9A84C] bg-[#C9A84C]/10 font-bold border border-[#C9A84C]/30' : 'text-[#E8E0CC]/80 hover:text-white hover:bg-[#141414]'
                       }`
                     }
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Products
                   </NavLink>
-                  <NavLink 
-                    to="/about" 
-                    className={({ isActive }) => 
-                      `text-base font-medium tracking-widest uppercase transition-all duration-300 block text-center w-full py-2.5 rounded-xl ${
-                        isActive ? 'text-[#C9A84C] bg-[#C9A84C]/10 font-bold border border-[#C9A84C]/30' : 'text-[#E8E0CC]/80 hover:text-white hover:bg-[#141414]'
+                  <NavLink
+                    to="/about"
+                    className={({ isActive }) =>
+                      `text-base font-medium tracking-widest uppercase transition-all duration-300 block text-center w-full py-2.5 rounded-xl ${isActive ? 'text-[#C9A84C] bg-[#C9A84C]/10 font-bold border border-[#C9A84C]/30' : 'text-[#E8E0CC]/80 hover:text-white hover:bg-[#141414]'
                       }`
                     }
                     onClick={() => setIsMenuOpen(false)}
@@ -399,11 +394,10 @@ const Navbar = () => {
                   </NavLink>
                   {/* Show Contact button only for regular users */}
                   {(isAuthenticated && user && user.role === 'user') && (
-                    <NavLink 
-                      to="/contact" 
-                      className={({ isActive }) => 
-                        `text-base font-medium tracking-widest uppercase transition-all duration-300 block text-center w-full py-2.5 rounded-xl ${
-                          isActive ? 'text-[#C9A84C] bg-[#C9A84C]/10 font-bold border border-[#C9A84C]/30' : 'text-[#E8E0CC]/80 hover:text-white hover:bg-[#141414]'
+                    <NavLink
+                      to="/contact"
+                      className={({ isActive }) =>
+                        `text-base font-medium tracking-widest uppercase transition-all duration-300 block text-center w-full py-2.5 rounded-xl ${isActive ? 'text-[#C9A84C] bg-[#C9A84C]/10 font-bold border border-[#C9A84C]/30' : 'text-[#E8E0CC]/80 hover:text-white hover:bg-[#141414]'
                         }`
                       }
                       onClick={() => setIsMenuOpen(false)}

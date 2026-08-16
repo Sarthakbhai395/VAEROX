@@ -13,6 +13,7 @@ const cors = require('cors');
 // Load env vars
 dotenv.config();
 
+
 // Connect to database
 connectDB();
 
