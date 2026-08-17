@@ -23,11 +23,21 @@ import Checkout from './pages/Checkout'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
 import IntroLoader from './components/IntroLoader'
+import ModeSelectionModal from './components/ModeSelectionModal'
+import { useMode } from './contexts/ModeContext'
 
 function App() {
+  const { openModeModal } = useMode();
+
+  const handleIntroComplete = () => {
+    // Open the Dual-Mode selection popup modal right after intro loader completes
+    openModeModal();
+  };
+
   return (
     <div className="App min-h-screen flex flex-col bg-black text-[#E8E0CC]">
-      <IntroLoader />
+      <IntroLoader onComplete={handleIntroComplete} />
+      <ModeSelectionModal />
       <Navbar />
       <main className="flex-grow">
         <Routes>

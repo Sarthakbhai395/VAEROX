@@ -3,8 +3,9 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../contexts/CartContext'
 import { useWishlist } from '../contexts/WishlistContext'
+import { useMode } from '../contexts/ModeContext'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu } from 'lucide-react'
+import { Menu, Sparkles, Crown, Zap } from 'lucide-react'
 import Logo from './Logo'
 
 const Navbar = () => {
@@ -16,6 +17,7 @@ const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth()
   const { getCartCount } = useCart()
   const { wishlistItems } = useWishlist()
+  const { mode, setMode, openModeModal } = useMode()
   const navigate = useNavigate()
 
   const toggleMenu = () => {
@@ -147,6 +149,25 @@ const Navbar = () => {
                     Contact
                   </NavLink>
                 )}
+
+                {/* Mode Switcher Button */}
+                <button
+                  onClick={openModeModal}
+                  className="ml-4 px-3 py-1.5 rounded-full border border-[#C9A84C]/40 bg-black/60 hover:border-[#C9A84C] text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 transition-all text-[#C9A84C] shadow-md cursor-pointer"
+                  title="Switch between Casual and Luxury mode"
+                >
+                  {mode === 'luxury' ? (
+                    <>
+                      <Crown size={12} className="text-[#C9A84C]" />
+                      <span>VÆROX Luxury ❖</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={12} className="text-blue-400" />
+                      <span className="text-blue-400">Casual Mode ⚡</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 

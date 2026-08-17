@@ -6,6 +6,7 @@ import './index.css'
 import { AuthProvider } from './contexts/AuthContext'
 import { CartProvider } from './contexts/CartContext'
 import { WishlistProvider } from './contexts/WishlistContext'
+import { ModeProvider } from './contexts/ModeContext'
 import { NotificationProvider } from './contexts/NotificationContext'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -18,7 +19,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>
-              <App />
+              <ModeProvider>
+                <App />
+              </ModeProvider>
             </WishlistProvider>
           </CartProvider>
         </AuthProvider>
