@@ -285,26 +285,27 @@ export const LuxuryHome = () => {
   return (
     <div className="min-h-screen bg-[#040404] text-[#E8E0CC] w-full overflow-x-hidden selection:bg-[#C9A84C] selection:text-black">
       {/* ── Top Floating Switcher Bar ── */}
-      <div className="bg-[#0A0A0A] border-b border-[#C9A84C]/30 py-2.5 px-4 text-center">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-2 text-[#C9A84C] font-semibold tracking-widest uppercase text-[10px]">
-            <Crown size={14} />
-            <span>AkarioMart Luxury x VÆROX Active</span>
+      <div className="bg-[#0A0A0A] border-b border-[#C9A84C]/30 py-3 px-4 text-center">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-[#C9A84C] font-semibold tracking-widest uppercase text-[11px]">
+            <Crown size={15} />
+            <span>AkarioMart Luxury x VÆROX</span>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-white/60 text-[11px]">Shopping for casual items?</span>
             <button
+              type="button"
               onClick={() => setMode('casual')}
-              className="px-3 py-1 rounded-full bg-white/10 hover:bg-[#C9A84C] text-white hover:text-black font-bold text-[10px] uppercase tracking-wider transition-all cursor-pointer"
+              className="px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-[11px] uppercase tracking-wider transition-all cursor-pointer shadow-md flex items-center gap-1.5"
             >
-              Switch to Casual Mode ⚡
+              ← Back to Casual Store
             </button>
             <button
+              type="button"
               onClick={openModeModal}
-              className="text-[#C9A84C] hover:underline text-[10px] uppercase font-bold"
+              className="text-[#C9A84C] hover:underline text-[11px] uppercase font-bold cursor-pointer"
             >
-              Change Mode
+              Change Experience ❖
             </button>
           </div>
         </div>
@@ -326,9 +327,19 @@ export const LuxuryHome = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-[#C9A84C]/50 text-[11px] font-bold tracking-[0.3em] text-[#C9A84C] uppercase">
-                <LogoEmblem className="w-4 h-4" />
-                AKARIOMART x VÆROX
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-[#C9A84C]/50 text-[11px] font-bold tracking-[0.3em] text-[#C9A84C] uppercase">
+                  <LogoEmblem className="w-4 h-4" />
+                  AKARIOMART x VÆROX
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setMode('casual')}
+                  className="px-3.5 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-[10px] uppercase tracking-wider transition-all cursor-pointer"
+                >
+                  ← Back to Casual Store
+                </button>
               </div>
 
               <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold leading-[1.08] tracking-tight font-serif">

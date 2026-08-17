@@ -5,9 +5,18 @@ import { LogoEmblem } from './Logo';
 import { Sparkles, ShoppingBag, Crown, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export const ModeSelectionModal = () => {
-  const { showModeModal, setShowModeModal, selectMode, mode } = useMode();
+  const { showModeModal, setShowModeModal, selectMode, setMode } = useMode();
 
   if (!showModeModal) return null;
+
+  const handleChooseMode = (chosenMode, e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (typeof selectMode === 'function') {
+      selectMode(chosenMode);
+    } else if (typeof setMode === 'function') {
+      setMode(chosenMode);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -57,7 +66,7 @@ export const ModeSelectionModal = () => {
             {/* ── LEFT: AKARIOMART CASUAL ── */}
             <motion.div
               className="p-8 md:p-10 flex flex-col justify-between relative group hover:bg-white/[0.02] transition-colors cursor-pointer"
-              onClick={() => selectMode('casual')}
+              onClick={(e) => handleChooseMode('casual', e)}
               whileHover={{ scale: 1.01 }}
               transition={{ duration: 0.2 }}
             >
@@ -93,6 +102,8 @@ export const ModeSelectionModal = () => {
 
               <div className="pt-8">
                 <button
+                  type="button"
+                  onClick={(e) => handleChooseMode('casual', e)}
                   className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg group-hover:shadow-blue-500/25 transition-all"
                 >
                   Enter Casual Store
@@ -104,7 +115,7 @@ export const ModeSelectionModal = () => {
             {/* ── RIGHT: AKARIOMART LUXURY (VÆROX) ── */}
             <motion.div
               className="p-8 md:p-10 flex flex-col justify-between relative group bg-gradient-to-b from-[#0F0D08]/80 to-[#080808] hover:bg-[#120F09] transition-colors cursor-pointer"
-              onClick={() => selectMode('luxury')}
+              onClick={(e) => handleChooseMode('luxury', e)}
               whileHover={{ scale: 1.01 }}
               transition={{ duration: 0.2 }}
             >
@@ -144,6 +155,8 @@ export const ModeSelectionModal = () => {
 
               <div className="pt-8 relative z-10">
                 <button
+                  type="button"
+                  onClick={(e) => handleChooseMode('luxury', e)}
                   className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#C9A84C] via-[#E4C875] to-[#9B782B] text-black font-extrabold text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(201,168,76,0.35)] group-hover:shadow-[0_0_35px_rgba(201,168,76,0.6)] transition-all"
                 >
                   Explore Luxury Experience ❖
