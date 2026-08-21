@@ -10,7 +10,7 @@ const productSchema = new mongoose.Schema({
   description: {
     type: String,
     required: [true, 'Please add a description'],
-    maxlength: [1000, 'Description cannot be more than 1000 characters']
+    maxlength: [5000, 'Description cannot be more than 5000 characters']
   },
   price: {
     type: Number,
@@ -25,8 +25,23 @@ const productSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    required: [true, 'Please add a category'],
-    enum: ['electronics', 'fashion', 'home & kitchen', 'books', 'sports', 'beauty', 'toys & games', 'grocery']
+    required: [true, 'Please add a category']
+    // Removed strict enum to support dynamic VÆROX categories like 
+    // standard-men, standard-women, premium-men-CEO, etc.
+  },
+  tier: {
+    type: String,
+    enum: ['standard', 'premium'],
+    default: 'standard'
+  },
+  gender: {
+    type: String,
+    enum: ['men', 'women'],
+    default: 'men'
+  },
+  role: {
+    type: String,
+    default: ''
   },
   image: {
     type: String,

@@ -24,8 +24,8 @@ const app = express();
 app.use(helmet());
 app.use(secureHeaders);
 app.use(morgan('dev'));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
 // General API rate limiter (1000 requests per 15 minutes per IP)
 const apiLimiter = rateLimiter({

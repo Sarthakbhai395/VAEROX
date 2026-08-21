@@ -3,9 +3,8 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../contexts/CartContext'
 import { useWishlist } from '../contexts/WishlistContext'
-import { useMode } from '../contexts/ModeContext'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, Sparkles, Crown, Zap } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import Logo from './Logo'
 
 const Navbar = () => {
@@ -17,7 +16,6 @@ const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth()
   const { getCartCount } = useCart()
   const { wishlistItems } = useWishlist()
-  const { mode, setMode, openModeModal } = useMode()
   const navigate = useNavigate()
 
   const toggleMenu = () => {
@@ -45,28 +43,12 @@ const Navbar = () => {
 
   const getDashboardLink = () => {
     if (!isAuthenticated || !user) return '/login'
-
-    switch (user.role) {
-      case 'admin':
-        return '/admin/dashboard'
-      case 'seller':
-        return '/seller/dashboard'
-      default:
-        return '/user/dashboard'
-    }
+    return user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard'
   }
 
   const getDashboardLabel = () => {
     if (!isAuthenticated || !user) return 'Login'
-
-    switch (user.role) {
-      case 'admin':
-        return 'Admin'
-      case 'seller':
-        return 'Seller Panel'
-      default:
-        return 'My Account'
-    }
+    return user.role === 'admin' ? 'Admin Panel' : 'My Account'
   }
 
   // Trigger animation when cart count changes
@@ -103,37 +85,33 @@ const Navbar = () => {
 
   // Dynamic CSS helper for desktop nav links
   const navLinkClass = ({ isActive }) =>
-    `text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 px-4 py-5 border-b-2 ${isActive
+    `text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 px-3 py-5 border-b-2 ${isActive
       ? 'text-[#C9A84C] border-[#C9A84C] bg-[#C9A84C]/10 font-bold'
       : 'text-[#E8E0CC]/80 border-transparent hover:text-[#C9A84C] hover:bg-[#C9A84C]/5'
     }`;
 
-  // Dynamic CSS helper for mobile nav links
-  const mobileNavLinkClass = ({ isActive }) =>
-    `font-semibold px-5 py-3.5 transition-colors duration-300 block border-l-4 ${isActive
-      ? 'text-white border-[#C9A84C] bg-[#141414]'
-      : 'text-[#E8E0CC]/70 border-transparent hover:text-white hover:bg-[#141414]/50'
-    }`;
-
   return (
     <>
+      {/* Top Announcement Ribbon */}
+      <div className="bg-[#050505] border-b border-[#26241E] py-2 text-center text-[10px] md:text-xs font-semibold tracking-[0.25em] text-[#C9A84C] uppercase select-none">
+        <span className="hidden sm:inline">✦ </span>
+        FREE EXPRESS DELIVERY ON ORDERS ABOVE ₹1999 &nbsp;•&nbsp; 24/7 VIP SUPPORT &nbsp;•&nbsp; AUTHENTIC LUXURY
+        <span className="hidden sm:inline"> ✦</span>
+      </div>
+
       <motion.nav
-        className="bg-black/95 backdrop-blur-md shadow-2xl sticky top-0 z-50 navbar-container"
+        className="bg-black/95 backdrop-blur-md shadow-2xl sticky top-0 z-50 navbar-container border-b border-[#26241E]"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
       >
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center h-20">
-            <div className="flex items-center h-full">
-              <Link to="/" className="flex-shrink-0 flex items-center mr-8 py-2">
-                <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.2 }}>
-                  <Logo layout="horizontal" size="md" />
-                </motion.div>
-              </Link>
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 items-center h-20">
 
-              {/* Desktop Navigation */}
-              <div className="hidden md:flex md:items-center h-full">
+            {/* Left Column: Navigation Links (Desktop) / Mobile Toggle */}
+            <div className="flex items-center">
+              {/* Desktop Left Nav */}
+              <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
                 <NavLink to="/" className={navLinkClass}>
                   Home
                 </NavLink>
@@ -143,162 +121,105 @@ const Navbar = () => {
                 <NavLink to="/about" className={navLinkClass}>
                   About
                 </NavLink>
-                {/* Show Contact button only for regular users, not for sellers or admins */}
-                {(isAuthenticated && user && user.role === 'user') && (
-                  <NavLink to="/contact" className={navLinkClass}>
-                    Contact
-                  </NavLink>
-                )}
-
-                {/* Mode Switcher Button */}
-                <button
-                  onClick={openModeModal}
-                  className="ml-4 px-3 py-1.5 rounded-full border border-[#C9A84C]/40 bg-black/60 hover:border-[#C9A84C] text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 transition-all text-[#C9A84C] shadow-md cursor-pointer"
-                  title="Switch between Casual and Luxury mode"
-                >
-                  {mode === 'luxury' ? (
-                    <>
-                      <Crown size={12} className="text-[#C9A84C]" />
-                      <span>VÆROX Luxury ❖</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap size={12} className="text-blue-400" />
-                      <span className="text-blue-400">Casual Mode ⚡</span>
-                    </>
-                  )}
-                </button>
               </div>
+
+              {/* Mobile Drawer Button */}
+              <button
+                onClick={toggleMenu}
+                className="md:hidden p-2 rounded-xl text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors focus:outline-none"
+                aria-label="Toggle menu"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
             </div>
 
-            <div className="hidden md:flex md:items-center space-x-6">
-              {/* Desktop Search */}
-              <form onSubmit={handleSearch} className="flex items-center">
+            {/* Middle Column: Centered Logo */}
+            <div className="flex justify-center items-center">
+              <Link to="/" className="flex items-center py-2 group">
+                <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }} className="flex items-center">
+                  <Logo layout="horizontal" size="md" />
+                </motion.div>
+              </Link>
+            </div>
+
+            {/* Right Column: Search, Wishlist, Cart, Account */}
+            <div className="flex items-center justify-end space-x-3 sm:space-x-4">
+              {/* Search (Desktop) */}
+              <form onSubmit={handleSearch} className="hidden lg:flex items-center">
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
-                    <svg className="h-5 w-5 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <svg className="h-4 w-4 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </span>
                   <input
                     type="text"
-                    placeholder="Search luxury items..."
-                    className="bg-[#121212] border border-[#C9A84C]/30 text-[#E8E0CC] placeholder-[#A39E93] text-xs tracking-wider rounded-xl pl-10 pr-4 py-2 focus:outline-none focus:border-[#C9A84C] focus:ring-1 focus:ring-[#C9A84C] w-44 lg:w-56 transition-all duration-300 focus:w-64"
+                    placeholder="Search luxury..."
+                    className="bg-[#121212] border border-[#C9A84C]/30 text-[#E8E0CC] placeholder-[#A39E93] text-xs tracking-wider rounded-xl pl-9 pr-3 py-1.5 focus:outline-none focus:border-[#C9A84C] w-36 xl:w-48 transition-all duration-300"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
               </form>
 
-              <div className="flex items-center space-x-4">
-                {/* Cart Icon - Only show for users */}
-                {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    animate={cartAnimation ? { scale: [1, 1.15, 1] } : {}}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Link to="/user/cart" className="relative text-[#E8E0CC] hover:text-[#C9A84C] p-2.5 hover:bg-[#C9A84C]/10 rounded-xl transition-colors duration-300 block">
-                      <div className="icon-with-counter">
-                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        {getCartCount() > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 bg-[#C9A84C] text-black text-[9px] font-extrabold px-1.5 py-0.5 rounded-full leading-none min-w-[15px] text-center shadow-md">
-                            {getCartCount()}
-                          </span>
-                        )}
-                      </div>
-                    </Link>
-                  </motion.div>
-                )}
-
-                {/* Wishlist Icon - Only show for users */}
-                {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    animate={wishlistAnimation ? { scale: [1, 1.15, 1] } : {}}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Link to="/user/wishlist" className="relative text-[#E8E0CC] hover:text-[#C9A84C] p-2.5 hover:bg-[#C9A84C]/10 rounded-xl transition-colors duration-300 block">
-                      <div className="icon-with-counter">
-                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                        {wishlistItems.length > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 bg-[#C9A84C] text-black text-[9px] font-extrabold px-1.5 py-0.5 rounded-full leading-none min-w-[15px] text-center shadow-md">
-                            {wishlistItems.length}
-                          </span>
-                        )}
-                      </div>
-                    </Link>
-                  </motion.div>
-                )}
-
-                {isAuthenticated ? (
-                  <div className="flex items-center space-x-3">
-                    <Link
-                      to={getDashboardLink()}
-                      className="border border-[#C9A84C]/40 bg-[#C9A84C]/10 hover:bg-[#C9A84C] text-[#C9A84C] hover:text-black font-bold py-2 px-4 rounded-xl transition duration-300 text-xs tracking-wider uppercase shadow-md"
-                    >
-                      {getDashboardLabel()}
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="border border-rose-500/40 bg-rose-950/20 hover:bg-rose-600 text-rose-300 hover:text-white font-bold py-2 px-4 rounded-xl transition duration-300 text-xs tracking-wider uppercase"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                ) : (
-                  <Link
-                    to="/login"
-                    className="bg-gradient-to-r from-[#C9A84C] to-[#9B782B] hover:from-[#E2C266] hover:to-[#B5943C] text-black font-extrabold py-2 px-6 rounded-xl transition duration-300 text-xs tracking-[0.2em] uppercase shadow-[0_0_15px_rgba(201,168,76,0.3)]"
-                  >
-                    Login
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            {/* Mobile menu controls */}
-            <div className="md:hidden flex items-center space-x-3">
-              {/* Mobile Cart/Wishlist */}
+              {/* Wishlist */}
               {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
-                <div className="flex items-center space-x-1">
-                  <Link to="/user/cart" className="relative text-[#E8E0CC] hover:text-[#C9A84C] p-2">
-                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    {getCartCount() > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 bg-[#C9A84C] text-black text-[8px] font-extrabold px-1 rounded-full leading-none min-w-[13px] text-center">
-                        {getCartCount()}
-                      </span>
-                    )}
-                  </Link>
-                  <Link to="/user/wishlist" className="relative text-[#E8E0CC] hover:text-[#C9A84C] p-2">
-                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Link to="/user/wishlist" className="relative text-[#E8E0CC] hover:text-[#C9A84C] p-2 hover:bg-[#C9A84C]/10 rounded-xl transition-colors duration-300 block" title="Wishlist">
+                    <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                     {wishlistItems.length > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 bg-[#C9A84C] text-black text-[8px] font-extrabold px-1 rounded-full leading-none min-w-[13px] text-center">
+                      <span className="absolute -top-1 -right-1 bg-[#C9A84C] text-black text-[9px] font-extrabold px-1.5 py-0.5 rounded-full leading-none min-w-[15px] text-center shadow-md">
                         {wishlistItems.length}
                       </span>
                     )}
                   </Link>
-                </div>
+                </motion.div>
               )}
 
-              <button
-                onClick={toggleMenu}
-                className="p-2 rounded-xl text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors focus:outline-none"
-                aria-label="Toggle menu"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
+              {/* Cart */}
+              {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Link to="/user/cart" className="relative text-[#E8E0CC] hover:text-[#C9A84C] p-2 hover:bg-[#C9A84C]/10 rounded-xl transition-colors duration-300 block" title="Cart">
+                    <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    {getCartCount() > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-[#C9A84C] text-black text-[9px] font-extrabold px-1.5 py-0.5 rounded-full leading-none min-w-[15px] text-center shadow-md">
+                        {getCartCount()}
+                      </span>
+                    )}
+                  </Link>
+                </motion.div>
+              )}
+
+              {/* Account / Login */}
+              {isAuthenticated ? (
+                <div className="flex items-center space-x-2">
+                  <Link
+                    to={getDashboardLink()}
+                    className="border border-[#C9A84C]/40 bg-[#C9A84C]/10 hover:bg-[#C9A84C] text-[#C9A84C] hover:text-black font-bold py-1.5 px-3 sm:px-4 rounded-xl transition duration-300 text-[11px] sm:text-xs tracking-wider uppercase shadow-md"
+                  >
+                    {getDashboardLabel()}
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="hidden sm:block border border-rose-500/40 bg-rose-950/20 hover:bg-rose-600 text-rose-300 hover:text-white font-bold py-1.5 px-3 rounded-xl transition duration-300 text-[11px] tracking-wider uppercase"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  className="bg-gradient-to-r from-[#C9A84C] to-[#9B782B] hover:from-[#E2C266] hover:to-[#B5943C] text-black font-extrabold py-1.5 px-4 sm:px-5 rounded-xl transition duration-300 text-[11px] sm:text-xs tracking-[0.15em] uppercase shadow-[0_0_15px_rgba(201,168,76,0.3)]"
+                >
+                  Login
+                </Link>
+              )}
             </div>
+
           </div>
         </div>
       </motion.nav>

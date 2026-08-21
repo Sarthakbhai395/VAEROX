@@ -12,7 +12,6 @@ import ForgotPassword from './pages/auth/ForgotPassword'
 import ResetPassword from './pages/auth/ResetPassword'
 import UserDashboard from './pages/user/Dashboard'
 import AdminDashboard from './pages/admin/Dashboard'
-import SellerDashboard from './pages/seller/Dashboard'
 import Products from './pages/Products'
 import ProductDetail from './pages/ProductDetail'
 import Cart from './pages/user/Cart'
@@ -21,23 +20,14 @@ import Checkout from './pages/Checkout'
 
 // Components
 import Navbar from './components/Navbar'
+import Footer from './components/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
 import IntroLoader from './components/IntroLoader'
-import ModeSelectionModal from './components/ModeSelectionModal'
-import { useMode } from './contexts/ModeContext'
 
 function App() {
-  const { openModeModal } = useMode();
-
-  const handleIntroComplete = () => {
-    // Open the Dual-Mode selection popup modal right after intro loader completes
-    openModeModal();
-  };
-
   return (
     <div className="App min-h-screen flex flex-col bg-black text-[#E8E0CC]">
-      <IntroLoader onComplete={handleIntroComplete} />
-      <ModeSelectionModal />
+      <IntroLoader />
       <Navbar />
       <main className="flex-grow">
         <Routes>
@@ -51,56 +41,49 @@ function App() {
           <Route path="/reset-password/:resettoken" element={<ResetPassword />} />
           <Route path="/products" element={<Products />} />
           <Route path="/product/:id" element={<ProductDetail />} />
-          <Route 
-            path="/user/dashboard" 
+          <Route
+            path="/user/dashboard"
             element={
               <ProtectedRoute allowedRoles={['user']}>
                 <UserDashboard />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/user/cart" 
+          <Route
+            path="/user/cart"
             element={
               <ProtectedRoute allowedRoles={['user']}>
                 <Cart />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/user/wishlist" 
+          <Route
+            path="/user/wishlist"
             element={
               <ProtectedRoute allowedRoles={['user']}>
                 <Wishlist />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/checkout" 
+          <Route
+            path="/checkout"
             element={
               <ProtectedRoute allowedRoles={['user']}>
                 <Checkout />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/admin/dashboard" 
+          <Route
+            path="/admin/dashboard"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminDashboard />
               </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/seller/dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['seller']}>
-                <SellerDashboard />
-              </ProtectedRoute>
-            } 
+            }
           />
         </Routes>
       </main>
+      <Footer />
     </div>
   )
 }

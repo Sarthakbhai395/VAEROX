@@ -103,7 +103,7 @@ const IntroLoader = ({ onComplete }) => {
           </motion.div>
         )}
 
-        {/* Stage 2: Silky Cinematic Text Animation */}
+        {/* Stage 2: Silky Cinematic Text Animation with Motivated Line */}
         {stage === 2 && (
           <motion.div
             key="stage2"
@@ -111,12 +111,12 @@ const IntroLoader = ({ onComplete }) => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-20 flex flex-col items-center text-center max-w-3xl px-6"
+            className="relative z-20 flex flex-col items-center text-center max-w-4xl px-6"
           >
             {/* Shimmer Light Line Accent */}
             <motion.div
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: '12rem', opacity: 1 }}
+              animate={{ width: '16rem', opacity: 1 }}
               transition={{ duration: 0.8, ease: 'easeInOut' }}
               className="h-[1px] bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent mb-6"
             />
@@ -126,9 +126,9 @@ const IntroLoader = ({ onComplete }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-[#E8E0CC] font-serif text-sm md:text-lg tracking-[0.4em] uppercase font-light mb-3"
+              className="text-[#E8E0CC]/90 font-serif text-sm md:text-lg tracking-[0.45em] uppercase font-light mb-2"
             >
-              WELCOME TO THE WORLD OF
+              WELCOME TO
             </motion.p>
 
             {/* Brand Title */}
@@ -136,25 +136,35 @@ const IntroLoader = ({ onComplete }) => {
               initial={{ opacity: 0, y: 25, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.9, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="text-4xl sm:text-6xl md:text-7xl font-serif font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#E8E0CC] tracking-[0.25em] uppercase mb-4 drop-shadow-[0_0_40px_rgba(201,168,76,0.6)]"
+              className="text-5xl sm:text-7xl md:text-8xl font-serif font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#E8E0CC] tracking-[0.3em] uppercase mb-5 drop-shadow-[0_0_50px_rgba(201,168,76,0.7)]"
             >
               VÆROX
             </motion.h1>
 
-            {/* Subtext */}
-            <motion.p
-              initial={{ opacity: 0, y: 15 }}
+            {/* Motivated & User Attractive Tagline */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.45 }}
-              className="text-xs md:text-sm text-[#C9A84C] tracking-[0.45em] uppercase font-medium"
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="flex flex-col items-center gap-2 max-w-2xl"
             >
-              — AKARIOMART • ELEVATE EVERYDAY —
-            </motion.p>
+              <div className="text-xs sm:text-sm md:text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#C9A84C] via-[#FFF5D6] to-[#C9A84C] tracking-[0.25em] uppercase leading-relaxed text-center px-4">
+                WHERE UNTAMED ELEGANCE MEETS FEARLESS AMBITION
+              </div>
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
+                className="inline-block px-4 py-1 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/40 text-[10px] sm:text-xs text-[#FFF5D6] tracking-[0.35em] uppercase font-semibold mt-1"
+              >
+                ✦ ELEVATE YOUR DESTINY ✦
+              </motion.div>
+            </motion.div>
 
             {/* Bottom Shimmer Line Accent */}
             <motion.div
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: '12rem', opacity: 1 }}
+              animate={{ width: '16rem', opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.3, ease: 'easeInOut' }}
               className="h-[1px] bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent mt-6"
             />

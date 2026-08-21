@@ -120,7 +120,7 @@ const UserDashboard = () => {
       return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=100&h=100';
     }
     
-    const isExternalUrl = imagePath.startsWith('http://') || imagePath.startsWith('https://');
+    const isExternalUrl = imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('data:') || imagePath.startsWith('blob:');
     if (isExternalUrl) {
       return imagePath;
     }

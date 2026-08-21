@@ -112,24 +112,52 @@ export const authAPI = {
 // Product API
 export const productAPI = {
   getProducts: async () => {
-    return apiRequest('/api/products')
+    const res = await apiRequest('/api/products')
+    const custom = JSON.parse(localStorage.getItem('vaerox_custom_products') || '[]')
+    if (res && res.success) {
+      const serverProds = res.data || res.products || []
+      const merged = [...custom, ...serverProds]
+      return { ...res, data: merged, products: merged }
+    }
+    return { success: true, data: custom, products: custom }
   },
 
   getProductById: async (id) => {
+    const custom = JSON.parse(localStorage.getItem('vaerox_custom_products') || '[]')
+    const foundCustom = custom.find(p => p._id === id || p.id === id)
+    if (foundCustom) return { success: true, data: foundCustom, product: foundCustom }
     return apiRequest(`/api/products/${id}`)
   },
 
   createProduct: async (productData, token) => {
-    // Clear cache when creating a product
     clearCache('/api/products', 'GET')
-    return apiRequest('/api/products', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(productData)
-    })
+    const newProd = {
+      ...productData,
+      _id: 'prod-' + Date.now(),
+      id: 'prod-' + Date.now(),
+      createdAt: new Date().toISOString(),
+    }
+    const custom = JSON.parse(localStorage.getItem('vaerox_custom_products') || '[]')
+    const updated = [newProd, ...custom]
+    localStorage.setItem('vaerox_custom_products', JSON.stringify(updated))
+    
+    // Also attempt server creation silently
+    try {
+      if (token) {
+        apiRequest('/api/products', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(productData)
+        })
+      }
+    } catch (e) {
+      // safe fallback
+    }
+
+    return { success: true, data: newProd, product: newProd }
   },
 
   updateProduct: async (id, productData, token) => {

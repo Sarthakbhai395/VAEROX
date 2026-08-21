@@ -37,8 +37,6 @@ const Login = () => {
           navigate(from)
         } else if (role === 'admin') {
           navigate('/admin/dashboard')
-        } else if (role === 'seller') {
-          navigate('/seller/dashboard')
         } else {
           navigate('/user/dashboard')
         }
@@ -151,8 +149,8 @@ const Login = () => {
                   onChange={(e) => setRole(e.target.value)}
                   className="mt-1 block w-full pl-3 pr-10 py-3 text-sm border border-[#26241E] focus:outline-none focus:border-[#C9A84C] rounded-xl transition duration-300 bg-[#121212] text-[#E8E0CC]"
                 >
-                  <option value="user">User</option>
-                  <option value="seller">Seller</option>
+                  <option value="user">Customer Account</option>
+                  <option value="admin">Administrator</option>
                 </select>
               )}
               {(email === 'admin@gmail.com' && password === '123456') && (
