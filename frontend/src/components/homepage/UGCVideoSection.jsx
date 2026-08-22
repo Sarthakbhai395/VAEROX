@@ -26,25 +26,25 @@ export const UGCVideoSection = () => {
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
-          className="text-center mb-10 md:mb-14"
+          className="text-center mb-8 md:mb-14"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.6 }}
         >
-          <span className="inline-block px-3.5 py-1 rounded-full text-[10px] md:text-xs font-bold tracking-[0.3em] text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/30 uppercase mb-3">
+          <span className="inline-block px-3.5 py-1 rounded-full text-[9px] sm:text-xs font-bold tracking-[0.25em] sm:tracking-[0.3em] text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/30 uppercase mb-2 sm:mb-3">
             COMMUNITY & REELS
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold text-[#FFF5D6] font-serif tracking-tight mb-3">
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-[#FFF5D6] font-serif tracking-tight mb-2 sm:mb-3">
             VÆROX IN REAL LIFE
           </h2>
-          <p className="text-[#E8E0CC]/70 text-sm md:text-base max-w-xl mx-auto font-light">
+          <p className="text-[#E8E0CC]/70 text-xs sm:text-base max-w-xl mx-auto font-light">
             Watch authentic moments, high-fashion styling tips, and red-carpet looks curated by our global community
           </p>
         </motion.div>
 
         {/* Video Reel Cards Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
           {videos.map((video, idx) => (
             <motion.div
               key={video.id || idx}

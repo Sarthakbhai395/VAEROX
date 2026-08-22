@@ -58,8 +58,13 @@ export const heroBannerService = {
   addBanner: (banner) => {
     const banners = heroBannerService.getBanners();
     const newBanner = {
-      ...banner,
       id: 'hero-' + Date.now(),
+      image: banner.image || '',
+      title: banner.title || '',
+      subtitle: banner.subtitle || '',
+      tag: banner.tag && banner.tag.trim() ? banner.tag.trim() : 'VÆROX LUXURY',
+      ctaText: banner.ctaText && banner.ctaText.trim() ? banner.ctaText.trim() : 'EXPLORE COLLECTION',
+      ctaLink: banner.ctaLink && banner.ctaLink.trim() ? banner.ctaLink.trim() : '/products',
       active: true,
     };
     const updated = [newBanner, ...banners];
@@ -88,3 +93,4 @@ export const heroBannerService = {
     return updated;
   },
 };
+
