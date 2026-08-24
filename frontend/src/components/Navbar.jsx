@@ -97,31 +97,31 @@ const Navbar = () => {
   return (
     <>
       {/* Top Announcement Ribbon */}
-      <div className="bg-[#050505] border-b border-[#C9A84C]/20 py-1.5 px-3 text-center text-[9px] sm:text-[10px] md:text-xs font-semibold tracking-[0.2em] sm:tracking-[0.25em] text-[#C9A84C] uppercase select-none overflow-hidden text-ellipsis whitespace-nowrap">
+      <div className="bg-[#050505] py-1.5 px-3 text-center text-[9px] sm:text-[10px] md:text-xs font-semibold tracking-[0.2em] sm:tracking-[0.25em] text-[#C9A84C] uppercase select-none overflow-hidden text-ellipsis whitespace-nowrap">
         <span>✦ FREE EXPRESS DELIVERY ON ORDERS ABOVE ₹1999 &nbsp;•&nbsp; 24/7 VIP SUPPORT &nbsp;•&nbsp; AUTHENTIC LUXURY ✦</span>
       </div>
 
       <motion.nav
-        className="bg-black/95 backdrop-blur-md shadow-2xl sticky top-0 z-50 border-b border-[#C9A84C]/30 w-full navbar-container"
+        className="bg-black/95 backdrop-blur-md shadow-2xl sticky top-0 z-50 w-full navbar-container"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16 md:h-20 w-full">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 w-full">
+          <div className="flex items-center justify-between h-14 sm:h-16 md:h-20 w-full min-w-0">
 
             {/* Left Section: Mobile Hamburger Icon (Hidden on Desktop) / Desktop Links */}
-            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-4 shrink-0">
               {/* Mobile Drawer Hamburger Button - Strictly hidden on md screens and above */}
               <button
                 onClick={(e) => {
                   e.stopPropagation()
                   setIsMenuOpen((prev) => !prev)
                 }}
-                className="md:hidden p-2 rounded-xl text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors focus:outline-none shrink-0 hamburger-menu-btn cursor-pointer"
+                className="md:hidden p-1.5 sm:p-2 rounded-xl text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors focus:outline-none shrink-0 hamburger-menu-btn cursor-pointer"
                 aria-label="Toggle menu"
               >
-                <Menu className="w-6 h-6 stroke-[2.5]" />
+                <Menu className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
               </button>
 
               {/* Desktop Left Navigation Links */}
@@ -139,7 +139,7 @@ const Navbar = () => {
             </div>
 
             {/* Middle Section: Centered Luxury Logo */}
-            <div className="flex justify-center items-center shrink-0">
+            <div className="flex justify-center items-center shrink-0 max-w-[130px] xs:max-w-[160px] sm:max-w-none">
               <Link to="/" className="flex items-center py-1 group">
                 <motion.div whileHover={{ scale: 1.04 }} transition={{ duration: 0.2 }} className="flex items-center">
                   <Logo layout="horizontal" size="md" />
@@ -148,7 +148,7 @@ const Navbar = () => {
             </div>
 
             {/* Right Section: Desktop Search, Wishlist, Cart, Account/Login */}
-            <div className="flex items-center justify-end space-x-2 sm:space-x-3 shrink-0">
+            <div className="flex items-center justify-end space-x-1 sm:space-x-2.5 shrink-0">
               {/* Search Bar (Desktop only) */}
               <form onSubmit={handleSearch} className="hidden lg:flex items-center">
                 <div className="relative">
@@ -171,7 +171,7 @@ const Navbar = () => {
               {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
                 <Link
                   to="/user/wishlist"
-                  className="relative text-[#E8E0CC] hover:text-[#C9A84C] p-1.5 sm:p-2 rounded-xl transition-colors duration-300 shrink-0"
+                  className="relative text-[#E8E0CC] hover:text-[#C9A84C] p-1 sm:p-2 rounded-xl transition-colors duration-300 shrink-0"
                   title="Wishlist"
                 >
                   <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,7 +189,7 @@ const Navbar = () => {
               {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
                 <Link
                   to="/user/cart"
-                  className="relative text-[#E8E0CC] hover:text-[#C9A84C] p-1.5 sm:p-2 rounded-xl transition-colors duration-300 shrink-0"
+                  className="relative text-[#E8E0CC] hover:text-[#C9A84C] p-1 sm:p-2 rounded-xl transition-colors duration-300 shrink-0"
                   title="Cart"
                 >
                   <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,18 +203,19 @@ const Navbar = () => {
                 </Link>
               )}
 
-              {/* Account / Login Button - Perfectly proportioned in header frame */}
+              {/* Account / Login Button - Perfectly fitted & zero overflow on mobile */}
               {isAuthenticated ? (
-                <div className="flex items-center space-x-1.5 shrink-0">
+                <div className="flex items-center space-x-1 sm:space-x-1.5 shrink-0">
                   <Link
                     to={getDashboardLink()}
-                    className="inline-flex items-center justify-center px-3 py-1.5 rounded-xl border border-[#C9A84C] bg-[#C9A84C]/10 hover:bg-[#C9A84C] text-[#C9A84C] hover:text-black font-extrabold text-[10px] sm:text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-md whitespace-nowrap"
+                    className="inline-flex items-center justify-center px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl border border-[#C9A84C] bg-[#C9A84C]/10 hover:bg-[#C9A84C] text-[#C9A84C] hover:text-black font-extrabold text-[9px] sm:text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-md whitespace-nowrap shrink-0"
                   >
-                    {getDashboardLabel()}
+                    <span className="sm:hidden">{user?.role === 'admin' ? 'ADMIN' : 'PANEL'}</span>
+                    <span className="hidden sm:inline">{getDashboardLabel()}</span>
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="hidden sm:inline-flex items-center justify-center px-3 py-1.5 rounded-xl border border-rose-500/40 bg-rose-950/20 hover:bg-rose-600 text-rose-300 hover:text-white font-extrabold text-[10px] sm:text-xs tracking-wider uppercase leading-none transition-all duration-300"
+                    className="hidden md:inline-flex items-center justify-center px-3 py-1.5 rounded-xl border border-rose-500/40 bg-rose-950/20 hover:bg-rose-600 text-rose-300 hover:text-white font-extrabold text-xs tracking-wider uppercase leading-none transition-all duration-300"
                   >
                     Logout
                   </button>
@@ -222,7 +223,7 @@ const Navbar = () => {
               ) : (
                 <Link
                   to="/login"
-                  className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#C9A84C] to-[#9B782B] hover:from-[#E2C266] hover:to-[#B5943C] text-black font-extrabold text-[10px] sm:text-xs tracking-[0.12em] uppercase leading-none transition duration-300 shadow-[0_0_15px_rgba(201,168,76,0.3)] whitespace-nowrap shrink-0"
+                  className="inline-flex items-center justify-center px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#C9A84C] to-[#9B782B] hover:from-[#E2C266] hover:to-[#B5943C] text-black font-extrabold text-[9px] sm:text-xs tracking-[0.1em] uppercase leading-none transition duration-300 shadow-[0_0_15px_rgba(201,168,76,0.3)] whitespace-nowrap shrink-0"
                 >
                   Login
                 </Link>

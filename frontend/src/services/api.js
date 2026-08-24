@@ -7,6 +7,8 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 const apiCache = new Map()
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
+import { getSecurityHeaders } from '../utils/security';
+
 // Helper function to make API requests
 const apiRequest = async (url, options = {}) => {
   try {
@@ -23,10 +25,11 @@ const apiRequest = async (url, options = {}) => {
       return cached.data
     }
     
-    // Auto-attach JWT authorization token if present in localStorage
+    // Auto-attach JWT authorization token and Cybersecurity Headers
     const token = localStorage.getItem('token');
     const headers = {
       'Content-Type': 'application/json',
+      ...getSecurityHeaders(),
       ...options.headers
     };
     if (token && !headers['Authorization']) {

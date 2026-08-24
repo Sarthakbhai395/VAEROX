@@ -101,7 +101,7 @@ const ProductCard = ({ product }) => {
   const renderProductImage = () => {
     if (images.length === 0 || imageError) {
       return (
-        <div className="w-full aspect-square bg-[#050505] flex flex-col items-center justify-center border-b border-[#26241E] p-4">
+        <div className="w-full aspect-[3/4] bg-[#050505] flex flex-col items-center justify-center border-b border-[#26241E] p-4">
           <svg className="w-8 h-8 text-[#26241E] mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
@@ -111,11 +111,11 @@ const ProductCard = ({ product }) => {
     }
 
     return (
-      <div className="relative w-full aspect-square bg-[#050505] flex items-center justify-center group/img overflow-hidden border-b border-[#26241E]">
+      <div className="relative w-full aspect-[3/4] bg-[#050505] flex items-center justify-center group/img overflow-hidden border-b border-[#26241E]">
         <img 
           src={images[currentImageIndex]} 
           alt={product?.name || 'Product'} 
-          className="max-w-full max-h-full w-auto h-auto object-contain p-3 transition-transform duration-500 group-hover/img:scale-105"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105"
           onError={() => setImageError(true)}
         />
         

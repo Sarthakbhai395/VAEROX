@@ -84,7 +84,7 @@ export const BannerCarousel = () => {
   const slide = banners[currentSlide] || banners[0]
 
   return (
-    <section className="relative w-full h-[70vh] min-h-[460px] md:h-[80vh] lg:h-[88vh] overflow-hidden rounded-2xl lg:rounded-3xl select-none shadow-2xl border border-[#26241E]">
+    <section className="relative w-full h-[70vh] min-h-[460px] md:h-[80vh] lg:h-[88vh] overflow-hidden rounded-2xl lg:rounded-3xl select-none shadow-2xl">
       {/* ── Background Images Crossfade ── */}
       <AnimatePresence initial={false}>
         <motion.div

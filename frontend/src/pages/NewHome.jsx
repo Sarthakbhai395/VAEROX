@@ -222,7 +222,6 @@ const NewHome = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-40px' }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          whileHover={{ y: -4 }}
           className="relative rounded-2xl md:rounded-3xl overflow-hidden border border-[#C9A84C]/50 bg-gradient-to-r from-[#0F0E0B] via-[#14120D] to-[#0A0A0A] p-5 sm:p-8 shadow-[0_0_35px_rgba(201,168,76,0.18)] flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8"
         >
           {/* Animated Background Ambient Glow & Light Beams */}
@@ -254,30 +253,21 @@ const NewHome = () => {
 
             {/* Feature Badges */}
             <div className="flex flex-wrap items-center gap-2 pt-1">
-              <motion.span
-                whileHover={{ scale: 1.05 }}
-                className="px-3 py-1 rounded-lg bg-black/60 border border-[#C9A84C]/30 text-[10px] sm:text-xs font-semibold text-[#FFF5D6] tracking-wider uppercase font-sans"
-              >
+              <span className="px-3 py-1 rounded-lg bg-black/60 border border-[#C9A84C]/30 text-[10px] sm:text-xs font-semibold text-[#FFF5D6] tracking-wider uppercase font-sans">
                 ✓ 100% Bespoke Fit
-              </motion.span>
-              <motion.span
-                whileHover={{ scale: 1.05 }}
-                className="px-3 py-1 rounded-lg bg-black/60 border border-[#C9A84C]/30 text-[10px] sm:text-xs font-semibold text-[#FFF5D6] tracking-wider uppercase font-sans"
-              >
+              </span>
+              <span className="px-3 py-1 rounded-lg bg-black/60 border border-[#C9A84C]/30 text-[10px] sm:text-xs font-semibold text-[#FFF5D6] tracking-wider uppercase font-sans">
                 ✦ 80+ Hours Hand Stitching
-              </motion.span>
-              <motion.span
-                whileHover={{ scale: 1.05 }}
-                className="px-3 py-1 rounded-lg bg-black/60 border border-[#C9A84C]/30 text-[10px] sm:text-xs font-semibold text-[#FFF5D6] tracking-wider uppercase font-sans"
-              >
+              </span>
+              <span className="px-3 py-1 rounded-lg bg-black/60 border border-[#C9A84C]/30 text-[10px] sm:text-xs font-semibold text-[#FFF5D6] tracking-wider uppercase font-sans">
                 ★ Italian Loro Piana Wools
-              </motion.span>
+              </span>
             </div>
           </div>
 
           {/* Right Action Call Button */}
           <div className="relative z-10 shrink-0 w-full sm:w-auto">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.96 }}>
+            <div>
               <Link
                 to="/contact"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-7 py-3.5 sm:px-8 sm:py-4 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-xs tracking-[0.2em] uppercase hover:shadow-[0_0_30px_rgba(201,168,76,0.6)] transition-all duration-300 shadow-xl font-sans"
@@ -285,7 +275,7 @@ const NewHome = () => {
                 <span>BOOK BESPOKE FITTING</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
-            </motion.div>
+            </div>
           </div>
         </motion.div>
       </section>

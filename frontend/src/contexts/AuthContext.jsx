@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react'
+import { safeStorage, sanitizeObject, resetRateLimit } from '../utils/security'
 
 const AuthContext = createContext()
 
@@ -6,21 +7,20 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  // Load auth state from localStorage on initial load
+  // Load auth state from localStorage safely on initial load
   useEffect(() => {
-    const savedUser = localStorage.getItem('user')
+    const savedUser = safeStorage.getItem('user')
     const savedAuthState = localStorage.getItem('isAuthenticated')
     const savedToken = localStorage.getItem('token')
     
     if (savedUser && savedAuthState === 'true' && savedToken) {
       try {
-        const parsedUser = JSON.parse(savedUser)
-        setUser(parsedUser)
+        const cleanUser = sanitizeObject(savedUser)
+        setUser(cleanUser)
         setIsAuthenticated(true)
       } catch (e) {
         console.error('Error parsing saved user data:', e)
-        // Clear invalid data
-        localStorage.removeItem('user')
+        safeStorage.removeItem('user')
         localStorage.removeItem('isAuthenticated')
         localStorage.removeItem('token')
       }
@@ -28,10 +28,13 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const login = (userData, token) => {
-    setUser(userData)
+    const cleanUser = sanitizeObject(userData)
+    setUser(cleanUser)
     setIsAuthenticated(true)
-    // Save to localStorage
-    localStorage.setItem('user', JSON.stringify(userData))
+    resetRateLimit('login_attempt')
+    
+    // Save to localStorage safely
+    safeStorage.setItem('user', cleanUser)
     localStorage.setItem('isAuthenticated', 'true')
     localStorage.setItem('token', token)
   }
@@ -40,7 +43,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null)
     setIsAuthenticated(false)
     // Remove from localStorage
-    localStorage.removeItem('user')
+    safeStorage.removeItem('user')
     localStorage.removeItem('isAuthenticated')
     localStorage.removeItem('token')
   }
