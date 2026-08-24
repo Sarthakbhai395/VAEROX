@@ -13,10 +13,23 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [cartAnimation, setCartAnimation] = useState(false)
   const [wishlistAnimation, setWishlistAnimation] = useState(false)
+  const [formattedDate, setFormattedDate] = useState('')
   const { user, isAuthenticated, logout } = useAuth()
   const { getCartCount } = useCart()
   const { wishlistItems } = useWishlist()
   const navigate = useNavigate()
+
+  // Format live calendar date (e.g. MON, 24 AUG)
+  useEffect(() => {
+    const updateDate = () => {
+      const now = new Date()
+      const options = { weekday: 'short', day: '2-digit', month: 'short' }
+      setFormattedDate(now.toLocaleDateString('en-US', options).toUpperCase())
+    }
+    updateDate()
+    const timer = setInterval(updateDate, 60000)
+    return () => clearInterval(timer)
+  }, [])
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
@@ -87,12 +100,12 @@ const Navbar = () => {
     }
   }, [isMenuOpen])
 
-  // Dynamic CSS helper for desktop nav links
-  const navLinkClass = ({ isActive }) =>
-    `text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 px-3 py-2 border-b-2 ${isActive
-      ? 'text-[#C9A84C] border-[#C9A84C] bg-[#C9A84C]/10 font-bold'
-      : 'text-[#E8E0CC]/80 border-transparent hover:text-[#C9A84C] hover:bg-[#C9A84C]/5'
-    }`;
+  const navItems = [
+    { path: '/', label: 'Home' },
+    { path: '/products', label: 'Products' },
+    { path: '/about', label: 'About' },
+    { path: '/contact', label: 'Contact' },
+  ];
 
   return (
     <>
@@ -101,136 +114,175 @@ const Navbar = () => {
         <span>✦ FREE EXPRESS DELIVERY ON ORDERS ABOVE ₹1999 &nbsp;•&nbsp; 24/7 VIP SUPPORT &nbsp;•&nbsp; AUTHENTIC LUXURY ✦</span>
       </div>
 
+      {/* Dynamic Animated Floating Capsule Navbar */}
       <motion.nav
-        className="bg-black/95 backdrop-blur-md shadow-2xl sticky top-0 z-50 w-full navbar-container"
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="sticky top-2 z-50 px-2 sm:px-4 md:px-6 w-full max-w-7xl mx-auto navbar-container"
+        initial={{ y: -80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 280, damping: 28 }}
       >
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 w-full">
-          <div className="flex items-center justify-between h-14 sm:h-16 md:h-20 w-full min-w-0">
+        <div className="bg-[#0A0A0A]/95 backdrop-blur-xl border border-[#C9A84C]/40 shadow-[0_12px_35px_rgba(0,0,0,0.85)] rounded-2xl md:rounded-full px-3 sm:px-5 py-2 flex items-center justify-between transition-all duration-300 w-full min-w-0">
 
-            {/* Left Section: Mobile Hamburger Icon (Hidden on Desktop) / Desktop Links */}
-            <div className="flex items-center gap-1 sm:gap-4 shrink-0">
-              {/* Mobile Drawer Hamburger Button - Strictly hidden on md screens and above */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setIsMenuOpen((prev) => !prev)
-                }}
-                className="md:hidden p-1.5 sm:p-2 rounded-xl text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors focus:outline-none shrink-0 hamburger-menu-btn cursor-pointer"
-                aria-label="Toggle menu"
-              >
-                <Menu className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
-              </button>
+          {/* 1. LEFT SECTION: HAMBURGER, LOGO & DYNAMIC CALENDAR BADGE */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Mobile Drawer Hamburger Button - Strictly hidden on md screens and above */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsMenuOpen((prev) => !prev)
+              }}
+              className="md:hidden p-1.5 sm:p-2 rounded-xl text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors focus:outline-none shrink-0 hamburger-menu-btn cursor-pointer"
+              aria-label="Toggle menu"
+            >
+              <Menu className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
+            </button>
 
-              {/* Desktop Left Navigation Links */}
-              <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
-                <NavLink to="/" className={navLinkClass}>
-                  Home
-                </NavLink>
-                <NavLink to="/products" className={navLinkClass}>
-                  Products
-                </NavLink>
-                <NavLink to="/about" className={navLinkClass}>
-                  About
-                </NavLink>
-              </div>
+            {/* Brand Logo */}
+            <Link to="/" className="flex items-center py-1 group shrink-0">
+              <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.2 }} className="flex items-center">
+                <Logo layout="horizontal" size="md" />
+              </motion.div>
+            </Link>
+
+            {/* Dynamic Calendar Live Date Pill Badge */}
+            <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#16140F] border border-[#C9A84C]/40 text-[10px] font-extrabold tracking-[0.2em] text-[#C9A84C] uppercase shadow-sm shrink-0 font-sans">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] animate-ping" />
+              <span>📅 {formattedDate || 'ATELIER 2026'}</span>
             </div>
-
-            {/* Middle Section: Centered Luxury Logo */}
-            <div className="flex justify-center items-center shrink-0 max-w-[130px] xs:max-w-[160px] sm:max-w-none">
-              <Link to="/" className="flex items-center py-1 group">
-                <motion.div whileHover={{ scale: 1.04 }} transition={{ duration: 0.2 }} className="flex items-center">
-                  <Logo layout="horizontal" size="md" />
-                </motion.div>
-              </Link>
-            </div>
-
-            {/* Right Section: Desktop Search, Wishlist, Cart, Account/Login */}
-            <div className="flex items-center justify-end space-x-1 sm:space-x-2.5 shrink-0">
-              {/* Search Bar (Desktop only) */}
-              <form onSubmit={handleSearch} className="hidden lg:flex items-center">
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg className="h-4 w-4 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Search luxury..."
-                    className="bg-[#121212] border border-[#C9A84C]/30 text-[#E8E0CC] placeholder-[#A39E93] text-xs tracking-wider rounded-xl pl-9 pr-3 py-1.5 focus:outline-none focus:border-[#C9A84C] w-36 xl:w-48 transition-all duration-300"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-              </form>
-
-              {/* Wishlist Icon */}
-              {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
-                <Link
-                  to="/user/wishlist"
-                  className="relative text-[#E8E0CC] hover:text-[#C9A84C] p-1 sm:p-2 rounded-xl transition-colors duration-300 shrink-0"
-                  title="Wishlist"
-                >
-                  <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  {wishlistItems.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#C9A84C] text-black text-[9px] font-extrabold px-1.5 py-0.5 rounded-full leading-none min-w-[15px] text-center shadow-md">
-                      {wishlistItems.length}
-                    </span>
-                  )}
-                </Link>
-              )}
-
-              {/* Cart Icon */}
-              {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
-                <Link
-                  to="/user/cart"
-                  className="relative text-[#E8E0CC] hover:text-[#C9A84C] p-1 sm:p-2 rounded-xl transition-colors duration-300 shrink-0"
-                  title="Cart"
-                >
-                  <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  {getCartCount() > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#C9A84C] text-black text-[9px] font-extrabold px-1.5 py-0.5 rounded-full leading-none min-w-[15px] text-center shadow-md">
-                      {getCartCount()}
-                    </span>
-                  )}
-                </Link>
-              )}
-
-              {/* Account / Login Button - Perfectly fitted & zero overflow on mobile */}
-              {isAuthenticated ? (
-                <div className="flex items-center space-x-1 sm:space-x-1.5 shrink-0">
-                  <Link
-                    to={getDashboardLink()}
-                    className="inline-flex items-center justify-center px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl border border-[#C9A84C] bg-[#C9A84C]/10 hover:bg-[#C9A84C] text-[#C9A84C] hover:text-black font-extrabold text-[9px] sm:text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-md whitespace-nowrap shrink-0"
-                  >
-                    <span className="sm:hidden">{user?.role === 'admin' ? 'ADMIN' : 'PANEL'}</span>
-                    <span className="hidden sm:inline">{getDashboardLabel()}</span>
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="hidden md:inline-flex items-center justify-center px-3 py-1.5 rounded-xl border border-rose-500/40 bg-rose-950/20 hover:bg-rose-600 text-rose-300 hover:text-white font-extrabold text-xs tracking-wider uppercase leading-none transition-all duration-300"
-                  >
-                    Logout
-                  </button>
-                </div>
-              ) : (
-                <Link
-                  to="/login"
-                  className="inline-flex items-center justify-center px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#C9A84C] to-[#9B782B] hover:from-[#E2C266] hover:to-[#B5943C] text-black font-extrabold text-[9px] sm:text-xs tracking-[0.1em] uppercase leading-none transition duration-300 shadow-[0_0_15px_rgba(201,168,76,0.3)] whitespace-nowrap shrink-0"
-                >
-                  Login
-                </Link>
-              )}
-            </div>
-
           </div>
+
+          {/* 2. RIGHT SECTION: ANIMATED SLIDING NAV TABS & DOCK ACTION PILLS */}
+          <div className="flex items-center justify-end space-x-2 lg:space-x-4 shrink-0">
+
+            {/* Desktop Dynamic Sliding Nav Tabs (Framer Motion layoutId) */}
+            <div className="hidden md:flex items-center space-x-1 lg:space-x-2 bg-[#12110D] p-1 rounded-full border border-[#C9A84C]/25">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `relative text-xs font-bold tracking-[0.16em] uppercase transition-all duration-300 px-3.5 py-1.5 rounded-full ${
+                      isActive
+                        ? 'text-black font-extrabold'
+                        : 'text-[#E8E0CC]/80 hover:text-[#C9A84C]'
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <motion.div
+                          layoutId="navbarActiveTab"
+                          className="absolute inset-0 bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] rounded-full z-0 shadow-[0_0_12px_rgba(201,168,76,0.5)]"
+                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                      <span className="relative z-10">{item.label}</span>
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+
+            {/* Desktop Search Bar */}
+            <form onSubmit={handleSearch} className="hidden lg:flex items-center">
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                  <svg className="h-3.5 w-3.5 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search luxury..."
+                  className="bg-[#121212] border border-[#C9A84C]/30 text-[#E8E0CC] placeholder-[#A39E93] text-[11px] tracking-wider rounded-full pl-8 pr-3 py-1 focus:outline-none focus:border-[#C9A84C] w-32 xl:w-44 transition-all duration-300 font-sans"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </form>
+
+            {/* Wishlist Dynamic Icon Badge */}
+            {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
+              <Link
+                to="/user/wishlist"
+                className={`relative text-[#E8E0CC] hover:text-[#C9A84C] p-1.5 rounded-full transition-all duration-300 shrink-0 ${
+                  wishlistAnimation ? 'scale-125 text-[#C9A84C]' : ''
+                }`}
+                title="Wishlist"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                {wishlistItems.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#C9A84C] text-black text-[9px] font-extrabold px-1.5 py-0.5 rounded-full leading-none min-w-[15px] text-center shadow-md animate-pulse">
+                    {wishlistItems.length}
+                  </span>
+                )}
+              </Link>
+            )}
+
+            {/* Cart Luxury Pill Button */}
+            {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
+              <Link
+                to="/user/cart"
+                className={`hidden md:inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#1F1E1B] hover:bg-[#C9A84C] text-[#E8E0CC] hover:text-black border border-[#C9A84C]/40 text-xs font-semibold tracking-wider transition-all duration-300 shadow-md shrink-0 ${
+                  cartAnimation ? 'scale-110 border-[#C9A84C]' : ''
+                }`}
+                title="Cart"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>Cart {getCartCount() > 0 ? `(${getCartCount()})` : ''}</span>
+              </Link>
+            )}
+
+            {/* Cart Icon for Mobile View */}
+            {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
+              <Link
+                to="/user/cart"
+                className="md:hidden relative text-[#E8E0CC] hover:text-[#C9A84C] p-1 rounded-xl transition-colors shrink-0"
+                title="Cart"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {getCartCount() > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#C9A84C] text-black text-[9px] font-extrabold px-1.5 py-0.5 rounded-full leading-none min-w-[15px] text-center shadow-md">
+                    {getCartCount()}
+                  </span>
+                )}
+              </Link>
+            )}
+
+            {/* Account / Login Pill Button */}
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-1 sm:space-x-1.5 shrink-0">
+                <Link
+                  to={getDashboardLink()}
+                  className="inline-flex items-center justify-center px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full border border-[#C9A84C] bg-[#C9A84C]/10 hover:bg-[#C9A84C] text-[#C9A84C] hover:text-black font-extrabold text-[9px] sm:text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-md whitespace-nowrap shrink-0"
+                >
+                  <span className="sm:hidden">{user?.role === 'admin' ? 'ADMIN' : 'PANEL'}</span>
+                  <span className="hidden sm:inline">{getDashboardLabel()}</span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="hidden md:inline-flex items-center justify-center px-3.5 py-1.5 rounded-full border border-rose-500/40 bg-rose-950/20 hover:bg-rose-600 text-rose-300 hover:text-white font-extrabold text-xs tracking-wider uppercase leading-none transition-all duration-300"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="inline-flex items-center justify-center px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-full bg-gradient-to-r from-[#C9A84C] to-[#9B782B] hover:from-[#E2C266] hover:to-[#B5943C] text-black font-extrabold text-[9px] sm:text-xs tracking-[0.1em] uppercase leading-none transition duration-300 shadow-[0_0_15px_rgba(201,168,76,0.3)] whitespace-nowrap shrink-0"
+              >
+                Login
+              </Link>
+            )}
+          </div>
+
         </div>
       </motion.nav>
 
@@ -266,8 +318,9 @@ const Navbar = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-black/35 to-black/20" />
                 <div className="absolute inset-0 p-4 flex flex-col justify-between z-10">
                   <div className="flex justify-between items-center">
-                    <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-[0.22em] text-[#C9A84C] bg-black/85 border border-[#C9A84C]/50 uppercase shadow-lg font-sans">
-                      ✦ HIGH FASHION ATELIER 2026
+                    <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-[0.22em] text-[#C9A84C] bg-black/85 border border-[#C9A84C]/50 uppercase shadow-lg font-sans flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] animate-ping" />
+                      📅 {formattedDate || 'ATELIER 2026'}
                     </span>
                     <button
                       onClick={() => setIsMenuOpen(false)}
