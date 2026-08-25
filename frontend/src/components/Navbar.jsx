@@ -121,38 +121,38 @@ const Navbar = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 280, damping: 28 }}
       >
-        <div className="bg-[#0A0A0A]/95 backdrop-blur-xl border border-[#C9A84C]/40 shadow-[0_12px_35px_rgba(0,0,0,0.85)] rounded-2xl md:rounded-full px-3 sm:px-5 py-2 flex items-center justify-between transition-all duration-300 w-full min-w-0">
+        <div className="bg-[#0A0A0A]/95 backdrop-blur-xl border border-[#C9A84C]/40 shadow-[0_12px_35px_rgba(0,0,0,0.85)] rounded-2xl md:rounded-full px-2 sm:px-5 py-1.5 md:py-2 flex items-center justify-between transition-all duration-300 w-full min-w-0">
 
           {/* 1. LEFT SECTION: HAMBURGER, LOGO & DYNAMIC CALENDAR BADGE */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0 min-w-0">
             {/* Mobile Drawer Hamburger Button - Strictly hidden on md screens and above */}
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 setIsMenuOpen((prev) => !prev)
               }}
-              className="md:hidden p-1.5 sm:p-2 rounded-xl text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors focus:outline-none shrink-0 hamburger-menu-btn cursor-pointer"
+              className="md:hidden p-1 sm:p-2 rounded-xl text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors focus:outline-none shrink-0 hamburger-menu-btn cursor-pointer"
               aria-label="Toggle menu"
             >
               <Menu className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
             </button>
 
-            {/* Brand Logo */}
-            <Link to="/" className="flex items-center py-1 group shrink-0">
-              <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.2 }} className="flex items-center">
+            {/* Brand Logo - Responsive scaled footprint on mobile */}
+            <Link to="/" className="flex items-center py-0.5 group shrink-0 max-w-[110px] xs:max-w-[130px] sm:max-w-none">
+              <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.2 }} className="flex items-center transform scale-[0.88] xs:scale-95 sm:scale-100 origin-left">
                 <Logo layout="horizontal" size="md" />
               </motion.div>
             </Link>
 
-            {/* Dynamic Calendar Live Date Pill Badge */}
-            <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#16140F] border border-[#C9A84C]/40 text-[10px] font-extrabold tracking-[0.2em] text-[#C9A84C] uppercase shadow-sm shrink-0 font-sans">
+            {/* Dynamic Calendar Live Date Pill Badge - Outline removed as requested */}
+            <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#16140F] text-[10px] font-extrabold tracking-[0.2em] text-[#C9A84C] uppercase shadow-sm shrink-0 font-sans">
               <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] animate-ping" />
               <span>📅 {formattedDate || 'ATELIER 2026'}</span>
             </div>
           </div>
 
           {/* 2. RIGHT SECTION: ANIMATED SLIDING NAV TABS & DOCK ACTION PILLS */}
-          <div className="flex items-center justify-end space-x-2 lg:space-x-4 shrink-0">
+          <div className="flex items-center justify-end space-x-1 sm:space-x-2.5 lg:space-x-4 shrink-0">
 
             {/* Desktop Dynamic Sliding Nav Tabs (Framer Motion layoutId) */}
             <div className="hidden md:flex items-center space-x-1 lg:space-x-2 bg-[#12110D] p-1 rounded-full border border-[#C9A84C]/25">
@@ -206,12 +206,12 @@ const Navbar = () => {
             {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
               <Link
                 to="/user/wishlist"
-                className={`relative text-[#E8E0CC] hover:text-[#C9A84C] p-1.5 rounded-full transition-all duration-300 shrink-0 ${
+                className={`relative text-[#E8E0CC] hover:text-[#C9A84C] p-1 sm:p-1.5 rounded-full transition-all duration-300 shrink-0 ${
                   wishlistAnimation ? 'scale-125 text-[#C9A84C]' : ''
                 }`}
                 title="Wishlist"
               >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-4 sm:h-5 w-4 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
                 {wishlistItems.length > 0 && (
@@ -245,7 +245,7 @@ const Navbar = () => {
                 className="md:hidden relative text-[#E8E0CC] hover:text-[#C9A84C] p-1 rounded-xl transition-colors shrink-0"
                 title="Cart"
               >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-4 sm:h-5 w-4 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 {getCartCount() > 0 && (
@@ -256,12 +256,12 @@ const Navbar = () => {
               </Link>
             )}
 
-            {/* Account / Login Pill Button */}
+            {/* Account / Login Pill Button - Zero overflow on mobile */}
             {isAuthenticated ? (
               <div className="flex items-center space-x-1 sm:space-x-1.5 shrink-0">
                 <Link
                   to={getDashboardLink()}
-                  className="inline-flex items-center justify-center px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full border border-[#C9A84C] bg-[#C9A84C]/10 hover:bg-[#C9A84C] text-[#C9A84C] hover:text-black font-extrabold text-[9px] sm:text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-md whitespace-nowrap shrink-0"
+                  className="inline-flex items-center justify-center px-2 py-1 sm:px-3.5 sm:py-1.5 rounded-full border border-[#C9A84C] bg-[#C9A84C]/10 hover:bg-[#C9A84C] text-[#C9A84C] hover:text-black font-extrabold text-[8.5px] sm:text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-md whitespace-nowrap shrink-0"
                 >
                   <span className="sm:hidden">{user?.role === 'admin' ? 'ADMIN' : 'PANEL'}</span>
                   <span className="hidden sm:inline">{getDashboardLabel()}</span>
@@ -276,7 +276,7 @@ const Navbar = () => {
             ) : (
               <Link
                 to="/login"
-                className="inline-flex items-center justify-center px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-full bg-gradient-to-r from-[#C9A84C] to-[#9B782B] hover:from-[#E2C266] hover:to-[#B5943C] text-black font-extrabold text-[9px] sm:text-xs tracking-[0.1em] uppercase leading-none transition duration-300 shadow-[0_0_15px_rgba(201,168,76,0.3)] whitespace-nowrap shrink-0"
+                className="inline-flex items-center justify-center px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-full bg-gradient-to-r from-[#C9A84C] to-[#9B782B] hover:from-[#E2C266] hover:to-[#B5943C] text-black font-extrabold text-[8.5px] sm:text-xs tracking-[0.08em] uppercase leading-none transition duration-300 shadow-[0_0_12px_rgba(201,168,76,0.3)] whitespace-nowrap shrink-0"
               >
                 Login
               </Link>
