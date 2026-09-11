@@ -106,14 +106,22 @@ app.use('/uploads', cors(corsOptions), (req, res, next) => {
   next();
 }, express.static(path.join(__dirname, 'public', 'uploads')));
 
-// Mount routers
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/products', require('./routes/products'));
-app.use('/api/contact', require('./routes/contact'));
-app.use('/api/payment', require('./routes/payment'));
-app.use('/api/seller/contact', require('./routes/sellerContact'));
-app.use('/api/activities', require('./routes/activities'));
+// Mount routers with dual path support (/api/* and /*) for bulletproof Vercel Serverless Functions
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const productRoutes = require('./routes/products');
+const contactRoutes = require('./routes/contact');
+const paymentRoutes = require('./routes/payment');
+const sellerContactRoutes = require('./routes/sellerContact');
+const activityRoutes = require('./routes/activities');
+
+app.use(['/api/auth', '/auth'], authRoutes);
+app.use(['/api/users', '/users'], userRoutes);
+app.use(['/api/products', '/products'], productRoutes);
+app.use(['/api/contact', '/contact'], contactRoutes);
+app.use(['/api/payment', '/payment'], paymentRoutes);
+app.use(['/api/seller/contact', '/seller/contact'], sellerContactRoutes);
+app.use(['/api/activities', '/activities'], activityRoutes);
 
 
 
