@@ -33,7 +33,7 @@ const ResetPassword = () => {
       const response = await authAPI.resetPassword(resettoken, password);
 
       if (response.success) {
-        setMessage('Password reset successful! You can now login with your new password.');
+        setMessage('Password reset successful! Redirecting to login...');
         setTimeout(() => {
           navigate('/login');
         }, 3000);
@@ -48,9 +48,9 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-black flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 text-[#E8E0CC]">
       <motion.div 
-        className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-gray-100"
+        className="max-w-md w-full space-y-8 bg-[#0A0A0A] p-10 rounded-2xl shadow-2xl border border-[#26241E]"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -61,22 +61,22 @@ const ResetPassword = () => {
           transition={{ delay: 0.2 }}
           className="text-center"
         >
-          <div className="mx-auto h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center">
-            <svg className="h-10 w-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+          <div className="mx-auto h-16 w-16 rounded-full bg-[#141414] border border-[#C9A84C]/40 flex items-center justify-center shadow-lg">
+            <svg className="h-8 w-8 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
             </svg>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-[#FFF5D6] font-serif tracking-tight">
             Set New Password
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Please enter your new password below.
+          <p className="mt-2 text-center text-sm text-[#C9A84C] uppercase tracking-widest font-semibold">
+            Create a strong new password
           </p>
         </motion.div>
         
         {message && (
           <motion.div 
-            className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg"
+            className="bg-green-950/30 border border-green-500/40 text-green-300 px-4 py-3 rounded-xl text-sm font-semibold"
             role="alert"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -88,7 +88,7 @@ const ResetPassword = () => {
         
         {error && (
           <motion.div 
-            className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg"
+            className="bg-red-950/50 border border-red-500/60 text-red-200 px-4 py-3 rounded-xl text-sm font-semibold"
             role="alert"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -107,7 +107,7 @@ const ResetPassword = () => {
         >
           <div className="space-y-4">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-xs font-bold text-[#C9A84C] uppercase tracking-widest mb-1">
                 New Password
               </label>
               <input
@@ -117,13 +117,13 @@ const ResetPassword = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent sm:text-sm transition duration-300 bg-white"
-                placeholder="New password"
+                className="appearance-none relative block w-full px-4 py-3 border border-[#26241E] placeholder-[#A39E93] text-[#E8E0CC] rounded-xl focus:outline-none focus:border-[#C9A84C] text-sm transition duration-300 bg-[#121212]"
+                placeholder="Min. 6 characters"
               />
             </div>
             
             <div>
-              <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="confirm-password" className="block text-xs font-bold text-[#C9A84C] uppercase tracking-widest mb-1">
                 Confirm New Password
               </label>
               <input
@@ -133,8 +133,8 @@ const ResetPassword = () => {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent sm:text-sm transition duration-300 bg-white"
-                placeholder="Confirm new password"
+                className="appearance-none relative block w-full px-4 py-3 border border-[#26241E] placeholder-[#A39E93] text-[#E8E0CC] rounded-xl focus:outline-none focus:border-[#C9A84C] text-sm transition duration-300 bg-[#121212]"
+                placeholder="Re-enter password"
               />
             </div>
           </div>
@@ -143,13 +143,13 @@ const ResetPassword = () => {
             <motion.button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 transition duration-300"
+              className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-extrabold rounded-xl text-black bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] hover:scale-102 focus:outline-none disabled:opacity-50 transition duration-300 uppercase tracking-wider shadow-lg"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               {loading ? (
                 <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -166,9 +166,9 @@ const ResetPassword = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          <p className="text-sm text-gray-600">
+          <p className="text-xs text-[#E8E0CC]/70">
             Remember your password?{' '}
-            <Link to="/login" className="font-medium text-gray-600 hover:text-gray-500">
+            <Link to="/login" className="font-bold text-[#C9A84C] hover:text-[#FFF5D6] transition-colors">
               Sign in
             </Link>
           </p>

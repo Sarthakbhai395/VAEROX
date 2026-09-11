@@ -41,14 +41,37 @@ const apiRequest = async (url, options = {}) => {
       headers
     });
     
-    // Graceful handling of non-JSON response types (e.g. HTML 404 pages from server failures)
+    // Graceful handling of non-JSON response types (e.g. HTML 404 pages from Vercel/CDN)
     let data = {};
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       data = await response.json();
     } else {
+      // Non-JSON response (likely HTML error page from Vercel/Render 404)
       const text = await response.text();
-      data = { error: text || `Server error: ${response.status} ${response.statusText}` };
+      const shortError = response.status === 404
+        ? 'API endpoint not found. Please check backend URL configuration.'
+        : `Server error: ${response.status} ${response.statusText}`;
+      data = { error: shortError };
+    }
+    
+    // CRITICAL: Normalize 'error' field to always be a string (prevents React Error #31)
+    // The backend sometimes returns error as an array (e.g., validation errors)
+    if (data.error && typeof data.error !== 'string') {
+      if (Array.isArray(data.error)) {
+        data.error = data.error.join('. ');
+      } else if (typeof data.error === 'object') {
+        data.error = data.error.message || JSON.stringify(data.error);
+      }
+    }
+    
+    // Also normalize 'message' field
+    if (data.message && typeof data.message !== 'string') {
+      if (Array.isArray(data.message)) {
+        data.message = data.message.join('. ');
+      } else if (typeof data.message === 'object') {
+        data.message = data.message.message || JSON.stringify(data.message);
+      }
     }
     
     const result = { success: response.ok, ...data };
@@ -64,7 +87,7 @@ const apiRequest = async (url, options = {}) => {
     return result;
   } catch (error) {
     console.error(`API request failed for ${url}:`, error);
-    return { success: false, message: error.message || 'Network error' }
+    return { success: false, error: 'Network error. Please check your connection and try again.', message: error.message || 'Network error' }
   }
 }
 
@@ -101,6 +124,20 @@ export const authAPI = {
     return apiRequest('/api/auth/forgotpassword', {
       method: 'POST',
       body: JSON.stringify({ email })
+    })
+  },
+
+  verifyOTP: async (email, otp) => {
+    return apiRequest('/api/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp })
+    })
+  },
+
+  resetPasswordOTP: async (email, otp, password) => {
+    return apiRequest('/api/auth/reset-password-otp', {
+      method: 'PUT',
+      body: JSON.stringify({ email, otp, password })
     })
   },
 

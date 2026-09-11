@@ -186,7 +186,7 @@ exports.logout = async (req, res, next) => {
   });
 };
 
-// @desc    Forgot password
+// @desc    Forgot password - Send OTP
 // @route   POST /api/auth/forgotpassword
 // @access  Public
 exports.forgotPassword = async (req, res, next) => {
@@ -201,48 +201,59 @@ exports.forgotPassword = async (req, res, next) => {
       });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please enter a valid email address'
+      });
+    }
+
     // Check for user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        error: 'User not found with this email'
+        error: 'No account found with this email address'
       });
     }
 
-    // Get reset token
-    const resetToken = user.getResetPasswordToken();
-
+    // Generate 6-digit OTP
+    const otp = user.generateOTP();
     await user.save({ validateBeforeSave: false });
-
-    // Create reset url (frontend route, not API route)
-    // Use CLIENT_URL if defined, fallback to current host in development
-    const clientUrl = process.env.CLIENT_URL || `${req.protocol}://${req.get('host')}`;
-    const resetUrl = `${clientUrl.replace(/\/$/, '')}/reset-password/${resetToken}`;
-
-    // For development, we'll show a success message even if email isn't sent
-    // In production, you should configure SMTP settings
 
     // Check if SMTP credentials are configured
     const hasSMTPConfig = process.env.SMTP_HOST && process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD;
 
     if (hasSMTPConfig) {
-      // Create email message
+      // Create OTP email message
       const message = `
-        <h2>Password Reset Request</h2>
-        <p>You are receiving this email because you (or someone else) has requested the reset of a password.</p>
-        <p>Please click on the following link to reset your password:</p>
-        <a href="${resetUrl}" target="_blank">${resetUrl}</a>
-        <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
-        <p>This link will expire in 10 minutes.</p>
+        <div style="font-family: 'Georgia', serif; max-width: 500px; margin: 0 auto; background: #0A0A0A; border: 1px solid #26241E; border-radius: 16px; overflow: hidden;">
+          <div style="background: linear-gradient(135deg, #C9A84C, #9B782B); padding: 24px; text-align: center;">
+            <h1 style="color: #000; margin: 0; font-size: 24px; letter-spacing: 4px;">VÆROX</h1>
+            <p style="color: #000; margin: 4px 0 0; font-size: 12px; letter-spacing: 2px;">PASSWORD RESET</p>
+          </div>
+          <div style="padding: 32px; text-align: center;">
+            <p style="color: #E8E0CC; font-size: 14px; margin-bottom: 24px;">You requested a password reset. Use the OTP below to verify your identity:</p>
+            <div style="background: #141414; border: 2px solid #C9A84C; border-radius: 12px; padding: 20px; margin: 20px 0;">
+              <p style="color: #C9A84C; font-size: 36px; font-weight: bold; letter-spacing: 12px; margin: 0;">${otp}</p>
+            </div>
+            <p style="color: #A39E93; font-size: 12px; margin-top: 16px;">This OTP is valid for <strong style="color: #C9A84C;">10 minutes</strong>.</p>
+            <p style="color: #A39E93; font-size: 12px;">If you didn't request this, please ignore this email.</p>
+          </div>
+          <div style="background: #050505; padding: 16px; text-align: center; border-top: 1px solid #26241E;">
+            <p style="color: #666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} VÆROX — High Luxury Experience</p>
+          </div>
+        </div>
       `;
 
       // Create transporter
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: process.env.SMTP_PORT || 587,
-        secure: false, // true for 465, false for other ports
+        secure: false,
         auth: {
           user: process.env.SMTP_EMAIL,
           pass: process.env.SMTP_PASSWORD
@@ -251,41 +262,37 @@ exports.forgotPassword = async (req, res, next) => {
 
       // Mail options
       const mailOptions = {
-        from: process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL,
+        from: `"VÆROX" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL}>`,
         to: user.email,
-        subject: 'Password Reset Request - Akario Mart',
+        subject: 'Your Password Reset OTP — VÆROX',
         html: message
       };
 
-      // Send email
       try {
         await transporter.sendMail(mailOptions);
-
         res.status(200).json({
           success: true,
-          message: 'Password reset link sent to your email'
+          message: 'OTP sent to your registered email address'
         });
       } catch (err) {
         console.error('Email sending error:', err);
-        user.resetPasswordToken = undefined;
-        user.resetPasswordExpire = undefined;
-
+        user.otpCode = undefined;
+        user.otpExpire = undefined;
         await user.save({ validateBeforeSave: false });
 
-        // Even if email fails, we'll still return success for development
-        // In production, you might want to return an error
-        res.status(200).json({
-          success: true,
-          message: 'Password reset link generated (email delivery failed - check server configuration)'
+        res.status(500).json({
+          success: false,
+          error: 'Failed to send OTP email. Please try again later.'
         });
       }
     } else {
-      // No SMTP configured, return success for development
-      console.warn('SMTP not configured. For production, please configure SMTP settings in .env file.');
+      // No SMTP configured — for development, return the OTP directly
+      console.warn('SMTP not configured. Returning OTP for development:', otp);
 
       res.status(200).json({
         success: true,
-        message: 'Password reset link generated (SMTP not configured for email sending)'
+        message: 'OTP generated (SMTP not configured — check server console for OTP)',
+        devOtp: process.env.NODE_ENV === 'development' ? otp : undefined
       });
     }
   } catch (err) {
@@ -297,7 +304,117 @@ exports.forgotPassword = async (req, res, next) => {
   }
 };
 
-// @desc    Reset password
+// @desc    Verify OTP
+// @route   POST /api/auth/verify-otp
+// @access  Public
+exports.verifyOTP = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and OTP are required'
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Hash the provided OTP to compare
+    const hashedOTP = require('crypto').createHash('sha256').update(otp.toString()).digest('hex');
+
+    const user = await User.findOne({
+      email: normalizedEmail,
+      otpCode: hashedOTP,
+      otpExpire: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid or expired OTP. Please request a new one.'
+      });
+    }
+
+    // OTP is valid — generate a short-lived reset token
+    const resetToken = user.getResetPasswordToken();
+    await user.save({ validateBeforeSave: false });
+
+    res.status(200).json({
+      success: true,
+      message: 'OTP verified successfully. You can now reset your password.',
+      resetToken
+    });
+  } catch (err) {
+    console.error('Verify OTP error:', err);
+    res.status(500).json({
+      success: false,
+      error: 'Server Error'
+    });
+  }
+};
+
+// @desc    Reset password after OTP verification
+// @route   PUT /api/auth/reset-password-otp
+// @access  Public
+exports.resetPasswordOTP = async (req, res, next) => {
+  try {
+    const { email, otp, password } = req.body;
+
+    if (!email || !otp || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email, OTP, and new password are required'
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 6 characters long'
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Hash the provided OTP to compare
+    const hashedOTP = require('crypto').createHash('sha256').update(otp.toString()).digest('hex');
+
+    const user = await User.findOne({
+      email: normalizedEmail,
+      otpCode: hashedOTP,
+      otpExpire: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid or expired OTP. Please request a new one.'
+      });
+    }
+
+    // Set new password
+    user.password = password;
+    user.otpCode = undefined;
+    user.otpExpire = undefined;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successful! You can now login with your new password.'
+    });
+  } catch (err) {
+    console.error('Reset password OTP error:', err);
+    res.status(500).json({
+      success: false,
+      error: 'Server Error'
+    });
+  }
+};
+
+// @desc    Reset password (via token link - legacy)
 // @route   PUT /api/auth/resetpassword/:resettoken
 // @access  Public
 exports.resetPassword = async (req, res, next) => {
@@ -320,6 +437,8 @@ exports.resetPassword = async (req, res, next) => {
     user.password = req.body.password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
+    user.otpCode = undefined;
+    user.otpExpire = undefined;
     await user.save();
 
     sendTokenResponse(user, 200, res);

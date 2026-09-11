@@ -2,6 +2,15 @@ import { useState } from 'react'
 import { authAPI } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 
+// Helper to ensure error is always a string (prevents React Error #31)
+const normalizeError = (err) => {
+  if (!err) return 'An unknown error occurred'
+  if (typeof err === 'string') return err
+  if (Array.isArray(err)) return err.join('. ')
+  if (typeof err === 'object') return err.message || JSON.stringify(err)
+  return String(err)
+}
+
 export const useAuthHook = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -19,12 +28,14 @@ export const useAuthHook = () => {
         login(response.data, response.token)
         return { success: true }
       } else {
-        setError(response.error || 'Login failed')
-        return { success: false, message: response.error || 'Login failed' }
+        const errorMsg = normalizeError(response.error || response.message || 'Login failed')
+        setError(errorMsg)
+        return { success: false, message: errorMsg }
       }
     } catch (err) {
-      setError('An error occurred during login')
-      return { success: false, message: 'An error occurred during login' }
+      const errorMsg = 'An error occurred during login'
+      setError(errorMsg)
+      return { success: false, message: errorMsg }
     } finally {
       setLoading(false)
     }
@@ -42,12 +53,14 @@ export const useAuthHook = () => {
         login(response.data, response.token)
         return { success: true }
       } else {
-        setError(response.error || 'Registration failed')
-        return { success: false, message: response.error || 'Registration failed' }
+        const errorMsg = normalizeError(response.error || response.message || 'Registration failed')
+        setError(errorMsg)
+        return { success: false, message: errorMsg }
       }
     } catch (err) {
-      setError('An error occurred during registration')
-      return { success: false, message: 'An error occurred during registration' }
+      const errorMsg = 'An error occurred during registration'
+      setError(errorMsg)
+      return { success: false, message: errorMsg }
     } finally {
       setLoading(false)
     }
@@ -65,3 +78,4 @@ export const useAuthHook = () => {
     handleLogout
   }
 }
+

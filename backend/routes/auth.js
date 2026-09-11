@@ -5,6 +5,8 @@ const {
   getMe,
   logout,
   forgotPassword,
+  verifyOTP,
+  resetPasswordOTP,
   resetPassword
 } = require('../controllers/authController');
 const { rateLimiter } = require('../middleware/security');
@@ -20,9 +22,18 @@ const authLimiter = rateLimiter({
   message: 'Too many authentication attempts from this IP. Please wait 5 minutes before trying again.'
 });
 
+// OTP Rate Limiter: 3 attempts per 5 minutes per IP (stricter for OTP)
+const otpLimiter = rateLimiter({
+  windowMs: 5 * 60 * 1000,
+  max: 3,
+  message: 'Too many OTP attempts from this IP. Please wait 5 minutes before trying again.'
+});
+
 router.post('/register', authLimiter, register);
 router.post('/login', authLimiter, login);
-router.post('/forgotpassword', authLimiter, forgotPassword);
+router.post('/forgotpassword', otpLimiter, forgotPassword);
+router.post('/verify-otp', otpLimiter, verifyOTP);
+router.put('/reset-password-otp', otpLimiter, resetPasswordOTP);
 router.put('/resetpassword/:resettoken', authLimiter, resetPassword);
 router.get('/me', protect, getMe);
 router.get('/logout', logout);

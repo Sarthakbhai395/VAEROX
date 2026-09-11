@@ -44,6 +44,8 @@ const userSchema = new mongoose.Schema({
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
+  otpCode: String,
+  otpExpire: Date,
   cart: [
     {
       product: {
@@ -111,6 +113,21 @@ userSchema.methods.getResetPasswordToken = function() {
   this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
 
   return resetToken;
+};
+
+// Generate 6-digit OTP for password reset
+userSchema.methods.generateOTP = function() {
+  const crypto = require('crypto');
+  // Generate a random 6-digit OTP
+  const otp = Math.floor(100000 + crypto.randomInt(900000)).toString();
+
+  // Hash OTP and store it
+  this.otpCode = crypto.createHash('sha256').update(otp).digest('hex');
+
+  // Set expiry to 10 minutes
+  this.otpExpire = Date.now() + 10 * 60 * 1000;
+
+  return otp;
 };
 
 module.exports = mongoose.model('User', userSchema);
