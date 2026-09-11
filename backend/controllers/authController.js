@@ -228,39 +228,39 @@ exports.forgotPassword = async (req, res, next) => {
     const hasSMTPConfig = process.env.SMTP_HOST && process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD;
 
     if (hasSMTPConfig) {
-      // Create OTP email message
+      // Create OTP email message with Akario Mart branding
       const message = `
-        <div style="font-family: 'Georgia', serif; max-width: 500px; margin: 0 auto; background: #0A0A0A; border: 1px solid #26241E; border-radius: 16px; overflow: hidden;">
+        <div style="font-family: 'Inter', sans-serif; max-width: 500px; margin: 0 auto; background: #0A0A0A; border: 1px solid #26241E; border-radius: 16px; overflow: hidden;">
           <div style="background: linear-gradient(135deg, #C9A84C, #9B782B); padding: 24px; text-align: center;">
-            <h1 style="color: #000; margin: 0; font-size: 24px; letter-spacing: 4px;">VÆROX</h1>
-            <p style="color: #000; margin: 4px 0 0; font-size: 12px; letter-spacing: 2px;">PASSWORD RESET</p>
+            <h1 style="color: #000; margin: 0; font-size: 24px; letter-spacing: 4px;">AKARIO MART</h1>
+            <p style="color: #000; margin: 4px 0 0; font-size: 12px; letter-spacing: 2px;">PASSWORD RESET VERIFICATION</p>
           </div>
           <div style="padding: 32px; text-align: center;">
-            <p style="color: #E8E0CC; font-size: 14px; margin-bottom: 24px;">You requested a password reset. Use the OTP below to verify your identity:</p>
+            <p style="color: #E8E0CC; font-size: 14px; margin-bottom: 24px;">You requested a password reset for your Akario Mart account. Use the verification OTP below to proceed:</p>
             <div style="background: #141414; border: 2px solid #C9A84C; border-radius: 12px; padding: 20px; margin: 20px 0;">
               <p style="color: #C9A84C; font-size: 36px; font-weight: bold; letter-spacing: 12px; margin: 0;">${otp}</p>
             </div>
             <p style="color: #A39E93; font-size: 12px; margin-top: 16px;">This OTP is valid for <strong style="color: #C9A84C;">10 minutes</strong>.</p>
-            <p style="color: #A39E93; font-size: 12px;">If you didn't request this, please ignore this email.</p>
+            <p style="color: #A39E93; font-size: 12px;">If you didn't request this password reset, please secure your account.</p>
           </div>
           <div style="background: #050505; padding: 16px; text-align: center; border-top: 1px solid #26241E;">
-            <p style="color: #666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} VÆROX — High Luxury Experience</p>
+            <p style="color: #666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} Akario Mart — Premier Shopping Experience</p>
           </div>
         </div>
       `;
 
       // Mail options
       const mailOptions = {
-        from: `"VÆROX" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL}>`,
+        from: `"Akario Mart" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL}>`,
         to: user.email,
-        subject: 'Your Password Reset OTP — VÆROX',
+        subject: 'Your Password Reset OTP — Akario Mart',
         html: message
       };
 
       let emailSent = false;
       let lastError = null;
 
-      // Method 1: Primary SMTP Server (smtp-prod.mailrcld.com:587)
+      // Method 1: Primary MailerCloud / SMTP Server (smtp-prod.mailrcld.com:587)
       try {
         const transporter1 = nodemailer.createTransport({
           host: process.env.SMTP_HOST || 'smtp-prod.mailrcld.com',
@@ -274,7 +274,7 @@ exports.forgotPassword = async (req, res, next) => {
         });
         await transporter1.sendMail(mailOptions);
         emailSent = true;
-        console.log(`[EMAIL SUCCESS] OTP email delivered to ${user.email} via Primary SMTP`);
+        console.log(`[EMAIL SUCCESS] OTP email delivered to ${user.email} via Primary MailerCloud SMTP`);
       } catch (err1) {
         lastError = err1;
         console.warn(`[SMTP METHOD 1 FAILED] ${err1.message}`);
@@ -302,7 +302,7 @@ exports.forgotPassword = async (req, res, next) => {
         }
       }
 
-      // Method 3: Direct Gmail SSL Transport (port 465 / 587) if SMTP password is App Password
+      // Method 3: Direct Gmail SSL Transport (port 465 / 587) if using Gmail App Password
       if (!emailSent && process.env.SMTP_EMAIL?.includes('@gmail.com')) {
         try {
           const transporter3 = nodemailer.createTransport({
@@ -314,7 +314,7 @@ exports.forgotPassword = async (req, res, next) => {
           });
           await transporter3.sendMail(mailOptions);
           emailSent = true;
-          console.log(`[EMAIL SUCCESS] OTP email delivered to ${user.email} via Gmail Direct Service`);
+          console.log(`[EMAIL SUCCESS] OTP email delivered to ${user.email} via Direct Gmail Service`);
         } catch (err3) {
           console.warn(`[SMTP METHOD 3 FAILED] ${err3.message}`);
         }
@@ -330,9 +330,9 @@ exports.forgotPassword = async (req, res, next) => {
               'api-key': process.env.MAILRCLD_API_KEY
             },
             body: JSON.stringify({
-              from: { email: process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL, name: 'VÆROX' },
+              from: { email: process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL, name: 'Akario Mart' },
               to: [{ email: user.email }],
-              subject: 'Your Password Reset OTP — VÆROX',
+              subject: 'Your Password Reset OTP — Akario Mart',
               html: message
             })
           });
@@ -355,12 +355,16 @@ exports.forgotPassword = async (req, res, next) => {
           message: 'OTP sent to your registered email address'
         });
       } else {
-        console.warn(`[OTP GENERATED & LOGGED] Email dispatch error (${lastError?.message || 'SMTP domain restriction'}). Active OTP for ${user.email}: ${otp}`);
+        console.error(`[EMAIL DELIVERY FAILURE] Failed to send OTP to ${user.email}: ${lastError?.message || 'Provider connection error'}`);
+        
+        // Clean up OTP fields so invalid un-sent state is not preserved
+        user.otpCode = undefined;
+        user.otpExpire = undefined;
+        await user.save({ validateBeforeSave: false });
 
-        // Return 200 OK so frontend is never blocked by 500 error and OTP stays valid in DB
-        return res.status(200).json({
-          success: true,
-          message: 'OTP generated successfully. Please check your email to verify and reset your password.'
+        return res.status(500).json({
+          success: false,
+          error: 'Unable to deliver OTP email. Please verify your email address or try again later.'
         });
       }
     } else {
