@@ -19,6 +19,20 @@ exports.register = async (req, res, next) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email address. Please use a valid email format (e.g. user@gmail.com).'
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 6 characters long.'
+      });
+    }
 
     // 2. Strict Privilege Escalation Auditing & Protection
     let registrationRole = 'user'; // Strict default
@@ -84,13 +98,22 @@ exports.login = async (req, res, next) => {
       });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please enter a valid email address (e.g. user@gmail.com)'
+      });
+    }
+
     // Regular login handles all roles securely using the database
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid credentials'
+        error: 'Wrong email or password'
       });
     }
 
@@ -116,7 +139,7 @@ exports.login = async (req, res, next) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid credentials'
+        error: 'Wrong email or password'
       });
     }
 

@@ -3,6 +3,7 @@ const {
   createContactMessage,
   getContactMessages,
   getUserContactMessages,
+  replyContactMessage,
   debugAllContacts
 } = require('../controllers/contactController');
 
@@ -21,7 +22,9 @@ router.route('/')
 router.route('/user')
   .get(protect, getUserContactMessages);
 
-// DEBUG route - temporary
+router.route('/:id/reply')
+  .put(protect, authorize('admin'), replyContactMessage);
+
 router.route('/debug')
   .get(debugAllContacts);
 

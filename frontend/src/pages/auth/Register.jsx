@@ -9,16 +9,60 @@ const Register = () => {
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('user')
   const navigate = useNavigate()
-  const { handleRegister, loading, error } = useAuthHook()
+  const [validationError, setValidationError] = useState('')
+  const [attemptCount, setAttemptCount] = useState(0)
+  const [lockoutTimer, setLockoutTimer] = useState(0)
+
+  React.useEffect(() => {
+    let interval = null
+    if (lockoutTimer > 0) {
+      interval = setInterval(() => {
+        setLockoutTimer((prev) => prev - 1)
+      }, 1000)
+    } else if (lockoutTimer === 0 && attemptCount >= 5) {
+      setAttemptCount(0)
+    }
+    return () => clearInterval(interval)
+  }, [lockoutTimer, attemptCount])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setValidationError('')
+
+    if (lockoutTimer > 0) {
+      setValidationError(`Too many failed registration attempts! Please wait ${lockoutTimer} seconds before trying again.`)
+      return
+    }
+
+    if (!name.trim()) {
+      setValidationError('Please enter your full name.')
+      return
+    }
+
+    // Strict Email Format Checking
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    if (!emailRegex.test(email.trim())) {
+      setValidationError('Please enter a valid email address (e.g. user@gmail.com).')
+      return
+    }
+
+    if (!password || password.length < 6) {
+      setValidationError('Password must be at least 6 characters long.')
+      return
+    }
     
-    const result = await handleRegister(name, email, password, role)
+    const result = await handleRegister(name.trim(), email.trim(), password, role)
     
     if (result.success) {
-      // Redirect to login page after registration
+      setAttemptCount(0)
       navigate('/login')
+    } else {
+      const newAttempts = attemptCount + 1
+      setAttemptCount(newAttempts)
+      if (newAttempts >= 5) {
+        setLockoutTimer(30)
+        setValidationError('Too many failed registration attempts! Temporarily locked for 30 seconds.')
+      }
     }
   }
 
@@ -51,13 +95,25 @@ const Register = () => {
         
         {error && (
           <motion.div 
-            className="bg-red-950/30 border border-red-500/40 text-red-300 px-4 py-3 rounded-xl text-sm"
+            className="bg-red-950/30 border border-red-500/40 text-red-300 px-4 py-3 rounded-xl text-sm font-semibold"
             role="alert"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
           >
             <span className="block sm:inline">{error}</span>
+          </motion.div>
+        )}
+
+        {validationError && (
+          <motion.div 
+            className="bg-red-950/50 border border-red-500/60 text-red-200 px-4 py-3 rounded-xl text-sm font-semibold"
+            role="alert"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <span className="block sm:inline">{validationError}</span>
           </motion.div>
         )}
         

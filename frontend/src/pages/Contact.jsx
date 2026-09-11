@@ -170,7 +170,7 @@ const Contact = () => {
               
               {submitSuccess && (
                 <div className="mb-6 bg-[#C9A84C]/15 border border-[#C9A84C] text-[#FFF5D6] px-6 py-4 rounded-xl shadow-lg text-xs sm:text-sm font-semibold">
-                  Thank you for your message! Our concierge team will reach out to you shortly.
+                  Thank you for your message! Your query has been submitted. You can track its status and read admin replies anytime under <span className="text-[#C9A84C] font-bold">"My Queries"</span> in your Dashboard.
                 </div>
               )}
               

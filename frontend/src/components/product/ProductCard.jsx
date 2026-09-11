@@ -173,25 +173,24 @@ const ProductCard = ({ product }) => {
 
   return (
     <motion.div 
-      className="bg-[#0A0A0A] rounded-2xl border border-[#26241E] shadow-2xl hover:border-[#C9A84C]/60 overflow-hidden h-full flex flex-col transition-all duration-300 group relative w-full text-[#E8E0CC]"
-      whileHover={{ y: -4 }}
+      className="bg-[#0A0A0A] rounded-2xl border border-[#26241E] shadow-xl hover:border-[#C9A84C]/60 overflow-hidden transition-all duration-300 group relative w-full text-[#E8E0CC] flex flex-row h-36 sm:h-40"
+      whileHover={{ y: -2 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
-      <motion.div 
+      {/* Left Side: Product Image */}
+      <div 
         onClick={handleImageClick}
-        className="cursor-pointer relative overflow-hidden"
-        whileHover={{ scale: 1.01 }}
-        transition={{ duration: 0.3 }}
+        className="cursor-pointer relative overflow-hidden w-28 sm:w-36 h-full shrink-0 bg-[#050505] border-r border-[#26241E]"
       >
         {renderProductImage()}
         {product?.discount && product.discount > 0 && (
-          <span className="absolute top-2.5 left-2.5 bg-[#C9A84C] text-black text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-sm z-10 uppercase tracking-wider">
+          <span className="absolute top-2 left-2 bg-[#C9A84C] text-black text-[8px] font-extrabold px-1.5 py-0.5 rounded-full z-10 uppercase tracking-wider shadow-sm">
             -{product.discount}%
           </span>
         )}
         <motion.button
           onClick={handleAddToWishlist}
-          className={`absolute top-2.5 right-2.5 w-8 h-8 flex items-center justify-center rounded-full shadow-md transition-all duration-300 z-10 ${
+          className={`absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full shadow-md transition-all duration-300 z-10 ${
             isInWishlist(productId)
               ? 'text-[#C9A84C] bg-black border border-[#C9A84C]'
               : 'text-[#A39E93] bg-black/80 hover:bg-black hover:text-[#C9A84C] border border-[#26241E]'
@@ -199,63 +198,56 @@ const ProductCard = ({ product }) => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <svg className="w-4 h-4" fill={isInWishlist(productId) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3 h-3" fill={isInWishlist(productId) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </motion.button>
-      </motion.div>
+      </div>
 
-      <div className="p-3.5 flex-grow flex flex-col bg-[#0A0A0A]">
-        {/* Category */}
-        <span className="text-[9px] font-bold text-[#C9A84C] uppercase tracking-widest mb-1 block">
-          {product?.category || 'Category'}
-        </span>
-
-        {/* Title */}
-        <div className="mb-1.5">
+      {/* Right Side: Text & Actions */}
+      <div className="p-3 sm:p-3.5 flex-grow flex flex-col justify-between bg-[#0A0A0A] overflow-hidden">
+        <div>
+          <span className="text-[8.5px] sm:text-[9px] font-bold text-[#C9A84C] uppercase tracking-widest block mb-0.5 truncate">
+            {product?.category || 'Category'}
+          </span>
           <h3 
             onClick={handleImageClick}
-            className="cursor-pointer font-sans text-xs md:text-sm font-semibold text-[#E8E0CC] line-clamp-2 h-9 leading-tight hover:text-[#FFF5D6] transition-colors duration-200"
+            className="cursor-pointer font-sans text-xs sm:text-sm font-semibold text-[#E8E0CC] line-clamp-1 hover:text-[#FFF5D6] transition-colors leading-tight mb-1"
           >
             {product?.name || 'Product Title'}
           </h3>
-        </div>
-
-        {/* Rating Row */}
-        <div className="flex items-center gap-1 mb-2.5">
-          <div className="flex items-center gap-0.5">
-            {[...Array(5)].map((_, i) => (
-              <svg
-                key={i}
-                className={`w-3 h-3 ${i < Math.floor(rating) ? 'text-[#C9A84C]' : 'text-[#26241E]'}`}
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            ))}
+          
+          {/* Rating */}
+          <div className="flex items-center gap-1">
+            <div className="flex text-[#C9A84C]">
+              {[...Array(5)].map((_, i) => (
+                <svg key={i} className={`w-2.5 h-2.5 ${i < Math.floor(rating) ? 'fill-[#C9A84C]' : 'fill-[#26241E]'}`} viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              ))}
+            </div>
+            <span className="text-[9px] font-bold text-[#E8E0CC]">{rating}</span>
+            <span className="text-[9px] text-[#A39E93]">({reviews})</span>
           </div>
-          <span className="font-bold text-[#E8E0CC] text-[10px] ml-0.5">{rating}</span>
-          <span className="text-[#A39E93] text-[10px]">({reviews})</span>
         </div>
 
         {/* Price & Action Row */}
-        <div className="mt-auto pt-2.5 border-t border-[#26241E] flex items-center justify-between gap-2">
-          <div className="flex flex-col">
+        <div className="pt-2 border-t border-[#26241E]/60 flex items-center justify-between gap-2">
+          <div>
             {product?.discount && product.discount > 0 ? (
-              <>
-                <span className="font-bold text-sm md:text-base text-[#C9A84C] leading-none">{formatCurrency(discountedPrice)}</span>
-                <span className="text-[10px] text-[#A39E93] line-through mt-0.5 leading-none">{formatCurrency(product?.price)}</span>
-              </>
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-bold text-xs sm:text-sm text-[#C9A84C] leading-none">{formatCurrency(discountedPrice)}</span>
+                <span className="text-[9px] text-[#A39E93] line-through leading-none">{formatCurrency(product?.price)}</span>
+              </div>
             ) : (
-              <span className="font-bold text-sm md:text-base text-[#C9A84C] leading-none">{formatCurrency(product?.price)}</span>
+              <span className="font-bold text-xs sm:text-sm text-[#C9A84C] leading-none">{formatCurrency(product?.price)}</span>
             )}
           </div>
 
           {!isSellerOrAdmin && (
             <motion.button 
               onClick={handleAddToCart}
-              className={`w-8 h-8 rounded-full transition-all duration-300 relative overflow-hidden flex items-center justify-center flex-shrink-0 ${
+              className={`w-7 h-7 rounded-full transition-all duration-300 flex items-center justify-center shrink-0 cursor-pointer ${
                 productInCart 
                   ? 'bg-emerald-600 text-white shadow-md' 
                   : 'bg-gradient-to-r from-[#C9A84C] to-[#9B782B] text-black font-bold shadow-[0_0_10px_rgba(201,168,76,0.3)] hover:scale-105'
@@ -266,16 +258,13 @@ const ProductCard = ({ product }) => {
               title={productInCart ? "Added to Cart" : "Add to Cart"}
             >
               {isAdding ? (
-                <svg className="animate-spin h-3.5 w-3.5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+                <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin" />
               ) : productInCart ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
               )}

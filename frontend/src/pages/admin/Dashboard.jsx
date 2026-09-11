@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from './components/Sidebar'
 import { HeroBannerManager } from './components/HeroBannerManager'
 import { UGCVideoManager } from './components/UGCVideoManager'
-import { productAPI, userAPI, activityAPI } from '../../services/api'
+import SiteAssetsManager from './components/SiteAssetsManager'
+import { productAPI, userAPI, activityAPI, contactAPI } from '../../services/api'
 import {
   ShoppingBag,
   Users,
@@ -26,6 +27,7 @@ import {
   Video,
   Layers,
   Upload,
+  MessageSquare,
 } from 'lucide-react'
 
 import { compressImage } from '../../utils/imageCompressor'
@@ -49,16 +51,121 @@ const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [products, setProducts] = useState([])
   const [users, setUsers] = useState([])
+  const [orders, setOrders] = useState([])
+  const [contactQueries, setContactQueries] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [activities, setActivities] = useState([])
   const [editingProduct, setEditingProduct] = useState(null)
   const [showAddProductModal, setShowAddProductModal] = useState(false)
+  const [replyModalQuery, setReplyModalQuery] = useState(null)
+  const [replyText, setReplyText] = useState('')
 
   // Search query states
   const [searchProductQuery, setSearchProductQuery] = useState('')
   const [searchUserQuery, setSearchUserQuery] = useState('')
+  const [searchOrderQuery, setSearchOrderQuery] = useState('')
+  const [searchQueryText, setSearchQueryText] = useState('')
+
+  // Fetch orders from localStorage or seed initial default executive orders
+  const fetchOrders = () => {
+    const stored = localStorage.getItem('vaerox_admin_orders')
+    if (stored) {
+      try {
+        setOrders(JSON.parse(stored))
+      } catch (e) {
+        setOrders([])
+      }
+    } else {
+      const defaultOrders = [
+        {
+          id: 'VRX-849201',
+          paymentId: 'pay_Nz82910482',
+          date: new Date(Date.now() - 3600000 * 4).toISOString(),
+          user: {
+            name: 'Vikramaditya Sharma',
+            email: 'vikram.sharma@executive.com',
+            phone: '+91 98765 43210',
+            address: '402 Regency Towers, Bandra Kurla Complex',
+            city: 'Mumbai',
+            state: 'Maharashtra',
+            zipCode: '400051'
+          },
+          items: [
+            {
+              id: 'p1',
+              name: 'VÆROX Executive Double-Breasted Wool Tuxedo',
+              image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=600&q=80',
+              price: 18499,
+              quantity: 1,
+              size: 'XL',
+              tier: 'premium',
+              category: 'men'
+            },
+            {
+              id: 'p2',
+              name: 'Bespoke Satin Silk Bowtie & Pocket Square',
+              image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80',
+              price: 2499,
+              quantity: 1,
+              size: 'Standard',
+              tier: 'premium',
+              category: 'accessories'
+            }
+          ],
+          subtotal: 20998,
+          tax: 1679.84,
+          totalAmount: 22677.84,
+          paymentMethod: 'Razorpay Secure (Online)',
+          paymentStatus: 'Paid',
+          orderStatus: 'Processing'
+        },
+        {
+          id: 'VRX-639102',
+          paymentId: 'pay_Kx91024810',
+          date: new Date(Date.now() - 86400000 * 2).toISOString(),
+          user: {
+            name: 'Ananya Roy',
+            email: 'ananya.roy@atelier.io',
+            phone: '+91 91234 56789',
+            address: '12-A Jubilee Hills, Road No. 36',
+            city: 'Hyderabad',
+            state: 'Telangana',
+            zipCode: '500033'
+          },
+          items: [
+            {
+              id: 'p3',
+              name: 'VÆROX Atelier Sculpted Velvet Blazer',
+              image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80',
+              price: 14999,
+              quantity: 1,
+              size: '34',
+              tier: 'premium',
+              category: 'women'
+            }
+          ],
+          subtotal: 14999,
+          tax: 1199.92,
+          totalAmount: 16198.92,
+          paymentMethod: 'Razorpay Secure (Online)',
+          paymentStatus: 'Paid',
+          orderStatus: 'Shipped'
+        }
+      ]
+      localStorage.setItem('vaerox_admin_orders', JSON.stringify(defaultOrders))
+      setOrders(defaultOrders)
+    }
+  }
+
+  const handleUpdateOrderStatus = (orderId, newStatus) => {
+    const updated = orders.map(ord => ord.id === orderId ? { ...ord, orderStatus: newStatus } : ord)
+    setOrders(updated)
+    localStorage.setItem('vaerox_admin_orders', JSON.stringify(updated))
+    setSuccess(`Order ${orderId} status updated to ${newStatus}`)
+    setTimeout(() => setSuccess(''), 3000)
+  }
 
   // Product edit form state
   const [productData, setProductData] = useState({
@@ -73,6 +180,10 @@ const AdminDashboard = () => {
   const [newProductForm, setNewProductForm] = useState({
     name: '',
     image: '',
+    subImage1: '',
+    subImage2: '',
+    subImage3: '',
+    subImage4: '',
     description: '',
     price: '',
     discount: '0',
@@ -137,6 +248,48 @@ const AdminDashboard = () => {
     }
   }
 
+  // Fetch contact queries
+  const fetchContactQueries = async (token, silent = false) => {
+    try {
+      if (!silent) {
+        setLoading(true)
+        setError('')
+      }
+      const response = await contactAPI.getAllMessages(token)
+      if (response && response.success) {
+        setContactQueries(response.data || [])
+      }
+    } catch (err) {
+      if (!silent) setError('An error occurred while fetching contact queries')
+    } finally {
+      if (!silent) setLoading(false)
+    }
+  }
+
+  // Handle admin reply submit
+  const handleSendReply = async (e) => {
+    e.preventDefault()
+    if (!replyModalQuery || !replyText.trim()) return
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('token')
+      const response = await contactAPI.replyMessage(replyModalQuery._id, replyText, token)
+      if (response && response.success) {
+        setSuccess('Reply sent successfully to user!')
+        setReplyModalQuery(null)
+        setReplyText('')
+        fetchContactQueries(token)
+        setTimeout(() => setSuccess(''), 3000)
+      } else {
+        setError(response.error || 'Failed to send reply')
+      }
+    } catch (err) {
+      setError('Error submitting reply')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) {
@@ -145,6 +298,7 @@ const AdminDashboard = () => {
     }
 
     const loadData = (isSilent = false) => {
+      fetchOrders()
       switch (activeSection) {
         case 'products':
           fetchProducts(token, isSilent)
@@ -152,10 +306,14 @@ const AdminDashboard = () => {
         case 'users':
           fetchUsers(token, isSilent)
           break
+        case 'queries':
+          fetchContactQueries(token, isSilent)
+          break
         default:
           fetchProducts(token, isSilent)
           fetchUsers(token, isSilent)
           fetchActivities(token, isSilent)
+          fetchContactQueries(token, isSilent)
           break
       }
     }
@@ -172,17 +330,17 @@ const AdminDashboard = () => {
   }
 
   // Local PC Image Upload Handler for Add Product with auto-compression
-  const handleProductImageUpload = async (e) => {
+  const handleProductImageUpload = async (e, targetKey = 'image') => {
     const file = e.target.files[0]
     if (!file) return
     try {
       const compressed = await compressImage(file, 800, 800, 0.82)
-      setNewProductForm((prev) => ({ ...prev, image: compressed }))
+      setNewProductForm((prev) => ({ ...prev, [targetKey]: compressed }))
     } catch (err) {
       console.error('Image compression failed:', err)
       const reader = new FileReader()
       reader.onload = (event) => {
-        setNewProductForm((prev) => ({ ...prev, image: event.target.result }))
+        setNewProductForm((prev) => ({ ...prev, [targetKey]: event.target.result }))
       }
       reader.readAsDataURL(file)
     }
@@ -200,11 +358,20 @@ const AdminDashboard = () => {
           ? `premium-${newProductForm.gender}-${newProductForm.role}`
           : `standard-${newProductForm.gender}`
 
+      const allSubImgs = [
+        newProductForm.image,
+        newProductForm.subImage1,
+        newProductForm.subImage2,
+        newProductForm.subImage3,
+        newProductForm.subImage4
+      ].filter(Boolean)
+
       const payload = {
         name: newProductForm.name,
         image:
           newProductForm.image ||
           'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80',
+        images: allSubImgs.length > 0 ? allSubImgs : [newProductForm.image],
         description: newProductForm.description,
         price: parseFloat(newProductForm.price),
         discount: parseFloat(newProductForm.discount || 0),
@@ -221,6 +388,10 @@ const AdminDashboard = () => {
         setNewProductForm({
           name: '',
           image: '',
+          subImage1: '',
+          subImage2: '',
+          subImage3: '',
+          subImage4: '',
           description: '',
           price: '',
           discount: '0',
@@ -545,11 +716,317 @@ const AdminDashboard = () => {
         )
       }
 
+      case 'orders': {
+        const filteredOrders = orders.filter(ord => 
+          ord.id.toLowerCase().includes(searchOrderQuery.toLowerCase()) ||
+          ord.user?.name?.toLowerCase().includes(searchOrderQuery.toLowerCase()) ||
+          ord.user?.email?.toLowerCase().includes(searchOrderQuery.toLowerCase())
+        )
+
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6 text-[#E8E0CC]"
+          >
+            {/* Header & Search */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#0A0A0A] p-6 rounded-2xl border border-[#26241E] shadow-xl">
+              <div>
+                <span className="text-[10px] font-bold text-[#C9A84C] uppercase tracking-widest font-serif block">
+                  CUSTOMER ORDERS MANAGEMENT
+                </span>
+                <h2 className="text-xl font-bold font-serif text-[#FFF5D6] uppercase">
+                  All Placed Orders & Client Details
+                </h2>
+              </div>
+
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-[#C9A84C] absolute left-3.5 top-3" />
+                <input
+                  type="text"
+                  placeholder="Search by Order ID or Client Name..."
+                  value={searchOrderQuery}
+                  onChange={(e) => setSearchOrderQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-[#121212] border border-[#26241E] rounded-xl text-xs text-[#E8E0CC] focus:outline-none focus:border-[#C9A84C]"
+                />
+              </div>
+            </div>
+
+            {/* Orders Cards List */}
+            {filteredOrders.length > 0 ? (
+              <div className="space-y-6">
+                {filteredOrders.map((ord) => (
+                  <motion.div
+                    key={ord.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-[#0A0A0A] border border-[#26241E] hover:border-[#C9A84C]/40 rounded-3xl p-6 shadow-2xl transition-all"
+                  >
+                    {/* Top Row: Order Header */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#26241E] mb-6">
+                      <div className="flex items-center gap-3">
+                        <span className="bg-[#C9A84C]/15 border border-[#C9A84C]/40 text-[#C9A84C] font-extrabold text-xs px-3 py-1 rounded-full uppercase tracking-wider">
+                          ORDER #{ord.id}
+                        </span>
+                        <span className="text-xs text-[#A39E93] font-mono">
+                          {new Date(ord.date).toLocaleString()}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-[#FFF5D6]">
+                          Total: <span className="text-[#C9A84C] text-sm">₹{ord.totalAmount?.toLocaleString()}</span>
+                        </span>
+                        <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-950/60 text-emerald-300 border border-emerald-500/40">
+                          {ord.paymentStatus} ({ord.paymentMethod || 'Razorpay'})
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Middle Grid: User Details + Product Details */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                      
+                      {/* 1. USER & SHIPPING DETAILS */}
+                      <div className="lg:col-span-5 bg-[#121212] p-5 rounded-2xl border border-[#26241E]">
+                        <h4 className="text-xs font-bold text-[#C9A84C] uppercase tracking-widest mb-3 font-serif flex items-center gap-2">
+                          <Users className="w-4 h-4 text-[#C9A84C]" />
+                          CLIENT & SHIPPING DETAILS
+                        </h4>
+                        
+                        <div className="space-y-2 text-xs text-[#E8E0CC]/90 font-sans">
+                          <div>
+                            <span className="text-[#A39E93] font-serif text-[10px] uppercase block">Client Name:</span>
+                            <span className="font-bold text-[#FFF5D6] text-sm">{ord.user?.name || 'N/A'}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#A39E93] font-serif text-[10px] uppercase block">Email Address:</span>
+                            <span className="font-mono text-emerald-400">{ord.user?.email || 'N/A'}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#A39E93] font-serif text-[10px] uppercase block">Contact Phone:</span>
+                            <span className="font-mono">{ord.user?.phone || 'N/A'}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#A39E93] font-serif text-[10px] uppercase block">Delivery Address:</span>
+                            <span className="leading-relaxed block bg-[#0A0A0A] p-2.5 rounded-xl border border-[#26241E] mt-1 text-[#E8E0CC]">
+                              {ord.user?.address || 'N/A'}, {ord.user?.city || ''}, {ord.user?.state || ''} - {ord.user?.zipCode || ''}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 2. ORDERED PRODUCTS & SIZE DETAILS */}
+                      <div className="lg:col-span-7 bg-[#121212] p-5 rounded-2xl border border-[#26241E]">
+                        <h4 className="text-xs font-bold text-[#C9A84C] uppercase tracking-widest mb-3 font-serif flex items-center gap-2">
+                          <ShoppingBag className="w-4 h-4 text-[#C9A84C]" />
+                          PURCHASED PRODUCTS & SIZE SPECS
+                        </h4>
+
+                        <div className="space-y-3">
+                          {ord.items?.map((it, idx) => (
+                            <div key={idx} className="flex items-center justify-between bg-[#0A0A0A] p-3 rounded-xl border border-[#26241E]">
+                              <div className="flex items-center gap-3">
+                                <img 
+                                  src={it.image || 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=200&q=80'} 
+                                  alt={it.name} 
+                                  className="w-14 h-14 object-cover rounded-lg border border-[#26241E] flex-shrink-0"
+                                />
+                                <div>
+                                  <h5 className="font-serif font-bold text-xs text-[#FFF5D6] uppercase leading-tight line-clamp-1">{it.name}</h5>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-[#C9A84C]/20 border border-[#C9A84C] text-[#C9A84C] uppercase">
+                                      SIZE: {it.size || 'L'}
+                                    </span>
+                                    <span className="text-[10px] text-[#A39E93]">Qty: {it.quantity || 1}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <span className="font-bold text-xs text-[#C9A84C] font-serif">
+                                ₹{(it.price * (it.quantity || 1)).toLocaleString()}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Row: Status Controls */}
+                    <div className="mt-6 pt-4 border-t border-[#26241E] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-serif text-[#A39E93] uppercase">Current Order Status:</span>
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                          ord.orderStatus === 'Delivered'
+                            ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40'
+                            : ord.orderStatus === 'Shipped'
+                            ? 'bg-blue-950/60 text-blue-300 border-blue-500/40'
+                            : 'bg-amber-950/60 text-amber-300 border-amber-500/40'
+                        }`}>
+                          {ord.orderStatus || 'Processing'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-[#C9A84C] uppercase font-serif">Update Status:</span>
+                        {['Processing', 'Shipped', 'Delivered'].map((st) => (
+                          <button
+                            key={st}
+                            onClick={() => handleUpdateOrderStatus(ord.id, st)}
+                            className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                              ord.orderStatus === st
+                                ? 'bg-[#C9A84C] text-black shadow-md'
+                                : 'bg-[#121212] text-[#A39E93] border border-[#26241E] hover:border-[#C9A84C]'
+                            }`}
+                          >
+                            {st}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-[#0A0A0A] border border-[#26241E] rounded-3xl p-12 text-center text-[#A39E93]">
+                No customer orders found matching your search.
+              </div>
+            )}
+          </motion.div>
+        )
+      }
+
+      case 'queries': {
+        const filteredQueries = contactQueries.filter((q) => {
+          const query = searchQueryText.toLowerCase().trim()
+          return (
+            (q.name || '').toLowerCase().includes(query) ||
+            (q.email || '').toLowerCase().includes(query) ||
+            (q.subject || '').toLowerCase().includes(query) ||
+            (q.message || '').toLowerCase().includes(query)
+          )
+        })
+
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6 text-[#E8E0CC]"
+          >
+            {/* Header & Search */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#0A0A0A] p-6 rounded-2xl border border-[#26241E] shadow-xl">
+              <div>
+                <span className="text-[10px] font-bold text-[#C9A84C] uppercase tracking-widest font-serif block">
+                  CUSTOMER SUPPORT & INQUIRIES
+                </span>
+                <h2 className="text-xl font-bold font-serif text-[#FFF5D6] uppercase">
+                  Users Queries & Contact Submissions
+                </h2>
+                <p className="text-[#A39E93] text-xs mt-0.5 font-light">
+                  View contact form submissions from users and reply directly.
+                </p>
+              </div>
+
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-[#C9A84C] absolute left-3.5 top-3" />
+                <input
+                  type="text"
+                  placeholder="Search queries by name, email..."
+                  value={searchQueryText}
+                  onChange={(e) => setSearchQueryText(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-[#121212] border border-[#26241E] rounded-xl text-xs text-[#E8E0CC] focus:outline-none focus:border-[#C9A84C]"
+                />
+              </div>
+            </div>
+
+            {/* Queries Grid/List */}
+            {filteredQueries.length > 0 ? (
+              <div className="space-y-4">
+                {filteredQueries.map((q) => (
+                  <motion.div
+                    key={q._id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-[#0A0A0A] border border-[#26241E] hover:border-[#C9A84C]/40 rounded-2xl p-5 sm:p-6 shadow-xl transition-all"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#26241E]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#C9A84C]/15 border border-[#C9A84C]/30 flex items-center justify-center text-[#C9A84C] font-extrabold text-sm font-serif uppercase">
+                          {q.name?.charAt(0) || 'U'}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-[#FFF5D6] text-sm">{q.name}</h4>
+                          <span className="text-xs text-emerald-400 font-mono">{q.email}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-[#A39E93] font-mono">
+                          {new Date(q.createdAt).toLocaleString()}
+                        </span>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          q.isReplied 
+                            ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/40' 
+                            : 'bg-amber-950/60 text-amber-300 border border-amber-500/40'
+                        }`}>
+                          {q.isReplied ? 'Replied' : 'Pending Reply'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="py-4 space-y-2">
+                      <div className="text-xs font-serif font-bold text-[#C9A84C] uppercase">
+                        Subject: <span className="text-[#FFF5D6] font-sans normal-case">{q.subject || 'General Inquiry'}</span>
+                      </div>
+                      <div className="bg-[#121212] p-4 rounded-xl border border-[#26241E] text-xs text-[#E8E0CC]/90 leading-relaxed font-sans">
+                        {q.message}
+                      </div>
+                    </div>
+
+                    {/* Admin Reply Section */}
+                    {q.isReplied && q.replyMessage ? (
+                      <div className="mt-2 bg-[#1A1813] border border-[#C9A84C]/30 p-4 rounded-xl space-y-1">
+                        <div className="flex items-center justify-between text-[10px] text-[#C9A84C] font-bold uppercase tracking-wider font-serif">
+                          <span>★ Admin Reply:</span>
+                          <span className="font-mono text-[#A39E93]">
+                            {q.replyDate ? new Date(q.replyDate).toLocaleString() : ''}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#FFF5D6] leading-relaxed italic">
+                          "{q.replyMessage}"
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          onClick={() => {
+                            setReplyModalQuery(q)
+                            setReplyText('')
+                          }}
+                          className="px-4 py-2 bg-[#C9A84C] hover:bg-[#FFF5D6] text-black font-extrabold rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+                        >
+                          <FileText className="w-4 h-4" />
+                          Reply to Query
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-[#0A0A0A] border border-[#26241E] rounded-3xl p-12 text-center text-[#A39E93]">
+                No user queries found.
+              </div>
+            )}
+          </motion.div>
+        )
+      }
+
       case 'hero':
         return <HeroBannerManager />
 
       case 'ugc':
         return <UGCVideoManager />
+
+      case 'assets':
+        return <SiteAssetsManager />
 
       default: {
         return (
@@ -598,6 +1075,26 @@ const AdminDashboard = () => {
                 </div>
               </motion.div>
 
+              {/* Customer Orders Card */}
+              <motion.div
+                whileHover={{ y: -4 }}
+                onClick={() => setActiveSection('orders')}
+                className="bg-[#0A0A0A] border border-[#26241E] rounded-2xl p-5 flex items-center justify-between shadow-xl cursor-pointer hover:border-[#C9A84C]"
+              >
+                <div>
+                  <span className="text-[#C9A84C] text-[10px] font-bold uppercase tracking-widest font-serif block">
+                    CUSTOMER ORDERS
+                  </span>
+                  <h3 className="text-3xl font-extrabold text-[#FFF5D6] font-serif mt-1">
+                    {orders.length}
+                  </h3>
+                  <p className="text-[#A39E93] text-[10px] font-light mt-1">View active orders</p>
+                </div>
+                <div className="bg-black p-3.5 rounded-2xl border border-[#C9A84C]/40 text-[#C9A84C]">
+                  <FileText className="w-6 h-6" />
+                </div>
+              </motion.div>
+
               {/* Hero Banners Card */}
               <motion.div
                 whileHover={{ y: -4 }}
@@ -612,23 +1109,6 @@ const AdminDashboard = () => {
                 </div>
                 <div className="bg-black p-3.5 rounded-2xl border border-[#C9A84C]/40 text-[#C9A84C]">
                   <Layers className="w-6 h-6" />
-                </div>
-              </motion.div>
-
-              {/* UGC Video Reels Card */}
-              <motion.div
-                whileHover={{ y: -4 }}
-                className="bg-[#0A0A0A] border border-[#26241E] rounded-2xl p-5 flex items-center justify-between shadow-xl"
-              >
-                <div>
-                  <span className="text-[#C9A84C] text-[10px] font-bold uppercase tracking-widest font-serif block">
-                    UGC VIDEO REELS
-                  </span>
-                  <h3 className="text-3xl font-extrabold text-[#FFF5D6] font-serif mt-1">ACTIVE</h3>
-                  <p className="text-[#A39E93] text-[10px] font-light mt-1">Community video reels</p>
-                </div>
-                <div className="bg-black p-3.5 rounded-2xl border border-[#C9A84C]/40 text-[#C9A84C]">
-                  <Video className="w-6 h-6" />
                 </div>
               </motion.div>
             </div>
@@ -648,6 +1128,13 @@ const AdminDashboard = () => {
                   <ShoppingBag className="w-4 h-4 text-[#C9A84C]" />
                 </button>
                 <button
+                  onClick={() => setActiveSection('orders')}
+                  className="flex items-center justify-between p-4 bg-[#121212] border border-[#26241E] rounded-xl hover:border-[#C9A84C] transition-all text-xs font-bold text-[#FFF5D6] uppercase tracking-wider"
+                >
+                  <span>Customer Orders</span>
+                  <FileText className="w-4 h-4 text-[#C9A84C]" />
+                </button>
+                <button
                   onClick={() => setActiveSection('users')}
                   className="flex items-center justify-between p-4 bg-[#121212] border border-[#26241E] rounded-xl hover:border-[#C9A84C] transition-all text-xs font-bold text-[#FFF5D6] uppercase tracking-wider"
                 >
@@ -661,25 +1148,48 @@ const AdminDashboard = () => {
                   <span>Hero Banners</span>
                   <Layers className="w-4 h-4 text-[#C9A84C]" />
                 </button>
-                <button
-                  onClick={() => setActiveSection('ugc')}
-                  className="flex items-center justify-between p-4 bg-[#121212] border border-[#26241E] rounded-xl hover:border-[#C9A84C] transition-all text-xs font-bold text-[#FFF5D6] uppercase tracking-wider"
-                >
-                  <span>UGC Video Reels</span>
-                  <Video className="w-4 h-4 text-[#C9A84C]" />
-                </button>
               </div>
             </div>
 
-            {/* Action Feed */}
+            {/* RECENT CUSTOMER ORDERS OVERVIEW */}
             <div className="bg-[#0A0A0A] border border-[#26241E] rounded-2xl p-6 shadow-xl">
-              <h2 className="text-base font-bold text-[#FFF5D6] mb-4 flex items-center gap-2 font-serif uppercase tracking-wider">
-                <Clock className="w-5 h-5 text-[#C9A84C]" />
-                Recent Action Logs
-              </h2>
-              <div className="text-center py-8 text-[#A39E93] text-xs font-light">
-                No recent admin alerts logged. System operational.
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-base font-bold text-[#FFF5D6] flex items-center gap-2 font-serif uppercase tracking-wider">
+                  <FileText className="w-5 h-5 text-[#C9A84C]" />
+                  Recent Customer Orders
+                </h2>
+                <button
+                  onClick={() => setActiveSection('orders')}
+                  className="text-xs font-bold text-[#C9A84C] uppercase tracking-wider hover:underline"
+                >
+                  View All Orders →
+                </button>
               </div>
+
+              {orders.length > 0 ? (
+                <div className="space-y-3">
+                  {orders.slice(0, 3).map((ord) => (
+                    <div key={ord.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#121212] p-4 rounded-xl border border-[#26241E] gap-2">
+                      <div>
+                        <span className="text-xs font-bold text-[#FFF5D6] font-serif block">
+                          ORDER #{ord.id} - <span className="text-[#C9A84C] font-sans">{ord.user?.name}</span>
+                        </span>
+                        <span className="text-[10px] text-[#A39E93] font-mono">{ord.user?.email} • Size: {ord.items?.[0]?.size || 'L'}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-[#C9A84C]">₹{ord.totalAmount?.toLocaleString()}</span>
+                        <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase bg-emerald-950/60 text-emerald-300 border border-emerald-500/40">
+                          {ord.orderStatus}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-[#A39E93] text-xs font-light">
+                  No orders recorded yet.
+                </div>
+              )}
             </div>
           </motion.div>
         )
@@ -699,6 +1209,8 @@ const AdminDashboard = () => {
         counts={{
           products: products.length,
           users: users.length,
+          orders: orders.length,
+          queries: contactQueries.filter(q => !q.isReplied).length,
         }}
       />
 
@@ -728,7 +1240,7 @@ const AdminDashboard = () => {
           {renderContent()}
         </main>
 
-        {/* ═══ ADD PRODUCT MODAL FORM ═══ */}
+        {/* Add Product Modal */}
         {showAddProductModal && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
             <motion.div
@@ -795,10 +1307,45 @@ const AdminDashboard = () => {
                   {/* Preview */}
                   {newProductForm.image && (
                     <div className="mt-2 flex items-center gap-3 bg-black p-2 rounded-xl border border-[#26241E]">
-                      <img src={newProductForm.image} alt="Preview" className="w-16 h-16 object-cover rounded-lg border border-[#26241E]" onError={(e) => { e.target.style.display = 'none' }} />
-                      <span className="text-[10px] text-emerald-400 font-bold">✓ Image Ready</span>
+                      <img src={newProductForm.image} alt="Preview" className="w-14 h-14 object-cover rounded-lg border border-[#26241E]" onError={(e) => { e.target.style.display = 'none' }} />
+                      <span className="text-[10px] text-emerald-400 font-bold">✓ Main Image Ready</span>
                     </div>
                   )}
+                </div>
+
+                {/* 4 Sub-Product Images Upload (Admin Upload for Product Gallery) */}
+                <div className="bg-[#121212] p-4 rounded-2xl border border-[#26241E]">
+                  <label className="block text-xs font-bold text-[#C9A84C] uppercase tracking-wider mb-2 font-serif">
+                    4 Sub-Product Gallery Images (Optional Sub Views)
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {[1, 2, 3, 4].map((num) => {
+                      const keyName = `subImage${num}`
+                      return (
+                        <div key={num} className="space-y-1">
+                          <span className="text-[10px] font-bold text-[#A39E93] uppercase block">Sub Image {num}:</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleProductImageUpload(e, keyName)}
+                            className="block w-full text-[10px] text-[#A39E93] file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-[#C9A84C] file:text-black hover:file:bg-[#FFF5D6] cursor-pointer bg-black p-1.5 border border-[#26241E] rounded-lg"
+                          />
+                          {!newProductForm[keyName] || !newProductForm[keyName].startsWith('data:') ? (
+                            <input
+                              type="text"
+                              placeholder={`Or paste Sub Image ${num} URL`}
+                              value={newProductForm[keyName] && !newProductForm[keyName].startsWith('data:') ? newProductForm[keyName] : ''}
+                              onChange={(e) => setNewProductForm({ ...newProductForm, [keyName]: e.target.value })}
+                              className="w-full px-3 py-1.5 bg-black border border-[#26241E] rounded-lg text-[10px] text-[#E8E0CC] focus:outline-none focus:border-[#C9A84C]"
+                            />
+                          ) : (
+                            <span className="text-[9px] text-emerald-400 font-bold">✓ Uploaded</span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
 
                 {/* Description */}
@@ -913,6 +1460,71 @@ const AdminDashboard = () => {
                     className="px-6 py-2.5 bg-gradient-to-r from-[#C9A84C] via-[#D4B559] to-[#9B782B] text-black font-extrabold text-xs rounded-xl uppercase tracking-wider hover:scale-105 transition-all"
                   >
                     Save Product
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Reply to Query Modal */}
+        {replyModalQuery && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-[#0A0A0A] border-2 border-[#C9A84C] rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-[0_0_50px_rgba(201,168,76,0.3)] text-[#E8E0CC]"
+            >
+              <div className="flex justify-between items-center pb-4 mb-4 border-b border-[#26241E]">
+                <div>
+                  <span className="text-[10px] font-bold text-[#C9A84C] uppercase tracking-widest font-serif">
+                    REPLY TO QUERY
+                  </span>
+                  <h2 className="text-lg font-bold text-[#FFF5D6] font-serif">
+                    User: {replyModalQuery.name}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setReplyModalQuery(null)}
+                  className="p-2 text-[#A39E93] hover:text-[#FFF5D6]"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="mb-4 bg-[#121212] p-3 rounded-xl border border-[#26241E]">
+                <p className="text-[11px] font-bold text-[#C9A84C] uppercase mb-1 font-serif">Original User Message:</p>
+                <p className="text-xs text-[#E8E0CC]/80 italic">"{replyModalQuery.message}"</p>
+              </div>
+
+              <form onSubmit={handleSendReply} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#C9A84C] uppercase tracking-wider mb-1 font-serif">
+                    Your Official Response *
+                  </label>
+                  <textarea
+                    required
+                    rows="4"
+                    placeholder="Type your response to the user query here..."
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    className="w-full px-4 py-3 bg-black border border-[#26241E] rounded-xl text-xs text-[#FFF5D6] focus:outline-none focus:border-[#C9A84C] leading-relaxed"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setReplyModalQuery(null)}
+                    className="px-4 py-2 border border-[#26241E] text-[#A39E93] rounded-xl text-xs uppercase font-bold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 bg-gradient-to-r from-[#C9A84C] via-[#D4B559] to-[#9B782B] text-black font-extrabold text-xs rounded-xl uppercase tracking-wider hover:scale-105 transition-all shadow-lg"
+                  >
+                    Send Reply
                   </button>
                 </div>
               </form>

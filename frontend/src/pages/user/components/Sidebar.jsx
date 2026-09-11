@@ -2,7 +2,7 @@ import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../contexts/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, LayoutDashboard, User, ShoppingCart, Heart, Mail, LogOut } from 'lucide-react'
+import { X, LayoutDashboard, User, ShoppingCart, Heart, Mail, LogOut, HelpCircle } from 'lucide-react'
 
 const Sidebar = ({ activeSection, setActiveSection, isOpen, setIsOpen, counts = {} }) => {
   const navigate = useNavigate()
@@ -30,6 +30,12 @@ const Sidebar = ({ activeSection, setActiveSection, isOpen, setIsOpen, counts = 
       name: 'Wishlist',
       count: counts.wishlist,
       icon: <Heart size={18} />
+    },
+    {
+      id: 'queries',
+      name: 'My Queries',
+      count: counts.queries,
+      icon: <HelpCircle size={18} />
     },
     {
       id: 'messages',

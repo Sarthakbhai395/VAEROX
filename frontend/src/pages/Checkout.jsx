@@ -92,6 +92,59 @@ const Checkout = () => {
     setLoading(true)
     setPaymentError('')
 
+    // Strict Field Validations
+    const fullName = formData.fullName.trim()
+    const email = formData.email.trim()
+    const phone = formData.phone.trim()
+    const address = formData.address.trim()
+    const city = formData.city.trim()
+    const state = formData.state.trim()
+    const zipCode = formData.zipCode.trim()
+
+    if (!fullName || fullName.length < 2) {
+      setPaymentError('Please enter a valid Full Name (minimum 2 characters).')
+      setLoading(false)
+      return
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    if (!email || !emailRegex.test(email)) {
+      setPaymentError('Please enter a valid email address (e.g. user@gmail.com).')
+      setLoading(false)
+      return
+    }
+
+    const phoneClean = phone.replace(/[\s-+]/g, '')
+    if (!phoneClean || !/^\d{10}$/.test(phoneClean)) {
+      setPaymentError('Please enter a valid 10-digit phone number.')
+      setLoading(false)
+      return
+    }
+
+    if (!address || address.length < 5) {
+      setPaymentError('Please enter a complete delivery address (minimum 5 characters).')
+      setLoading(false)
+      return
+    }
+
+    if (!city || city.length < 2) {
+      setPaymentError('Please enter your City.')
+      setLoading(false)
+      return
+    }
+
+    if (!state) {
+      setPaymentError('Please select or enter your State.')
+      setLoading(false)
+      return
+    }
+
+    if (!zipCode || !/^\d{5,6}$/.test(zipCode)) {
+      setPaymentError('Please enter a valid 6-digit Pincode/Zip Code.')
+      setLoading(false)
+      return
+    }
+
     try {
       const isLoaded = await loadRazorpay()
       if (!isLoaded) {
@@ -120,6 +173,45 @@ const Checkout = () => {
             });
 
             if (verifyRes.success) {
+              // Create full order record with user & product details
+              const newOrderRecord = {
+                id: response.razorpay_order_id || `VRX-${Math.floor(100000 + Math.random() * 900000)}`,
+                paymentId: response.razorpay_payment_id || `PAY-${Date.now()}`,
+                date: new Date().toISOString(),
+                user: {
+                  name: formData.fullName,
+                  email: formData.email,
+                  phone: formData.phone,
+                  address: formData.address,
+                  city: formData.city,
+                  state: formData.state,
+                  zipCode: formData.zipCode,
+                },
+                items: cartItems.map(item => {
+                  const product = item.product || item
+                  return {
+                    id: product._id || product.id,
+                    name: product.name,
+                    image: getProductImageUrl(product.image),
+                    price: product.discount ? product.price * (1 - product.discount / 100) : product.price,
+                    quantity: item.quantity || 1,
+                    size: product.selectedSize || item.selectedSize || 'L',
+                    tier: product.tier || 'standard',
+                    category: product.category || 'clothes'
+                  }
+                }),
+                subtotal,
+                tax,
+                totalAmount: total,
+                paymentMethod: 'Razorpay Secure (Online)',
+                paymentStatus: 'Paid',
+                orderStatus: 'Processing'
+              }
+
+              const existingOrders = JSON.parse(localStorage.getItem('vaerox_admin_orders') || '[]')
+              existingOrders.unshift(newOrderRecord)
+              localStorage.setItem('vaerox_admin_orders', JSON.stringify(existingOrders))
+
               setOrderPlaced(true);
               clearCart();
               setTimeout(() => {

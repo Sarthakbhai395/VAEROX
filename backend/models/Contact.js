@@ -31,10 +31,17 @@ const contactSchema = new mongoose.Schema({
     ref: 'User',
     required: false
   },
-  response: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Contact',
+  replyMessage: {
+    type: String,
     required: false
+  },
+  replyDate: {
+    type: Date,
+    required: false
+  },
+  isReplied: {
+    type: Boolean,
+    default: false
   },
   createdAt: {
     type: Date,

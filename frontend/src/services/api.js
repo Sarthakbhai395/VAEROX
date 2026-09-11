@@ -423,6 +423,27 @@ export const contactAPI = {
       }
     });
     return response;
+  },
+
+  getAllMessages: async (token) => {
+    return apiRequest('/api/contact', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      bypassCache: true
+    });
+  },
+
+  replyMessage: async (id, replyMessage, token) => {
+    return apiRequest(`/api/contact/${id}/reply`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ replyMessage }),
+      bypassCache: true
+    });
   }
 }
 

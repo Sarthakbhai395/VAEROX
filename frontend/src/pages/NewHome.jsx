@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowRight,
@@ -14,6 +14,7 @@ import { UGCVideoSection } from '../components/homepage/UGCVideoSection'
 import { FAQSection } from '../components/homepage/FAQSection'
 import ProductCard from '../components/product/ProductCard'
 import { productAPI } from '../services/api'
+import { getSiteAssets } from '../utils/siteAssets'
 
 // Animation variants
 const fadeUp = {
@@ -55,12 +56,17 @@ const serviceFeatures = [
 ]
 
 const NewHome = () => {
+  const navigate = useNavigate()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [siteAssets, setSiteAssets] = useState(getSiteAssets())
 
   useEffect(() => {
     fetchFeaturedProducts()
+    const handleAssetsUpdate = () => setSiteAssets(getSiteAssets())
+    window.addEventListener('vaerox_site_assets_updated', handleAssetsUpdate)
+    return () => window.removeEventListener('vaerox_site_assets_updated', handleAssetsUpdate)
   }, [])
 
   const fetchFeaturedProducts = async () => {
@@ -93,10 +99,12 @@ const NewHome = () => {
           }
         })
         setProducts(formatted)
+      } else {
+        setError('Failed to fetch featured items')
       }
     } catch (err) {
-      console.error('Error fetching featured products:', err)
-      setError('An error occurred while fetching products')
+      console.error(err)
+      setError('An error occurred loading products')
     } finally {
       setLoading(false)
     }
@@ -104,7 +112,7 @@ const NewHome = () => {
 
   return (
     <div className="min-h-screen bg-black text-[#E8E0CC] w-full overflow-x-hidden select-none">
-      {/* ═══ 1. DYNAMIC HERO SECTION (ADMIN CONTROLLED) ═══ */}
+      {/* Hero Banner Section */}
       <section className="px-2 sm:px-4 md:px-6 lg:px-8 pt-2 md:pt-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -115,7 +123,7 @@ const NewHome = () => {
         </motion.div>
       </section>
 
-      {/* ═══ 2. MEN'S WEAR & WOMEN'S WEAR CATEGORIES SECTION ═══ */}
+      {/* Collections Section */}
       <section className="py-12 md:py-24 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <motion.div
           className="text-center mb-8 md:mb-16"
@@ -136,41 +144,46 @@ const NewHome = () => {
         </motion.div>
 
         {/* Categories Grid (Men's Wear & Women's Wear) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           {/* Card 1: Men's Wear */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#26241E] bg-[#0A0A0A] aspect-[4/5] sm:aspect-[4/5] min-h-[420px] shadow-2xl hover:border-[#C9A84C]/80 hover:shadow-[0_0_40px_rgba(201,168,76,0.25)] transition-all duration-500"
+            onClick={() => navigate('/products?category=men&tier=premium')}
+            className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#26241E] bg-[#0A0A0A] shadow-xl hover:border-[#C9A84C]/80 hover:shadow-[0_0_30px_rgba(201,168,76,0.2)] transition-all duration-500 flex flex-col sm:flex-row min-h-[220px] cursor-pointer"
           >
-            <img
-              src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1200&q=80"
-              alt="Men's Classical Formal Wear"
-              className="w-full h-full object-cover object-top group-hover:scale-108 transition-transform duration-700 ease-out"
-            />
-            {/* Gradients */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
+            {/* Left Side: Image (One Side) */}
+            <div className="sm:w-5/12 h-52 sm:h-auto shrink-0 relative overflow-hidden">
+              <img
+                src={(typeof siteAssets.homeMensCard === 'string' ? siteAssets.homeMensCard : siteAssets.homeMensCard?.url || siteAssets.home_mens_card?.url) || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80"}
+                alt="Men's Classical Formal Wear"
+                className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-out"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-black/60 via-transparent to-transparent" />
+            </div>
 
-            {/* Content Overlay */}
-            <div className="absolute inset-0 p-5 sm:p-8 md:p-12 flex flex-col justify-end items-start z-10">
-              <span className="px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-extrabold tracking-[0.25em] text-[#C9A84C] bg-black/85 backdrop-blur-md border border-[#C9A84C]/50 uppercase mb-2 sm:mb-3">
-                HIGH FORMAL TAILORING
-              </span>
-              <h3 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-[#FFF5D6] font-serif tracking-tight mb-2 sm:mb-3 uppercase">
-                MEN'S WEAR
-              </h3>
-              <p className="text-xs sm:text-sm text-[#E8E0CC]/80 mb-4 sm:mb-6 font-light max-w-md leading-relaxed line-clamp-3 sm:line-clamp-none">
-                Bespoke double-breasted tuxedos, sharp wool blazers, handcrafted oxford leather silhouettes & luxury accessories.
-              </p>
+            {/* Right Side: Text & Content (Other Side) */}
+            <div className="sm:w-7/12 p-5 sm:p-6 flex flex-col justify-between items-start bg-[#0A0A0A] relative z-10">
+              <div>
+                <span className="px-2.5 py-1 rounded-full text-[9px] font-extrabold tracking-[0.2em] text-[#C9A84C] bg-black border border-[#C9A84C]/40 uppercase mb-2 inline-block">
+                  HIGH FORMAL TAILORING
+                </span>
+                <h3 className="text-xl sm:text-2xl font-extrabold text-[#FFF5D6] font-serif tracking-tight mb-2 uppercase">
+                  MEN'S WEAR
+                </h3>
+                <p className="text-xs text-[#E8E0CC]/80 mb-4 font-light leading-relaxed">
+                  Bespoke double-breasted tuxedos, sharp wool blazers & luxury accessories.
+                </p>
+              </div>
+
               <Link
-                to="/products?category=men"
-                className="inline-flex items-center justify-center gap-2.5 px-6 py-3 sm:px-7 sm:py-3.5 rounded-full bg-gradient-to-r from-[#C9A84C] via-[#D4B559] to-[#9B782B] text-black font-extrabold text-[10px] sm:text-xs tracking-[0.2em] uppercase hover:scale-105 transition-all duration-300 shadow-[0_0_20px_rgba(201,168,76,0.4)]"
+                to="/products?category=men&tier=premium"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#C9A84C] via-[#D4B559] to-[#9B782B] text-black font-extrabold text-[10px] tracking-[0.18em] uppercase hover:scale-105 transition-all duration-300 shadow-md"
               >
                 <span>SHOP MEN'S WEAR</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           </motion.div>
@@ -181,34 +194,39 @@ const NewHome = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#26241E] bg-[#0A0A0A] aspect-[4/5] sm:aspect-[4/5] min-h-[420px] shadow-2xl hover:border-[#C9A84C]/80 hover:shadow-[0_0_40px_rgba(201,168,76,0.25)] transition-all duration-500"
+            onClick={() => navigate('/products?category=women&tier=premium')}
+            className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#26241E] bg-[#0A0A0A] shadow-xl hover:border-[#C9A84C]/80 hover:shadow-[0_0_30px_rgba(201,168,76,0.2)] transition-all duration-500 flex flex-col sm:flex-row-reverse min-h-[220px] cursor-pointer"
           >
-            <img
-              src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80"
-              alt="Women's Classical Formal Wear"
-              className="w-full h-full object-cover object-top group-hover:scale-108 transition-transform duration-700 ease-out"
-            />
-            {/* Gradients */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
+            {/* Right Side: Image (One Side) */}
+            <div className="sm:w-5/12 h-52 sm:h-auto shrink-0 relative overflow-hidden">
+              <img
+                src={(typeof siteAssets.homeWomensCard === 'string' ? siteAssets.homeWomensCard : siteAssets.homeWomensCard?.url || siteAssets.home_womens_card?.url) || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80"}
+                alt="Women's Classical Formal Wear"
+                className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-out"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-l from-black/60 via-transparent to-transparent" />
+            </div>
 
-            {/* Content Overlay */}
-            <div className="absolute inset-0 p-5 sm:p-8 md:p-12 flex flex-col justify-end items-start z-10">
-              <span className="px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-extrabold tracking-[0.25em] text-[#C9A84C] bg-black/85 backdrop-blur-md border border-[#C9A84C]/50 uppercase mb-2 sm:mb-3">
-                ATELIER EVENING COUTURE
-              </span>
-              <h3 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-[#FFF5D6] font-serif tracking-tight mb-2 sm:mb-3 uppercase">
-                WOMEN'S WEAR
-              </h3>
-              <p className="text-xs sm:text-sm text-[#E8E0CC]/80 mb-4 sm:mb-6 font-light max-w-md leading-relaxed line-clamp-3 sm:line-clamp-none">
-                Sculpted satin evening gowns, tailored power pant-suits, hand-embroidered velvet wraps & signature accessories.
-              </p>
+            {/* Left Side: Text & Content (Other Side) */}
+            <div className="sm:w-7/12 p-5 sm:p-6 flex flex-col justify-between items-start bg-[#0A0A0A] relative z-10">
+              <div>
+                <span className="px-2.5 py-1 rounded-full text-[9px] font-extrabold tracking-[0.2em] text-[#C9A84C] bg-black border border-[#C9A84C]/40 uppercase mb-2 inline-block">
+                  ATELIER EVENING COUTURE
+                </span>
+                <h3 className="text-xl sm:text-2xl font-extrabold text-[#FFF5D6] font-serif tracking-tight mb-2 uppercase">
+                  WOMEN'S WEAR
+                </h3>
+                <p className="text-xs text-[#E8E0CC]/80 mb-4 font-light leading-relaxed">
+                  Sculpted satin evening gowns, power pant-suits & signature accessories.
+                </p>
+              </div>
+
               <Link
-                to="/products?category=women"
-                className="inline-flex items-center justify-center gap-2.5 px-6 py-3 sm:px-7 sm:py-3.5 rounded-full bg-gradient-to-r from-[#C9A84C] via-[#D4B559] to-[#9B782B] text-black font-extrabold text-[10px] sm:text-xs tracking-[0.2em] uppercase hover:scale-105 transition-all duration-300 shadow-[0_0_20px_rgba(201,168,76,0.4)]"
+                to="/products?category=women&tier=premium"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#C9A84C] via-[#D4B559] to-[#9B782B] text-black font-extrabold text-[10px] tracking-[0.18em] uppercase hover:scale-105 transition-all duration-300 shadow-md"
               >
                 <span>SHOP WOMEN'S WEAR</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           </motion.div>

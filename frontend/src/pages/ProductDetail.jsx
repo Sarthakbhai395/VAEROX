@@ -1,11 +1,33 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { productAPI } from '../services/api'
 import { useCart } from '../contexts/CartContext'
 import { useWishlist } from '../contexts/WishlistContext'
 import { formatCurrency } from '../utils/format'
 import { getProductImageUrl } from '../utils/imageUrl'
+import ProductCard from '../components/product/ProductCard'
+import { 
+  Sparkles, 
+  ShoppingBag, 
+  Heart, 
+  Ruler, 
+  ShieldCheck, 
+  Truck, 
+  X, 
+  ArrowRight,
+  Star,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  HelpCircle,
+  Feather,
+  Award
+} from 'lucide-react'
+
+// Alpha & Numeric Size Options
+const ALPHA_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+const NUMERIC_SIZES = ['28', '30', '32', '34', '36', '38', '40', '42', '44']
 
 const ProductDetail = () => {
   const { id } = useParams()
@@ -14,11 +36,30 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [quantity, setQuantity] = useState(1)
+
+  // Size states
+  const [sizeType, setSizeType] = useState('alpha')
+  const [selectedSize, setSelectedSize] = useState('L')
+  const [showSizeModal, setShowSizeModal] = useState(false)
+
+  // Active info tab: 'materials' | 'benefits' | 'description' | 'care'
+  const [activeInfoTab, setActiveInfoTab] = useState('materials')
+
+  // Product FAQ open index
+  const [openFaqIndex, setOpenFaqIndex] = useState(0)
+
+  // Related Category Products for "You May Also Like" slider
+  const [relatedProducts, setRelatedProducts] = useState([])
+  const sliderRef = useRef(null)
+
   const { addToCart, loading: cartLoading } = useCart()
   const { addToWishlist, isInWishlist, loading: wishlistLoading } = useWishlist()
 
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+
   useEffect(() => {
     fetchProduct()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [id])
 
   const fetchProduct = async () => {
@@ -26,8 +67,10 @@ const ProductDetail = () => {
       setLoading(true)
       const response = await productAPI.getProductById(id)
       
-      if (response.success) {
-        setProduct(response.data || response.product)
+      if (response && response.success) {
+        const prodData = response.data || response.product
+        setProduct(prodData)
+        fetchRelatedProducts(prodData)
       } else {
         setError('Product not found')
       }
@@ -38,10 +81,71 @@ const ProductDetail = () => {
     }
   }
 
+  // Fetch related products for slider
+  const fetchRelatedProducts = async (currentProd) => {
+    try {
+      const res = await productAPI.getProducts()
+      if (res && res.success) {
+        const all = res.data || res.products || []
+        const currId = currentProd._id || currentProd.id
+        const filtered = all.filter(p => (p._id || p.id) !== currId && (p.gender === currentProd.gender || p.tier === currentProd.tier))
+        setRelatedProducts(filtered.length > 0 ? filtered : all.filter(p => (p._id || p.id) !== currId))
+      }
+    } catch (err) {
+      console.error('Failed to fetch related products:', err)
+    }
+  }
+
+  // Extract 4 sub-product images
+  const getProductImages = (prod) => {
+    if (!prod) return []
+    const imagesList = []
+    
+    if (Array.isArray(prod.images) && prod.images.length > 0) {
+      prod.images.forEach(img => {
+        const resolved = getProductImageUrl(img)
+        if (resolved && !imagesList.includes(resolved)) imagesList.push(resolved)
+      })
+    }
+    
+    const mainImg = getProductImageUrl(prod?.image)
+    if (mainImg && !imagesList.includes(mainImg)) {
+      imagesList.unshift(mainImg)
+    }
+
+    const fallbackAngles = [
+      'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?auto=format&fit=crop&w=800&q=80'
+    ]
+
+    while (imagesList.length < 4) {
+      imagesList.push(fallbackAngles[imagesList.length % fallbackAngles.length])
+    }
+
+    return imagesList.slice(0, 4)
+  }
+
+  const images = getProductImages(product)
+
+  // Slider Controls for "You May Also Like"
+  const scrollSlider = (direction) => {
+    if (sliderRef.current) {
+      const scrollAmount = direction === 'left' ? -320 : 320
+      sliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+    }
+  }
+
   const handleAddToCart = async () => {
     if (product) {
       try {
-        await addToCart(product, quantity)
+        const productWithSize = {
+          ...product,
+          selectedSize,
+          selectedSizeType: sizeType
+        }
+        await addToCart(productWithSize, quantity)
       } catch (err) {
         console.error('Failed to add to cart:', err)
       }
@@ -61,9 +165,12 @@ const ProductDetail = () => {
   const handleBuyNow = async () => {
     if (product) {
       try {
-        // Add to cart first
-        await addToCart(product, quantity)
-        // Redirect to checkout page
+        const productWithSize = {
+          ...product,
+          selectedSize,
+          selectedSizeType: sizeType
+        }
+        await addToCart(productWithSize, quantity)
         navigate('/checkout')
       } catch (err) {
         console.error('Failed to add to cart:', err)
@@ -75,317 +182,698 @@ const ProductDetail = () => {
     ? product.price * (1 - product.discount / 100)
     : product?.price
 
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [imageError, setImageError] = useState(false);
-
-  // Helper to extract all valid images (both new images array and old image string)
-  const getProductImages = (prod) => {
-    if (!prod) return [];
-    const imagesList = [];
-    if (Array.isArray(prod.images) && prod.images.length > 0) {
-      prod.images.forEach(img => {
-        const resolved = getProductImageUrl(img);
-        if (resolved) imagesList.push(resolved);
-      });
+  // 5 Product FAQs
+  const productFaqs = [
+    {
+      q: "How do I choose between Alpha (S-XXXL) and Waist (28-44) sizes?",
+      a: "For suits, jackets, and blazers, we recommend selecting standard Alpha Sizes (S to XXXL). For trousers, tailored pants, and waist fittings, select Numeric Waist Sizes (28 to 44 Inches). Use our interactive Size Guide above for exact measurement breakdowns."
+    },
+    {
+      q: "What materials & premium fabrics are crafted into this VÆROX garment?",
+      a: "This luxury garment features 100% fine Merino wool blend weave, lined with smooth Mulberry satin silk. Handcrafted canvas interlining ensures structured drape, breathability, and natural temperature regulation."
+    },
+    {
+      q: "What is the expected delivery timeframe and shipping policy?",
+      a: "All VÆROX products ship within 24 to 48 hours in protective luxury garment packaging. Delivery takes 2-4 business days across major cities with live order tracking."
+    },
+    {
+      q: "Can I request custom alterations or bespoke fitting adjustments?",
+      a: "Yes! Every VÆROX garment includes generous complimentary seam margins. You can visit any VÆROX flagship atelier or request our complimentary at-home tailor adjustment service."
+    },
+    {
+      q: "What is your return, exchange, and 100% satisfaction guarantee?",
+      a: "We offer a 7-day hassle-free return & size exchange guarantee. If your size fit is not 100% perfect, our team will exchange it immediately free of shipping cost."
     }
-    if (imagesList.length === 0) {
-      const resolved = getProductImageUrl(prod?.image);
-      if (resolved) imagesList.push(resolved);
-    }
-    return imagesList;
-  };
-
-  const images = getProductImages(product);
+  ]
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-light-grey flex items-center justify-center">
-        <motion.div 
-          className="text-2xl text-dark-grey"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          Loading product...
-        </motion.div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+          <span className="text-[#C9A84C] font-serif text-xs tracking-widest uppercase">Loading Product Details...</span>
+        </div>
       </div>
     )
   }
 
-  if (error) {
+  if (error || !product) {
     return (
-      <div className="min-h-screen bg-light-grey flex items-center justify-center">
-        <motion.div 
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-          role="alert"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <span className="block sm:inline">{error}</span>
-        </motion.div>
-      </div>
-    )
-  }
-
-  if (!product) {
-    return (
-      <div className="min-h-screen bg-light-grey flex items-center justify-center">
-        <motion.div 
-          className="text-2xl text-dark-grey"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          Product not found
-        </motion.div>
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="text-center max-w-md py-12">
+          <h2 className="text-xl font-serif text-[#FFF5D6] mb-3">Product Unavailable</h2>
+          <p className="text-xs text-[#A39E93] mb-6">{error || "The requested item is unavailable."}</p>
+          <button
+            onClick={() => navigate('/products')}
+            className="px-6 py-2.5 rounded-full bg-[#C9A84C] text-black font-extrabold text-xs uppercase tracking-wider"
+          >
+            Explore Products
+          </button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-light-grey">
+    <div className="min-h-screen bg-[#050505] text-[#E8E0CC] py-8 md:py-14">
       <motion.div 
-        className="max-w-7xl mx-auto px-4 py-8"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <motion.div 
-          className="bg-white rounded-xl shadow-lg overflow-hidden"
-          initial={{ y: 20 }}
-          animate={{ y: 0 }}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
-            {/* Product Image */}
-            <motion.div
-              className="flex flex-col"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center h-96">
-                {images.length === 0 || imageError ? (
-                  <div className="flex flex-col items-center justify-center p-8">
-                    <svg className="w-16 h-16 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span className="text-sm text-gray-400 font-medium font-sans">No Image Available</span>
-                  </div>
-                ) : (
+        {/* Breadcrumb Navigation (Clean & Frameless) */}
+        <div className="mb-8 flex items-center gap-2 text-xs font-serif text-[#A39E93]">
+          <span onClick={() => navigate('/products')} className="hover:text-[#C9A84C] cursor-pointer">PRODUCTS</span>
+          <span>/</span>
+          <span className="text-[#C9A84C] uppercase">{product.tier === 'premium' ? 'VÆROX PREMIUM' : 'STANDARD CLOTHES'}</span>
+          <span>/</span>
+          <span className="text-[#FFF5D6] truncate">{product.name}</span>
+        </div>
+
+        {/* ═══ TOP SECTION: OPEN FRAMELESS PRODUCT VIEW ═══ */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-14 items-start pb-16">
+          
+          {/* ─── LEFT COLUMN: COMPACT PRODUCT IMAGES ─── */}
+          <div className="lg:col-span-5 flex flex-col items-center">
+            {/* Main Compact Product Image Container */}
+            <div className="relative rounded-xl overflow-hidden bg-[#0D0C0A] h-72 sm:h-80 md:h-88 w-full max-w-sm mx-auto flex items-center justify-center group mb-4 shadow-xl">
+              {product.discount > 0 && (
+                <span className="absolute top-3 left-3 z-20 bg-[#C9A84C] text-black font-extrabold text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-full shadow-lg">
+                  -{product.discount}% OFF
+                </span>
+              )}
+              
+              <img 
+                src={images[selectedImageIndex]} 
+                alt={product.name} 
+                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+              />
+            </div>
+
+            {/* 4 Sub-Product Thumbnail Images */}
+            <div className="grid grid-cols-4 gap-3 w-full max-w-sm">
+              {images.map((imgUrl, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImageIndex(index)}
+                  className={`relative rounded-lg overflow-hidden h-14 sm:h-16 w-full border transition-all duration-300 cursor-pointer bg-[#0D0C0A] ${
+                    selectedImageIndex === index 
+                      ? 'border-[#C9A84C] shadow-lg scale-105' 
+                      : 'border-transparent opacity-60 hover:opacity-100'
+                  }`}
+                >
                   <img 
-                    src={images[selectedImageIndex]} 
-                    alt={product.name} 
-                    className="w-full h-full object-contain"
-                    onError={() => setImageError(true)}
+                    src={imgUrl} 
+                    alt={`${product.name} Sub image ${index + 1}`} 
+                    className="w-full h-full object-cover"
                   />
-                )}
+                  {selectedImageIndex === index && (
+                    <div className="absolute inset-0 bg-[#C9A84C]/10 pointer-events-none rounded-lg" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* SIZE SELECTION & QUANTITY SECTION (PLACED DIRECTLY BELOW SUB IMAGES) */}
+            <div className="w-full max-w-sm mt-6 space-y-4 pt-4 border-t border-[#26241E]/40">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-[#C9A84C] uppercase tracking-widest font-serif flex items-center gap-1.5">
+                  <Ruler className="w-4 h-4 text-[#C9A84C]" />
+                  SELECT GARMENT FIT
+                </label>
+
+                <button
+                  onClick={() => setShowSizeModal(true)}
+                  className="text-[10px] font-bold text-[#C9A84C] hover:text-[#FFF5D6] uppercase tracking-wider underline cursor-pointer"
+                >
+                  Size Guide Modal
+                </button>
               </div>
-              {images.length > 1 && (
-                <div className="mt-4 grid grid-cols-4 gap-2">
-                  {images.map((imgUrl, index) => (
+
+              {/* Size Type Switcher (Alpha vs Numeric) */}
+              <div className="flex items-center gap-4 pb-2 border-b border-[#26241E]/40">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSizeType('alpha')
+                    setSelectedSize('L')
+                  }}
+                  className={`pb-1 text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer ${
+                    sizeType === 'alpha'
+                      ? 'border-[#C9A84C] text-[#C9A84C]'
+                      : 'border-transparent text-[#A39E93] hover:text-[#E8E0CC]'
+                  }`}
+                >
+                  Alpha Sizes (S - XXXL)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSizeType('numeric')
+                    setSelectedSize('34')
+                  }}
+                  className={`pb-1 text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer ${
+                    sizeType === 'numeric'
+                      ? 'border-[#C9A84C] text-[#C9A84C]'
+                      : 'border-transparent text-[#A39E93] hover:text-[#E8E0CC]'
+                  }`}
+                >
+                  Waist Sizes (28 - 44)
+                </button>
+              </div>
+
+              {/* Alpha Size Buttons */}
+              {sizeType === 'alpha' && (
+                <div className="grid grid-cols-6 gap-2 pt-1">
+                  {ALPHA_SIZES.map((sz) => (
                     <button
-                      key={index}
-                      onClick={() => {
-                        setSelectedImageIndex(index);
-                        setImageError(false);
-                      }}
-                      className={`relative rounded-lg overflow-hidden h-24 border-2 transition-all duration-200 bg-gray-50 flex items-center justify-center ${
-                        selectedImageIndex === index 
-                          ? 'border-blue-500 ring-2 ring-blue-500/20' 
-                          : 'border-transparent hover:border-gray-300'
+                      key={sz}
+                      type="button"
+                      onClick={() => setSelectedSize(sz)}
+                      className={`py-2 text-xs font-extrabold uppercase rounded-lg transition-all border cursor-pointer ${
+                        selectedSize === sz
+                          ? 'bg-[#C9A84C] text-black border-[#C9A84C] shadow-md font-bold'
+                          : 'bg-transparent text-[#E8E0CC] border-[#26241E] hover:border-[#C9A84C]/60'
                       }`}
                     >
-                      <img 
-                        src={imgUrl} 
-                        alt={`${product.name} thumbnail ${index + 1}`} 
-                        className="w-full h-full object-cover"
-                      />
+                      {sz}
                     </button>
                   ))}
                 </div>
               )}
-            </motion.div>
-            
-            {/* Product Info */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <motion.h1 
-                className="text-4xl font-bold text-dark-grey mb-4"
-                initial={{ y: -20 }}
-                animate={{ y: 0 }}
-              >
-                {product.name}
-              </motion.h1>
-              
-              <div className="flex items-center mb-4">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <svg 
-                      key={i} 
-                      className={`w-5 h-5 ${i < Math.floor(4.5) ? 'fill-current' : 'stroke-current'}`} 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
+
+              {/* Numeric Size Buttons */}
+              {sizeType === 'numeric' && (
+                <div className="grid grid-cols-5 gap-2 sm:grid-cols-9 pt-1">
+                  {NUMERIC_SIZES.map((sz) => (
+                    <button
+                      key={sz}
+                      type="button"
+                      onClick={() => setSelectedSize(sz)}
+                      className={`py-2 text-xs font-extrabold uppercase rounded-lg transition-all border cursor-pointer ${
+                        selectedSize === sz
+                          ? 'bg-[#C9A84C] text-black border-[#C9A84C] shadow-md font-bold'
+                          : 'bg-transparent text-[#E8E0CC] border-[#26241E] hover:border-[#C9A84C]/60'
+                      }`}
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                    </svg>
+                      {sz}
+                    </button>
                   ))}
                 </div>
-                <span className="ml-2 text-gray-600">(128 reviews)</span>
-              </div>
-              
-              <motion.p 
-                className="text-gray-600 mb-6"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                {product.description}
-              </motion.p>
-              
-              <div className="mb-6">
-                <div className="flex items-center mb-2">
-                  {product.discount ? (
-                    <>
-                      <span className="text-3xl font-bold text-red-600">{formatCurrency(discountedPrice)}</span>
-                      <span className="ml-4 text-xl text-gray-500 line-through">{formatCurrency(product.price)}</span>
-                      <span className="ml-4 bg-red-100 text-red-800 text-sm font-semibold px-2.5 py-0.5 rounded">
-                        {product.discount}% OFF
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-3xl font-bold text-dark-grey">{formatCurrency(product.price)}</span>
-                  )}
-                </div>
-                <p className="text-green-600 font-medium">Inclusive of all taxes</p>
-              </div>
-              
-              <div className="border-t border-b border-gray-200 py-4 mb-6">
-                <div className="flex items-center text-sm text-gray-600 mb-2">
-                  <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  In stock and ready to ship
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Free shipping on orders over ₹500
-                </div>
-              </div>
-              
-              <motion.div 
-                className="mb-6"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-              >
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Quantity
+              )}
+
+              {/* Quantity */}
+              <div className="pt-2 flex items-center justify-between">
+                <label className="text-xs font-bold text-[#C9A84C] uppercase tracking-widest font-serif">
+                  QUANTITY
                 </label>
-                <div className="flex items-center">
-                  <motion.button 
+                <div className="flex items-center border border-[#26241E] rounded-lg overflow-hidden bg-[#0A0A0A]">
+                  <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="bg-gray-200 text-gray-600 hover:bg-gray-300 rounded-l-lg px-4 py-2"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    disabled={cartLoading}
+                    className="px-3.5 py-1.5 text-[#E8E0CC] hover:bg-[#1E1C17] transition-colors font-bold"
                   >
                     -
-                  </motion.button>
-                  <span className="bg-gray-100 px-6 py-2">{quantity}</span>
-                  <motion.button 
+                  </button>
+                  <span className="px-4 text-xs font-bold text-[#FFF5D6]">{quantity}</span>
+                  <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="bg-gray-200 text-gray-600 hover:bg-gray-300 rounded-r-lg px-4 py-2"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    disabled={cartLoading}
+                    className="px-3.5 py-1.5 text-[#E8E0CC] hover:bg-[#1E1C17] transition-colors font-bold"
                   >
                     +
-                  </motion.button>
+                  </button>
                 </div>
-              </motion.div>
-              
-              <motion.div 
-                className="flex flex-wrap gap-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
+              </div>
+            </div>
+          </div>
+
+          {/* ─── RIGHT COLUMN: OPEN PRODUCT DETAILS ─── */}
+          <div className="lg:col-span-7 flex flex-col justify-between space-y-6">
+            <div>
+              {/* Collection Tag */}
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-3.5 h-3.5 text-[#C9A84C]" />
+                <span className="text-[10px] font-bold text-[#C9A84C] uppercase tracking-[0.25em] font-serif">
+                  VÆROX BESPOKE ATELIER
+                </span>
+              </div>
+
+              {/* Title */}
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-3 leading-tight">
+                {product.name}
+              </h1>
+
+              {/* Rating */}
+              <div className="flex items-center gap-2 mb-5">
+                <div className="flex text-[#C9A84C]">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-3.5 h-3.5 fill-[#C9A84C] text-[#C9A84C]" />
+                  ))}
+                </div>
+                <span className="text-[11px] text-[#A39E93] font-sans">4.9 (128 Bespoke Reviews)</span>
+              </div>
+
+              {/* Price Row */}
+              <div className="mb-6 flex items-baseline gap-4 pb-4 border-b border-[#26241E]/40">
+                {product.discount ? (
+                  <>
+                    <span className="text-3xl font-extrabold text-[#FFF5D6] font-serif">
+                      {formatCurrency(discountedPrice)}
+                    </span>
+                    <span className="text-base text-[#A39E93] line-through font-serif">
+                      {formatCurrency(product.price)}
+                    </span>
+                    <span className="text-xs font-bold text-[#C9A84C] uppercase tracking-wider">
+                      Save {product.discount}%
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-3xl font-extrabold text-[#FFF5D6] font-serif">
+                    {formatCurrency(product.price)}
+                  </span>
+                )}
+              </div>
+
+              {/* Product Short Summary */}
+              <p className="text-xs sm:text-sm text-[#E8E0CC]/80 leading-relaxed mb-6 font-light">
+                {product.description || "Hand-tailored executive suit crafted from 100% fine Merino wool with Mulberry satin lining, engineered for impeccable silhouette and posture."}
+              </p>
+            </div>
+
+            {/* ACTION BUTTONS (OPEN & CLEAN) */}
+            <div className="space-y-3 pt-4 border-t border-[#26241E]/40">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <motion.button
                   onClick={handleAddToCart}
-                  className="btn-primary text-lg px-8 py-3"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
                   disabled={cartLoading}
+                  className="py-3.5 px-6 rounded-xl bg-transparent border border-[#C9A84C] text-[#C9A84C] font-extrabold text-xs uppercase tracking-widest hover:bg-[#C9A84C] hover:text-black transition-all cursor-pointer flex items-center justify-center gap-2 shadow-lg"
                 >
-                  {cartLoading ? 'Adding...' : 'Add to Cart'}
+                  <ShoppingBag className="w-4 h-4" />
+                  {cartLoading ? 'ADDING...' : 'ADD TO CART'}
                 </motion.button>
+
                 <motion.button
                   onClick={handleBuyNow}
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold text-lg px-8 py-3 rounded-lg transition duration-300"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
                   disabled={cartLoading}
+                  className="py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-xs uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xl"
                 >
-                  {cartLoading ? 'Processing...' : 'Buy Now'}
+                  <span>BUY NOW</span>
+                  <ArrowRight className="w-4 h-4" />
                 </motion.button>
-                <motion.button
-                  onClick={handleAddToWishlist}
-                  className={`font-bold text-lg px-8 py-3 rounded-lg transition duration-300 ${
-                    isInWishlist(product._id || product.id)
-                      ? 'bg-red-500 hover:bg-red-700 text-white'
-                      : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                  }`}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                  disabled={wishlistLoading}
-                >
-                  {wishlistLoading ? 'Processing...' : (isInWishlist(product._id || product.id) ? 'Remove from Wishlist' : 'Add to Wishlist')}
-                </motion.button>
-              </motion.div>
-              
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-semibold mb-3">Product Details</h3>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="font-medium text-gray-600">Category</div>
-                  <div className="text-gray-800 capitalize">{product.category}</div>
-                  <div className="font-medium text-gray-600">Brand</div>
-                  <div className="text-gray-800">Akario Mart</div>
-                  <div className="font-medium text-gray-600">SKU</div>
-                  <div className="text-gray-800">{product._id?.substring(0, 8).toUpperCase() || 'N/A'}</div>
+              </div>
+
+              <motion.button
+                onClick={handleAddToWishlist}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                disabled={wishlistLoading}
+                className={`w-full py-3 px-5 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                  isInWishlist(product._id || product.id)
+                    ? 'bg-rose-950/40 border-rose-500/40 text-rose-300'
+                    : 'bg-transparent border-[#26241E] text-[#A39E93] hover:text-[#FFF5D6] hover:border-[#C9A84C]/40'
+                }`}
+              >
+                <Heart className={`w-4 h-4 ${isInWishlist(product._id || product.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
+                {isInWishlist(product._id || product.id) ? 'WISHLISTED ITEM' : 'ADD TO ATELIER WISHLIST'}
+              </motion.button>
+
+              {/* ═══ ANIMATED INFO TABS (MATERIAL, BENEFITS, DESCRIPTION & CARE) ═══ */}
+              <div className="pt-6 mt-6 border-t border-[#26241E]/40">
+                {/* Tab Controls */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 bg-[#0A0A0A] p-1.5 rounded-xl border border-[#26241E]">
+                  <button
+                    type="button"
+                    onClick={() => setActiveInfoTab('materials')}
+                    className={`py-2 px-2 text-[10px] sm:text-xs font-serif font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      activeInfoTab === 'materials'
+                        ? 'bg-[#C9A84C] text-black shadow-md font-bold'
+                        : 'text-[#A39E93] hover:text-[#FFF5D6] hover:bg-[#141414]'
+                    }`}
+                  >
+                    <Feather className="w-3.5 h-3.5" />
+                    <span className="truncate">Materials</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveInfoTab('benefits')}
+                    className={`py-2 px-2 text-[10px] sm:text-xs font-serif font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      activeInfoTab === 'benefits'
+                        ? 'bg-[#C9A84C] text-black shadow-md font-bold'
+                        : 'text-[#A39E93] hover:text-[#FFF5D6] hover:bg-[#141414]'
+                    }`}
+                  >
+                    <Award className="w-3.5 h-3.5" />
+                    <span className="truncate">Benefits</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveInfoTab('description')}
+                    className={`py-2 px-2 text-[10px] sm:text-xs font-serif font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      activeInfoTab === 'description'
+                        ? 'bg-[#C9A84C] text-black shadow-md font-bold'
+                        : 'text-[#A39E93] hover:text-[#FFF5D6] hover:bg-[#141414]'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span className="truncate">Description</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveInfoTab('care')}
+                    className={`py-2 px-2 text-[10px] sm:text-xs font-serif font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      activeInfoTab === 'care'
+                        ? 'bg-[#C9A84C] text-black shadow-md font-bold'
+                        : 'text-[#A39E93] hover:text-[#FFF5D6] hover:bg-[#141414]'
+                    }`}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span className="truncate">Care</span>
+                  </button>
                 </div>
+
+                {/* Animated Tab Content */}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeInfoTab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                    className="bg-[#0A0A0A]/80 p-4 rounded-xl border border-[#26241E]/60 text-xs sm:text-sm leading-relaxed text-[#E8E0CC]/90 shadow-inner"
+                  >
+                    {activeInfoTab === 'materials' && (
+                      <div className="space-y-3">
+                        <div>
+                          <h4 className="font-serif font-bold text-[#FFF5D6] uppercase tracking-wider mb-1 flex items-center gap-2 text-xs">
+                            <Feather className="w-3.5 h-3.5 text-[#C9A84C]" />
+                            Primary Shell Weave
+                          </h4>
+                          <p className="text-[#A39E93] text-xs leading-relaxed">
+                            Crafted from 100% fine Merino wool blend with crease-resistant twisted yarn, delivering an immaculate drape and luxurious handfeel.
+                          </p>
+                        </div>
+                        <div className="pt-2 border-t border-[#26241E]/40">
+                          <h4 className="font-serif font-bold text-[#FFF5D6] uppercase tracking-wider mb-1 flex items-center gap-2 text-xs">
+                            <Sparkles className="w-3.5 h-3.5 text-[#C9A84C]" />
+                            Inner Lining & Lapel
+                          </h4>
+                          <p className="text-[#A39E93] text-xs leading-relaxed">
+                            Lined with Mulberry satin silk for effortless friction-free layering, accompanied by hand-stitched horsehair canvas for lapel structure.
+                          </p>
+                        </div>
+                        <div className="pt-2 border-t border-[#26241E]/40">
+                          <h4 className="font-serif font-bold text-[#FFF5D6] uppercase tracking-wider mb-1 flex items-center gap-2 text-xs">
+                            <Award className="w-3.5 h-3.5 text-[#C9A84C]" />
+                            Hardware & Trimmings
+                          </h4>
+                          <p className="text-[#A39E93] text-xs leading-relaxed">
+                            Custom VÆROX gold crest horn buttons, reinforced armhole stitching, and interior executive passport/wallet pockets.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeInfoTab === 'benefits' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-1">
+                        <div className="flex items-start gap-2.5">
+                          <div className="w-5 h-5 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/30 flex items-center justify-center flex-shrink-0 text-[#C9A84C] text-[10px]">
+                            ✓
+                          </div>
+                          <div>
+                            <h4 className="font-serif font-bold text-[#FFF5D6] uppercase tracking-wider text-xs mb-0.5">Executive Fit</h4>
+                            <p className="text-[#A39E93] text-[11px]">Engineered shoulder padding and tapered waist line.</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-2.5">
+                          <div className="w-5 h-5 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/30 flex items-center justify-center flex-shrink-0 text-[#C9A84C] text-[10px]">
+                            ✓
+                          </div>
+                          <div>
+                            <h4 className="font-serif font-bold text-[#FFF5D6] uppercase tracking-wider text-xs mb-0.5">Travel Weave</h4>
+                            <p className="text-[#A39E93] text-[11px]">Maintains sharp tailored creases through transit.</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-2.5">
+                          <div className="w-5 h-5 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/30 flex items-center justify-center flex-shrink-0 text-[#C9A84C] text-[10px]">
+                            ✓
+                          </div>
+                          <div>
+                            <h4 className="font-serif font-bold text-[#FFF5D6] uppercase tracking-wider text-xs mb-0.5">Seam Margins</h4>
+                            <p className="text-[#A39E93] text-[11px]">Extra internal margins for bespoke fitting modifications.</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-2.5">
+                          <div className="w-5 h-5 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/30 flex items-center justify-center flex-shrink-0 text-[#C9A84C] text-[10px]">
+                            ✓
+                          </div>
+                          <div>
+                            <h4 className="font-serif font-bold text-[#FFF5D6] uppercase tracking-wider text-xs mb-0.5">Gold Hardware</h4>
+                            <p className="text-[#A39E93] text-[11px]">Hand-engraved VÆROX crest gold horn buttons.</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeInfoTab === 'description' && (
+                      <div className="space-y-3 py-1">
+                        <p className="text-[#E8E0CC]/90 leading-relaxed font-light text-xs sm:text-sm">
+                          {product.description || "The VÆROX Executive Collection represents the pinnacle of modern tailoring. Each piece undergoes 48 precision hand operations, combining timeless heritage craftsmanship with contemporary silhouettes."}
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 text-xs font-serif text-[#C9A84C] pt-3 border-t border-[#26241E]/40">
+                          <div>SKU: <span className="text-[#FFF5D6]">{product._id?.substring(0,8).toUpperCase() || 'VRX-849'}</span></div>
+                          <div>Tier: <span className="text-[#FFF5D6]">{product.tier?.toUpperCase() || 'STANDARD'}</span></div>
+                          <div>Gender: <span className="text-[#FFF5D6]">{product.gender?.toUpperCase() || 'MEN'}</span></div>
+                          <div>Origin: <span className="text-[#FFF5D6]">Handcrafted Atelier</span></div>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeInfoTab === 'care' && (
+                      <div className="space-y-2 py-1">
+                        <h4 className="font-serif font-bold text-[#FFF5D6] uppercase tracking-wider flex items-center gap-2 text-xs">
+                          <ShieldCheck className="w-3.5 h-3.5 text-[#C9A84C]" />
+                          Garment Maintenance Instructions
+                        </h4>
+                        <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#A39E93]">
+                          <li>Professional dry clean only. Do not machine wash or tumble dry.</li>
+                          <li>Hang on wide wooden suit hangers between wears to maintain structure.</li>
+                          <li>Use steam iron on low temperature with a protective pressing cloth.</li>
+                          <li>Store in the provided breathable VÆROX garment carrier bag.</li>
+                        </ul>
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ═══ OPEN SECTION: 5 PRODUCT FAQS (MINIMALIST ACCORDION) ═══ */}
+        <div className="border-t border-[#26241E]/50 pt-12 mt-12 mb-16">
+          <div className="flex items-center gap-2 mb-6">
+            <HelpCircle className="w-5 h-5 text-[#C9A84C]" />
+            <h3 className="font-serif text-xl font-bold text-[#FFF5D6] uppercase tracking-wider">
+              FREQUENTLY ASKED QUESTIONS
+            </h3>
+          </div>
+
+          <div className="divide-y divide-[#26241E]/50 border-t border-b border-[#26241E]/50">
+            {productFaqs.map((faq, idx) => {
+              const isOpen = openFaqIndex === idx
+              return (
+                <div key={idx} className="py-4">
+                  <button
+                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                    className="w-full text-left flex justify-between items-center text-xs sm:text-sm font-bold text-[#FFF5D6] uppercase tracking-wider font-serif cursor-pointer hover:text-[#C9A84C] transition-colors"
+                  >
+                    <span>{idx + 1}. {faq.q}</span>
+                    <ChevronDown className={`w-4 h-4 text-[#C9A84C] transition-transform duration-300 flex-shrink-0 ml-3 ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  <AnimatePresence>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="text-xs text-[#A39E93] leading-relaxed pt-3 pr-6"
+                      >
+                        {faq.a}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* ═══ "YOU MAY ALSO LIKE" ANIMATED CATEGORY CAROUSEL ═══ */}
+        {relatedProducts.length > 0 && (
+          <div className="border-t border-[#26241E]/50 pt-12 mt-12 mb-16">
+            <div className="flex items-center justify-between mb-8 pb-3 border-b border-[#26241E]/40">
+              <div>
+                <span className="text-[10px] font-bold text-[#C9A84C] uppercase tracking-widest font-serif block mb-1">
+                  EXPLORE CATEGORY
+                </span>
+                <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#FFF5D6] uppercase tracking-tight">
+                  YOU MAY ALSO LIKE
+                </h3>
+              </div>
+
+              {/* Slider Navigation Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => scrollSlider('left')}
+                  className="w-9 h-9 rounded-full bg-[#121212] border border-[#26241E] text-[#C9A84C] hover:bg-[#C9A84C] hover:text-black transition-all flex items-center justify-center cursor-pointer shadow-md"
+                  aria-label="Previous Products"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => scrollSlider('right')}
+                  className="w-9 h-9 rounded-full bg-[#121212] border border-[#26241E] text-[#C9A84C] hover:bg-[#C9A84C] hover:text-black transition-all flex items-center justify-center cursor-pointer shadow-md"
+                  aria-label="Next Products"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Sliding Animation Container */}
+            <div 
+              ref={sliderRef}
+              className="flex items-center gap-6 overflow-x-auto pb-6 scrollbar-thin scroll-smooth"
+            >
+              {relatedProducts.map((relProd, index) => (
+                <motion.div 
+                  key={relProd._id || relProd.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.08, duration: 0.4 }}
+                  whileHover={{ y: -6 }}
+                  className="w-64 sm:w-72 flex-shrink-0 cursor-pointer"
+                  onClick={() => {
+                    navigate(`/product/${relProd._id || relProd.id}`)
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                >
+                  <ProductCard product={relProd} />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </motion.div>
+
+      {/* SIZE CHART MODAL */}
+      <AnimatePresence>
+        {showSizeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0A0A0A] border border-[#C9A84C]/40 rounded-3xl p-6 md:p-8 max-w-2xl w-full shadow-2xl text-[#E8E0CC] relative max-h-[90vh] overflow-y-auto"
+            >
+              <button
+                onClick={() => setShowSizeModal(false)}
+                className="absolute top-5 right-5 text-[#A39E93] hover:text-white"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              <div className="flex items-center gap-2 mb-2">
+                <Ruler className="w-5 h-5 text-[#C9A84C]" />
+                <h3 className="font-serif text-xl font-bold text-[#FFF5D6] uppercase tracking-wider">
+                  VÆROX BESPOKE SIZE GUIDE
+                </h3>
+              </div>
+              <p className="text-xs text-[#A39E93] mb-6">
+                All measurements in inches.
+              </p>
+
+              {/* Alpha Table */}
+              <div className="mb-6">
+                <h4 className="text-xs font-bold text-[#C9A84C] uppercase tracking-widest mb-3 font-serif">
+                  ALPHA FIT SIZES (S to XXXL)
+                </h4>
+                <div className="overflow-x-auto rounded-xl border border-[#26241E]">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-[#121212] text-[#C9A84C] uppercase text-[10px] tracking-wider font-serif">
+                      <tr>
+                        <th className="p-2.5 border-b border-[#26241E]">Size</th>
+                        <th className="p-2.5 border-b border-[#26241E]">Chest</th>
+                        <th className="p-2.5 border-b border-[#26241E]">Shoulder</th>
+                        <th className="p-2.5 border-b border-[#26241E]">Length</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#26241E] bg-[#050505]">
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">S</td><td className="p-2.5">36-38"</td><td className="p-2.5">17.0"</td><td className="p-2.5">28.5"</td></tr>
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">M</td><td className="p-2.5">38-40"</td><td className="p-2.5">17.5"</td><td className="p-2.5">29.0"</td></tr>
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">L</td><td className="p-2.5">40-42"</td><td className="p-2.5">18.0"</td><td className="p-2.5">29.5"</td></tr>
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">XL</td><td className="p-2.5">42-44"</td><td className="p-2.5">18.5"</td><td className="p-2.5">30.0"</td></tr>
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">XXL</td><td className="p-2.5">44-46"</td><td className="p-2.5">19.0"</td><td className="p-2.5">30.5"</td></tr>
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">XXXL</td><td className="p-2.5">46-48"</td><td className="p-2.5">19.5"</td><td className="p-2.5">31.0"</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Numeric Table */}
+              <div>
+                <h4 className="text-xs font-bold text-[#C9A84C] uppercase tracking-widest mb-3 font-serif">
+                  NUMERIC WAIST SIZES (28 to 44)
+                </h4>
+                <div className="overflow-x-auto rounded-xl border border-[#26241E]">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-[#121212] text-[#C9A84C] uppercase text-[10px] tracking-wider font-serif">
+                      <tr>
+                        <th className="p-2.5 border-b border-[#26241E]">Waist Size</th>
+                        <th className="p-2.5 border-b border-[#26241E]">Waist Circumference</th>
+                        <th className="p-2.5 border-b border-[#26241E]">Inseam</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#26241E] bg-[#050505]">
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">28</td><td className="p-2.5">28-29"</td><td className="p-2.5">32"</td></tr>
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">30</td><td className="p-2.5">30-31"</td><td className="p-2.5">32"</td></tr>
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">32</td><td className="p-2.5">32-33"</td><td className="p-2.5">32.5"</td></tr>
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">34</td><td className="p-2.5">34-35"</td><td className="p-2.5">33"</td></tr>
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">36</td><td className="p-2.5">36-37"</td><td className="p-2.5">33"</td></tr>
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">38</td><td className="p-2.5">38-39"</td><td className="p-2.5">33.5"</td></tr>
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">40</td><td className="p-2.5">40-41"</td><td className="p-2.5">33.5"</td></tr>
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">42</td><td className="p-2.5">42-43"</td><td className="p-2.5">34"</td></tr>
+                      <tr><td className="p-2.5 font-bold text-[#FFF5D6]">44</td><td className="p-2.5">44-45"</td><td className="p-2.5">34"</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => setShowSizeModal(false)}
+                  className="px-8 py-3 rounded-full bg-[#C9A84C] text-black font-extrabold text-xs uppercase tracking-widest shadow-xl"
+                >
+                  Close Guide
+                </button>
               </div>
             </motion.div>
           </div>
-        </motion.div>
-        
-        {/* Product Description Section */}
-        <motion.div 
-          className="bg-white rounded-xl shadow-lg p-6 mt-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <h2 className="text-2xl font-bold text-dark-grey mb-4">Product Description</h2>
-          <p className="text-gray-700 leading-relaxed">
-            {product.description || 'No description available for this product.'}
-          </p>
-          
-          <div className="mt-6">
-            <h3 className="text-xl font-semibold text-dark-grey mb-3">Key Features</h3>
-            <ul className="list-disc pl-5 space-y-2 text-gray-700">
-              <li>High-quality materials for durability</li>
-              <li>Designed for optimal performance</li>
-              <li>User-friendly interface</li>
-              <li>Comes with 1-year warranty</li>
-              <li>Eco-friendly packaging</li>
-            </ul>
-          </div>
-        </motion.div>
-      </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -49,7 +49,7 @@ exports.createContactMessage = async (req, res, next) => {
 // @access  Private (Admin only)
 exports.getContactMessages = async (req, res, next) => {
   try {
-    const contacts = await Contact.find().populate('user', 'name email').populate('response');
+    const contacts = await Contact.find().populate('user', 'name email').sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -69,17 +69,18 @@ exports.getContactMessages = async (req, res, next) => {
 // @access  Private (User only)
 exports.getUserContactMessages = async (req, res, next) => {
   try {
-    console.log('Fetching contact messages for user:', req.user.id);
-    
-    // Fetch original messages sent by the user and populate their responses
-    const originalMessages = await Contact.find({ user: req.user.id }).populate('response');
-    
-    console.log('Found messages:', originalMessages);
-    
+    const userId = req.user.id;
+    const userEmail = req.user.email;
+
+    // Fetch original messages sent by user ID or email
+    const userMessages = await Contact.find({
+      $or: [{ user: userId }, { email: userEmail }]
+    }).sort({ createdAt: -1 });
+
     res.status(200).json({
       success: true,
-      count: originalMessages.length,
-      data: originalMessages
+      count: userMessages.length,
+      data: userMessages
     });
   } catch (err) {
     console.error('Error in getUserContactMessages:', err);
@@ -90,10 +91,53 @@ exports.getUserContactMessages = async (req, res, next) => {
   }
 };
 
-// DEBUG: Temporary route to check all contacts
+// @desc    Reply to a contact message
+// @route   PUT /api/contact/:id/reply
+// @access  Private (Admin only)
+exports.replyContactMessage = async (req, res, next) => {
+  try {
+    const { replyMessage } = req.body;
+
+    if (!replyMessage || !replyMessage.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide a reply message'
+      });
+    }
+
+    let contact = await Contact.findById(req.params.id);
+    if (!contact) {
+      return res.status(404).json({
+        success: false,
+        error: 'Contact message not found'
+      });
+    }
+
+    contact.replyMessage = replyMessage.trim();
+    contact.replyDate = Date.now();
+    contact.isReplied = true;
+
+    await contact.save();
+
+    res.status(200).json({
+      success: true,
+      data: contact
+    });
+  } catch (err) {
+    console.error('Error replying to contact message:', err);
+    res.status(500).json({
+      success: false,
+      error: 'Server Error'
+    });
+  }
+};
+
+// @desc    Debug all contacts
+// @route   GET /api/contact/debug
+// @access  Public
 exports.debugAllContacts = async (req, res, next) => {
   try {
-    const contacts = await Contact.find().populate('user', 'name email').populate('response');
+    const contacts = await Contact.find().sort({ createdAt: -1 });
     res.status(200).json({
       success: true,
       count: contacts.length,

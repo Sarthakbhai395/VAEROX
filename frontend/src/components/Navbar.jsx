@@ -4,8 +4,9 @@ import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../contexts/CartContext'
 import { useWishlist } from '../contexts/WishlistContext'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu } from 'lucide-react'
+import { Menu, ShieldCheck, UserCheck } from 'lucide-react'
 import Logo from './Logo'
+import { getSiteAssets } from '../utils/siteAssets'
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -14,10 +15,17 @@ const Navbar = () => {
   const [cartAnimation, setCartAnimation] = useState(false)
   const [wishlistAnimation, setWishlistAnimation] = useState(false)
   const [formattedDate, setFormattedDate] = useState('')
+  const [siteAssets, setSiteAssets] = useState(getSiteAssets())
   const { user, isAuthenticated, logout } = useAuth()
   const { getCartCount } = useCart()
   const { wishlistItems } = useWishlist()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const handleUpdate = () => setSiteAssets(getSiteAssets())
+    window.addEventListener('vaerox_site_assets_updated', handleUpdate)
+    return () => window.removeEventListener('vaerox_site_assets_updated', handleUpdate)
+  }, [])
 
   // Format live calendar date (e.g. MON, 24 AUG)
   useEffect(() => {
@@ -61,7 +69,7 @@ const Navbar = () => {
 
   const getDashboardLabel = () => {
     if (!isAuthenticated || !user) return 'Login'
-    return user.role === 'admin' ? 'Admin Panel' : 'My Account'
+    return user.role === 'admin' ? 'Admin Panel' : 'User Panel'
   }
 
   // Trigger animation when cart count changes
@@ -109,175 +117,146 @@ const Navbar = () => {
 
   return (
     <>
-      {/* Top Announcement Ribbon */}
-      <div className="bg-[#050505] py-1.5 px-3 text-center text-[9px] sm:text-[10px] md:text-xs font-semibold tracking-[0.2em] sm:tracking-[0.25em] text-[#C9A84C] uppercase select-none overflow-hidden text-ellipsis whitespace-nowrap">
-        <span>✦ FREE EXPRESS DELIVERY ON ORDERS ABOVE ₹1999 &nbsp;•&nbsp; 24/7 VIP SUPPORT &nbsp;•&nbsp; AUTHENTIC LUXURY ✦</span>
-      </div>
-
-      {/* Dynamic Animated Floating Capsule Navbar */}
       <motion.nav
         className="sticky top-2 z-50 px-2 sm:px-4 md:px-6 w-full max-w-7xl mx-auto navbar-container"
-        initial={{ y: -80, opacity: 0 }}
+        initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 280, damping: 28 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
       >
-        <div className="bg-[#0A0A0A]/95 backdrop-blur-xl border border-[#C9A84C]/40 shadow-[0_12px_35px_rgba(0,0,0,0.85)] rounded-2xl md:rounded-full px-2 sm:px-5 py-1.5 md:py-2 flex items-center justify-between transition-all duration-300 w-full min-w-0">
+        <div className="bg-[#050505]/95 backdrop-blur-2xl px-3.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between rounded-full border border-[#C9A84C]/40 shadow-[0_12px_35px_rgba(0,0,0,0.9)] w-full min-w-0">
 
-          {/* 1. LEFT SECTION: HAMBURGER, LOGO & DYNAMIC CALENDAR BADGE */}
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0 min-w-0">
-            {/* Mobile Drawer Hamburger Button - Strictly hidden on md screens and above */}
+          {/* 1. LEFT SECTION: HAMBURGER MENU & LOGO */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 setIsMenuOpen((prev) => !prev)
               }}
-              className="md:hidden p-1 sm:p-2 rounded-xl text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors focus:outline-none shrink-0 hamburger-menu-btn cursor-pointer"
+              className="md:hidden p-1.5 sm:p-2 text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors focus:outline-none shrink-0 hamburger-menu-btn cursor-pointer active:scale-95 flex items-center justify-center border-none outline-none"
               aria-label="Toggle menu"
             >
-              <Menu className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
+              <Menu className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.5]" />
             </button>
 
-            {/* Brand Logo - Responsive scaled footprint on mobile */}
-            <Link to="/" className="flex items-center py-0.5 group shrink-0 max-w-[110px] xs:max-w-[130px] sm:max-w-none">
-              <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.2 }} className="flex items-center transform scale-[0.88] xs:scale-95 sm:scale-100 origin-left">
-                <Logo layout="horizontal" size="md" />
+            <Link to="/" className="flex items-center py-0.5 group shrink-0">
+              <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.2 }} className="flex items-center">
+                <Logo layout="horizontal" size="sm" />
               </motion.div>
             </Link>
 
-            {/* Dynamic Calendar Live Date Pill Badge - Outline removed as requested */}
-            <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#16140F] text-[10px] font-extrabold tracking-[0.2em] text-[#C9A84C] uppercase shadow-sm shrink-0 font-sans">
+            <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 text-[10px] font-extrabold tracking-[0.2em] text-[#C9A84C] uppercase shrink-0 font-sans">
               <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] animate-ping" />
-              <span>📅 {formattedDate || 'ATELIER 2026'}</span>
+              <span>{formattedDate || 'ATELIER 2026'}</span>
             </div>
           </div>
 
-          {/* 2. RIGHT SECTION: ANIMATED SLIDING NAV TABS & DOCK ACTION PILLS */}
-          <div className="flex items-center justify-end space-x-1 sm:space-x-2.5 lg:space-x-4 shrink-0">
+          {/* 2. CENTER SECTION: DESKTOP NAVIGATION LINKS */}
+          <div className="hidden md:flex flex-1 items-center justify-center space-x-6 lg:space-x-8 px-4">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  `relative text-xs font-extrabold tracking-[0.18em] uppercase transition-all duration-300 py-1.5 opacity-100 ${isActive
+                    ? 'text-[#C9A84C]'
+                    : 'text-[#FFF5D6] hover:text-[#C9A84C]'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <span className={`relative z-10 opacity-100 ${isActive ? 'text-[#C9A84C]' : 'text-[#FFF5D6]'}`}>
+                      {item.label}
+                    </span>
+                    {isActive && (
+                      <motion.div
+                        layoutId="navbarActiveIndicator"
+                        className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent shadow-[0_0_12px_rgba(201,168,76,0.8)]"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </div>
 
-            {/* Desktop Dynamic Sliding Nav Tabs (Framer Motion layoutId) */}
-            <div className="hidden md:flex items-center space-x-1 lg:space-x-2 bg-[#12110D] p-1 rounded-full border border-[#C9A84C]/25">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `relative text-xs font-bold tracking-[0.16em] uppercase transition-all duration-300 px-3.5 py-1.5 rounded-full ${
-                      isActive
-                        ? 'text-black font-extrabold'
-                        : 'text-[#E8E0CC]/80 hover:text-[#C9A84C]'
-                    }`
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      {isActive && (
-                        <motion.div
-                          layoutId="navbarActiveTab"
-                          className="absolute inset-0 bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] rounded-full z-0 shadow-[0_0_12px_rgba(201,168,76,0.5)]"
-                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                        />
-                      )}
-                      <span className="relative z-10">{item.label}</span>
-                    </>
-                  )}
-                </NavLink>
-              ))}
-            </div>
+          {/* 3. RIGHT SECTION: LINEAR ACTION BUTTONS (WISHLIST, CART, ACCOUNT) */}
+          <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
 
-            {/* Desktop Search Bar */}
-            <form onSubmit={handleSearch} className="hidden lg:flex items-center">
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <svg className="h-3.5 w-3.5 text-[#C9A84C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search luxury..."
-                  className="bg-[#121212] border border-[#C9A84C]/30 text-[#E8E0CC] placeholder-[#A39E93] text-[11px] tracking-wider rounded-full pl-8 pr-3 py-1 focus:outline-none focus:border-[#C9A84C] w-32 xl:w-44 transition-all duration-300 font-sans"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </form>
-
-            {/* Wishlist Dynamic Icon Badge */}
+            {/* Wishlist Icon Button */}
             {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
               <Link
                 to="/user/wishlist"
-                className={`relative text-[#E8E0CC] hover:text-[#C9A84C] p-1 sm:p-1.5 rounded-full transition-all duration-300 shrink-0 ${
-                  wishlistAnimation ? 'scale-125 text-[#C9A84C]' : ''
+                className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#121212] border border-[#26241E] hover:border-[#C9A84C]/60 flex items-center justify-center text-[#FFF5D6] hover:text-[#C9A84C] transition-all duration-300 shrink-0 ${
+                  wishlistAnimation ? 'scale-110 border-[#C9A84C] text-[#C9A84C]' : ''
                 }`}
                 title="Wishlist"
               >
-                <svg className="h-4 sm:h-5 w-4 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
                 {wishlistItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#C9A84C] text-black text-[9px] font-extrabold px-1.5 py-0.5 rounded-full leading-none min-w-[15px] text-center shadow-md animate-pulse">
+                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center leading-none shadow-[0_0_8px_rgba(201,168,76,0.8)]">
                     {wishlistItems.length}
                   </span>
                 )}
               </Link>
             )}
 
-            {/* Cart Luxury Pill Button */}
+            {/* Cart Icon Button */}
             {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
               <Link
                 to="/user/cart"
-                className={`hidden md:inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#1F1E1B] hover:bg-[#C9A84C] text-[#E8E0CC] hover:text-black border border-[#C9A84C]/40 text-xs font-semibold tracking-wider transition-all duration-300 shadow-md shrink-0 ${
-                  cartAnimation ? 'scale-110 border-[#C9A84C]' : ''
+                className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#121212] border border-[#26241E] hover:border-[#C9A84C]/60 flex items-center justify-center text-[#FFF5D6] hover:text-[#C9A84C] transition-all duration-300 shrink-0 ${
+                  cartAnimation ? 'scale-110 border-[#C9A84C] text-[#C9A84C]' : ''
                 }`}
                 title="Cart"
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                <span>Cart {getCartCount() > 0 ? `(${getCartCount()})` : ''}</span>
-              </Link>
-            )}
-
-            {/* Cart Icon for Mobile View */}
-            {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
-              <Link
-                to="/user/cart"
-                className="md:hidden relative text-[#E8E0CC] hover:text-[#C9A84C] p-1 rounded-xl transition-colors shrink-0"
-                title="Cart"
-              >
-                <svg className="h-4 sm:h-5 w-4 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 {getCartCount() > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#C9A84C] text-black text-[9px] font-extrabold px-1.5 py-0.5 rounded-full leading-none min-w-[15px] text-center shadow-md">
+                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center leading-none shadow-[0_0_8px_rgba(201,168,76,0.8)]">
                     {getCartCount()}
                   </span>
                 )}
               </Link>
             )}
 
-            {/* Account / Login Pill Button - Zero overflow on mobile */}
+            {/* Account / Login / Panel Action Button */}
             {isAuthenticated ? (
-              <div className="flex items-center space-x-1 sm:space-x-1.5 shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 <Link
                   to={getDashboardLink()}
-                  className="inline-flex items-center justify-center px-2 py-1 sm:px-3.5 sm:py-1.5 rounded-full border border-[#C9A84C] bg-[#C9A84C]/10 hover:bg-[#C9A84C] text-[#C9A84C] hover:text-black font-extrabold text-[8.5px] sm:text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-md whitespace-nowrap shrink-0"
+                  className="relative inline-flex items-center gap-1 px-3 py-1.5 sm:px-5 sm:py-2 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-[10px] sm:text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-[0_0_18px_rgba(201,168,76,0.5)] hover:shadow-[0_0_28px_rgba(201,168,76,0.85)] hover:scale-105 border border-[#FFF5D6]/60 overflow-hidden group shrink-0 cursor-pointer"
+                  title={user?.role === 'admin' ? 'Admin Management Panel' : 'User Account Dashboard Panel'}
                 >
-                  <span className="sm:hidden">{user?.role === 'admin' ? 'ADMIN' : 'PANEL'}</span>
+                  <span className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
+                  {user?.role === 'admin' ? (
+                    <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black shrink-0" />
+                  ) : (
+                    <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black shrink-0" />
+                  )}
+                  <span className="sm:hidden font-extrabold">{user?.role === 'admin' ? 'A.P' : 'U.D'}</span>
                   <span className="hidden sm:inline">{getDashboardLabel()}</span>
                 </Link>
+
+                {/* Shiny Red Logout Button (Desktop) */}
                 <button
                   onClick={handleLogout}
-                  className="hidden md:inline-flex items-center justify-center px-3.5 py-1.5 rounded-full border border-rose-500/40 bg-rose-950/20 hover:bg-rose-600 text-rose-300 hover:text-white font-extrabold text-xs tracking-wider uppercase leading-none transition-all duration-300"
+                  className="relative hidden md:inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-gradient-to-r from-red-600 via-red-500 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-extrabold text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-[0_0_15px_rgba(239,68,68,0.7)] hover:shadow-[0_0_25px_rgba(239,68,68,0.95)] hover:scale-105 overflow-hidden group cursor-pointer border border-red-400/50"
                 >
+                  <span className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
                   Logout
                 </button>
               </div>
             ) : (
               <Link
                 to="/login"
-                className="inline-flex items-center justify-center px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-full bg-gradient-to-r from-[#C9A84C] to-[#9B782B] hover:from-[#E2C266] hover:to-[#B5943C] text-black font-extrabold text-[8.5px] sm:text-xs tracking-[0.08em] uppercase leading-none transition duration-300 shadow-[0_0_12px_rgba(201,168,76,0.3)] whitespace-nowrap shrink-0"
+                className="relative inline-flex items-center justify-center px-4 py-1.5 sm:px-6 sm:py-2 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-[10px] sm:text-xs tracking-[0.1em] uppercase leading-none transition-all duration-300 shadow-[0_0_15px_rgba(201,168,76,0.4)] hover:shadow-[0_0_25px_rgba(201,168,76,0.85)] hover:scale-105 overflow-hidden group shrink-0 cursor-pointer"
               >
+                <span className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
                 Login
               </Link>
             )}
@@ -311,7 +290,7 @@ const Navbar = () => {
               {/* 1. TOP POWERFUL VÆROX LUXURY APPLICATION BANNER (HIGH FASHION EDITORIAL) */}
               <div className="relative h-52 sm:h-56 w-full overflow-hidden border-b border-[#C9A84C]/50 bg-black shrink-0">
                 <img
-                  src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80"
+                  src={(typeof siteAssets.drawerHeader === 'string' ? siteAssets.drawerHeader : siteAssets.drawerHeader?.url || siteAssets.drawer_header?.url) || "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80"}
                   alt="VÆROX High Fashion Luxury Atelier"
                   className="w-full h-full object-cover object-center opacity-80 transform scale-105 hover:scale-110 transition-transform duration-700"
                 />
@@ -345,10 +324,9 @@ const Navbar = () => {
                 <NavLink
                   to="/"
                   className={({ isActive }) =>
-                    `flex items-center justify-between text-xs font-bold tracking-widest uppercase py-2.5 px-3.5 rounded-xl transition-all ${
-                      isActive
-                        ? 'text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40'
-                        : 'text-[#E8E0CC]/80 hover:text-white hover:bg-[#141414]'
+                    `flex items-center justify-between text-xs font-extrabold tracking-widest uppercase py-2.5 px-3.5 rounded-xl transition-all opacity-100 ${isActive
+                      ? 'text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40'
+                      : 'text-[#FFF5D6] bg-[#121212] hover:text-[#C9A84C] hover:bg-[#1A1A1A] border border-[#26241E]'
                     }`
                   }
                   onClick={() => setIsMenuOpen(false)}
@@ -360,10 +338,9 @@ const Navbar = () => {
                 <NavLink
                   to="/products"
                   className={({ isActive }) =>
-                    `flex items-center justify-between text-xs font-bold tracking-widest uppercase py-2.5 px-3.5 rounded-xl transition-all ${
-                      isActive
-                        ? 'text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40'
-                        : 'text-[#E8E0CC]/80 hover:text-white hover:bg-[#141414]'
+                    `flex items-center justify-between text-xs font-extrabold tracking-widest uppercase py-2.5 px-3.5 rounded-xl transition-all opacity-100 ${isActive
+                      ? 'text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40'
+                      : 'text-[#FFF5D6] bg-[#121212] hover:text-[#C9A84C] hover:bg-[#1A1A1A] border border-[#26241E]'
                     }`
                   }
                   onClick={() => setIsMenuOpen(false)}
@@ -375,10 +352,9 @@ const Navbar = () => {
                 <NavLink
                   to="/about"
                   className={({ isActive }) =>
-                    `flex items-center justify-between text-xs font-bold tracking-widest uppercase py-2.5 px-3.5 rounded-xl transition-all ${
-                      isActive
-                        ? 'text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40'
-                        : 'text-[#E8E0CC]/80 hover:text-white hover:bg-[#141414]'
+                    `flex items-center justify-between text-xs font-extrabold tracking-widest uppercase py-2.5 px-3.5 rounded-xl transition-all opacity-100 ${isActive
+                      ? 'text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40'
+                      : 'text-[#FFF5D6] bg-[#121212] hover:text-[#C9A84C] hover:bg-[#1A1A1A] border border-[#26241E]'
                     }`
                   }
                   onClick={() => setIsMenuOpen(false)}
@@ -390,10 +366,9 @@ const Navbar = () => {
                 <NavLink
                   to="/contact"
                   className={({ isActive }) =>
-                    `flex items-center justify-between text-xs font-bold tracking-widest uppercase py-2.5 px-4 rounded-xl transition-all ${
-                      isActive
-                        ? 'text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40'
-                        : 'text-[#E8E0CC]/80 hover:text-white hover:bg-[#141414]'
+                    `flex items-center justify-between text-xs font-extrabold tracking-widest uppercase py-2.5 px-4 rounded-xl transition-all opacity-100 ${isActive
+                      ? 'text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40'
+                      : 'text-[#FFF5D6] bg-[#121212] hover:text-[#C9A84C] hover:bg-[#1A1A1A] border border-[#26241E]'
                     }`
                   }
                   onClick={() => setIsMenuOpen(false)}
@@ -438,8 +413,9 @@ const Navbar = () => {
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="block text-center w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs tracking-[0.18em] uppercase rounded-xl border border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all cursor-pointer"
+                      className="relative overflow-hidden group block text-center w-full py-3 bg-gradient-to-r from-red-600 via-red-500 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-extrabold text-xs tracking-[0.2em] uppercase rounded-xl border border-red-400/60 shadow-[0_0_25px_rgba(239,68,68,0.7)] hover:shadow-[0_0_35px_rgba(239,68,68,1)] transition-all cursor-pointer"
                     >
+                      <span className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
                       Logout
                     </button>
                   </div>

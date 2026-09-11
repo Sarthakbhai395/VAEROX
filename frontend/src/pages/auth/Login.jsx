@@ -9,37 +9,71 @@ const Login = () => {
   const [role, setRole] = useState('user')
   const navigate = useNavigate()
   const location = useLocation()
-  const { handleLogin, loading, error } = useAuthHook()
+  const [validationError, setValidationError] = useState('')
+  const [attemptCount, setAttemptCount] = useState(0)
+  const [lockoutTimer, setLockoutTimer] = useState(0)
 
-  // Get the redirect message if it exists
-  const redirectMessage = location.state?.message
+  // Countdown effect for rate-limit lockout
+  React.useEffect(() => {
+    let interval = null
+    if (lockoutTimer > 0) {
+      interval = setInterval(() => {
+        setLockoutTimer((prev) => prev - 1)
+      }, 1000)
+    } else if (lockoutTimer === 0 && attemptCount >= 5) {
+      setAttemptCount(0)
+    }
+    return () => clearInterval(interval)
+  }, [lockoutTimer, attemptCount])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setValidationError('')
+
+    if (lockoutTimer > 0) {
+      setValidationError(`Too many failed attempts! Please wait ${lockoutTimer} seconds before trying again.`)
+      return
+    }
+
+    // Strict Email Format Checking
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    if (!emailRegex.test(email.trim())) {
+      setValidationError('Please enter a valid email address (e.g. user@gmail.com).')
+      return
+    }
+
+    if (!password) {
+      setValidationError('Please enter your password.')
+      return
+    }
     
     // Check for predefined admin credentials
-    if (email === 'admin@gmail.com' && password === '123456') {
-      // Override role to admin for predefined admin
+    if (email.trim() === 'admin@gmail.com' && password === '123456') {
       const result = await handleLogin(email, password, 'admin')
-      
       if (result.success) {
         navigate('/admin/dashboard')
+        return
+      }
+    }
+
+    const result = await handleLogin(email, password, role)
+    
+    if (result.success) {
+      setAttemptCount(0)
+      const from = location.state?.from?.pathname || '/'
+      if (from !== '/' && from !== '/login') {
+        navigate(from)
+      } else if (role === 'admin') {
+        navigate('/admin/dashboard')
+      } else {
+        navigate('/user/dashboard')
       }
     } else {
-      const result = await handleLogin(email, password, role)
-      
-      if (result.success) {
-        // Check if there's a redirect path
-        const from = location.state?.from?.pathname || '/'
-        
-        // Redirect based on role or to the attempted location
-        if (from !== '/' && from !== '/login') {
-          navigate(from)
-        } else if (role === 'admin') {
-          navigate('/admin/dashboard')
-        } else {
-          navigate('/user/dashboard')
-        }
+      const newAttempts = attemptCount + 1
+      setAttemptCount(newAttempts)
+      if (newAttempts >= 5) {
+        setLockoutTimer(30)
+        setValidationError('Too many failed attempts! Account temporarily locked for 30 seconds.')
       }
     }
   }
@@ -85,13 +119,25 @@ const Login = () => {
         
         {error && (
           <motion.div 
-            className="bg-red-950/30 border border-red-500/40 text-red-300 px-4 py-3 rounded-xl text-sm"
+            className="bg-red-950/30 border border-red-500/40 text-red-300 px-4 py-3 rounded-xl text-sm font-semibold"
             role="alert"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
           >
             <span className="block sm:inline">{error}</span>
+          </motion.div>
+        )}
+        
+        {validationError && (
+          <motion.div 
+            className="bg-red-950/50 border border-red-500/60 text-red-200 px-4 py-3 rounded-xl text-sm font-semibold"
+            role="alert"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <span className="block sm:inline">{validationError}</span>
           </motion.div>
         )}
         
@@ -141,23 +187,15 @@ const Login = () => {
               <label htmlFor="role" className="block text-xs font-bold text-[#C9A84C] uppercase tracking-widest mb-1">
                 Login as
               </label>
-              {!(email === 'admin@gmail.com' && password === '123456') && (
-                <select
-                  id="role"
-                  name="role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="mt-1 block w-full pl-3 pr-10 py-3 text-sm border border-[#26241E] focus:outline-none focus:border-[#C9A84C] rounded-xl transition duration-300 bg-[#121212] text-[#E8E0CC]"
-                >
-                  <option value="user">Customer Account</option>
-                  <option value="admin">Administrator</option>
-                </select>
-              )}
-              {(email === 'admin@gmail.com' && password === '123456') && (
-                <div className="mt-1 block w-full pl-3 pr-10 py-3 text-sm border border-[#C9A84C]/40 rounded-xl bg-[#141414] text-[#FFF5D6] font-semibold">
-                  Admin (Predefined)
-                </div>
-              )}
+              <select
+                id="role"
+                name="role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="mt-1 block w-full pl-3 pr-10 py-3 text-sm border border-[#26241E] focus:outline-none focus:border-[#C9A84C] rounded-xl transition duration-300 bg-[#121212] text-[#E8E0CC]"
+              >
+                <option value="user">User</option>
+              </select>
             </div>
           </div>
 

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, ArrowRight, ArrowLeft, Search, Filter, RefreshCw, CheckCircle2, UserCheck } from 'lucide-react'
 import ProductCard from '../components/product/ProductCard'
 import { productAPI } from '../services/api'
+import { getSiteAssets } from '../utils/siteAssets'
 
 const ROLES_LIST = [
   'ALL',
@@ -33,20 +34,31 @@ const Products = () => {
   const [error, setError] = useState(null)
   const [sort, setSort] = useState('name')
   const [searchQuery, setSearchQuery] = useState('')
+  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false)
+  const [siteAssets, setSiteAssets] = useState(getSiteAssets())
+
+  useEffect(() => {
+    const handleAssetsUpdate = () => setSiteAssets(getSiteAssets())
+    window.addEventListener('vaerox_site_assets_updated', handleAssetsUpdate)
+    return () => window.removeEventListener('vaerox_site_assets_updated', handleAssetsUpdate)
+  }, [])
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search)
     const categoryParam = urlParams.get('category')
     const searchParam = urlParams.get('search')
+    const tierParam = urlParams.get('tier')
 
     if (categoryParam) {
       const catLower = categoryParam.toLowerCase()
       if (catLower === 'men' || catLower === 'women') {
-        setSelectedTier('standard')
+        setSelectedTier(tierParam === 'premium' ? 'premium' : 'standard')
         setSelectedGender(catLower)
       } else {
-        setSelectedTier('standard')
+        setSelectedTier(tierParam === 'premium' ? 'premium' : 'standard')
       }
+    } else if (tierParam) {
+      setSelectedTier(tierParam === 'premium' ? 'premium' : 'standard')
     }
     if (searchParam) setSearchQuery(searchParam)
 
@@ -203,109 +215,272 @@ const Products = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-[#E8E0CC] select-none py-10 px-4 md:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-black text-[#E8E0CC] select-none">
+      <div className="w-full">
         <AnimatePresence mode="wait">
           {/* ════════════ STEP 1: TIER SELECTION (STANDARD vs PREMIUM) ════════════ */}
           {!selectedTier && (
             <motion.div
               key="step-tier"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
-              className="py-8"
+              className="relative"
             >
-              <div className="text-center mb-12">
-                <span className="inline-block px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold tracking-[0.3em] text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40 uppercase mb-3 font-serif">
-                  VÆROX COLLECTION SELECTION
-                </span>
-                <h1 className="text-3xl sm:text-5xl font-extrabold text-[#FFF5D6] font-serif tracking-tight mb-4 uppercase">
-                  CHOOSE YOUR COLLECTION TIER
-                </h1>
-                <p className="text-[#E8E0CC]/70 text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed">
-                  Select your desired luxury line below to customize your fitting experience.
-                </p>
-              </div>
+              {/* Full-width Cinematic Background */}
+              <div className="relative w-full overflow-hidden" style={{ minHeight: '100vh' }}>
+                {/* Dark ambient background with warm golden tones */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#0D0A05] via-[#0A0805] to-[#050301]" />
+                
+                {/* Ambient warm golden light effects */}
+                <div className="absolute inset-0">
+                  <div className="absolute top-0 left-1/4 w-[600px] h-[400px] bg-[#C9A84C]/5 rounded-full blur-[120px]" />
+                  <div className="absolute bottom-1/3 right-1/4 w-[500px] h-[350px] bg-[#8B6914]/4 rounded-full blur-[100px]" />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-[#C9A84C]/3 rounded-full blur-[150px]" />
+                </div>
 
-              {/* 2 Animated Selection Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                {/* Card 1: Standard Clothes */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleSelectTier('standard')}
-                  className="group relative rounded-3xl overflow-hidden border-2 border-[#26241E] bg-[#0A0A0A] p-8 md:p-10 cursor-pointer shadow-2xl hover:border-[#C9A84C] hover:shadow-[0_0_40px_rgba(201,168,76,0.3)] transition-all duration-500 flex flex-col justify-between min-h-[380px]"
-                >
-                  {/* Background Image Overlay */}
-                  <div
-                    className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity duration-700"
-                    style={{
-                      backgroundImage: `url('https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=1000&q=80')`,
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
+                {/* Subtle grain/texture overlay */}
+                <div className="absolute inset-0 opacity-[0.02]" style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
+                }} />
 
-                  <div className="relative z-10">
-                    <span className="inline-block px-3 py-1 rounded-full text-[9px] font-extrabold tracking-[0.25em] text-[#C9A84C] bg-black/80 border border-[#C9A84C]/40 uppercase mb-4">
-                      CLASSIC ESSENTIALS
-                    </span>
-                    <h2 className="text-3xl md:text-4xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-3">
-                      STANDARD CLOTHES
-                    </h2>
-                    <p className="text-xs md:text-sm text-[#E8E0CC]/80 font-light leading-relaxed mb-6">
-                      Signature formal attire, tailored blazers, classic trousers, and everyday luxury essentials engineered for impeccable elegance.
-                    </p>
+                {/* Content Container */}
+                <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 pt-16 md:pt-20 pb-8">
+                  
+                  {/* Header Section */}
+                  <div className="text-center mb-12 md:mb-16">
+                    {/* Decorative line with subtitle */}
+                    <motion.div 
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1, duration: 0.6 }}
+                      className="flex items-center justify-center gap-4 mb-5"
+                    >
+                      <div className="h-[1px] w-12 md:w-20 bg-gradient-to-r from-transparent to-[#C9A84C]/60" />
+                      <span className="text-[10px] md:text-xs font-semibold tracking-[0.35em] text-[#C9A84C]/80 uppercase font-serif">
+                        Curated for the Modern Gentleman
+                      </span>
+                      <div className="h-[1px] w-12 md:w-20 bg-gradient-to-l from-transparent to-[#C9A84C]/60" />
+                    </motion.div>
+
+                    {/* Main Title */}
+                    <motion.h1 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2, duration: 0.7 }}
+                      className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-[#FFF5D6] font-serif tracking-tight mb-5 uppercase leading-[1.05]"
+                    >
+                      CHOOSE YOUR COLLECTION
+                    </motion.h1>
+
+                    {/* Subtitle description */}
+                    <motion.p 
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.35, duration: 0.6 }}
+                      className="text-[#E8E0CC]/60 text-sm md:text-base max-w-lg mx-auto font-light leading-relaxed tracking-wide"
+                    >
+                      Timeless styles. Premium fabrics. Unmatched elegance.
+                    </motion.p>
                   </div>
 
-                  <div className="relative z-10 pt-4 border-t border-white/10 flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#C9A84C] tracking-widest uppercase">
-                      EXPLORE STANDARD LINE
-                    </span>
-                    <div className="w-10 h-10 rounded-full bg-[#C9A84C] text-black flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <ArrowRight className="w-5 h-5" />
+                  {/* ═══ TWO COLLECTION CARDS ═══ */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.45, duration: 0.7 }}
+                    className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6 max-w-6xl mx-auto mb-16 md:mb-20"
+                  >
+                    {/* ─── Card 1: Standard Clothes ─── */}
+                    <motion.div
+                      whileHover={{ y: -4, scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={() => handleSelectTier('standard')}
+                      className="group relative rounded-2xl overflow-hidden cursor-pointer bg-[#0D0C0A] border border-[#26241E]/80 hover:border-[#C9A84C]/50 transition-all duration-500 shadow-xl flex flex-col sm:flex-row min-h-[320px] md:min-h-[360px]"
+                    >
+                      {/* Card border glow on hover */}
+                      <div className="absolute inset-0 rounded-2xl border border-transparent group-hover:border-[#C9A84C]/40 transition-all duration-700 pointer-events-none z-20" />
+                      
+                      {/* Image Side (Left) */}
+                      <div className="w-full sm:w-1/2 relative min-h-[220px] sm:min-h-full overflow-hidden flex-shrink-0">
+                        <img 
+                          src={(typeof siteAssets.productsMensBanner === 'string' ? siteAssets.productsMensBanner : siteAssets.productsMensBanner?.url || siteAssets.products_standard_card?.url) || "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=1000&q=80"}
+                          alt="Standard Collection"
+                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-[1200ms] ease-out"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-transparent via-black/20 to-[#0D0C0A]" />
+                      </div>
+                      
+                      {/* Text Side (Right) */}
+                      <div className="w-full sm:w-1/2 p-6 md:p-8 flex flex-col justify-between relative z-10 bg-[#0D0C0A]">
+                        {/* Top Section */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-4">
+                            <div className="h-[1px] w-4 bg-[#C9A84C]/70" />
+                            <span className="text-[9px] font-bold tracking-[0.25em] text-[#C9A84C] uppercase">
+                              Classic Collection
+                            </span>
+                          </div>
+
+                          {/* Title */}
+                          <h2 className="text-2xl sm:text-2xl md:text-3xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight leading-tight mb-4">
+                            STANDARD<br />CLOTHES
+                          </h2>
+
+                          {/* Category Tags */}
+                          <div className="flex items-center gap-1.5 md:gap-2 mb-6 flex-wrap">
+                            <span className="text-[9px] md:text-[10px] font-semibold tracking-[0.15em] text-[#E8E0CC]/70 uppercase">Formal</span>
+                            <span className="text-[#C9A84C]/50 text-xs">/</span>
+                            <span className="text-[9px] md:text-[10px] font-semibold tracking-[0.15em] text-[#E8E0CC]/70 uppercase">Business</span>
+                            <span className="text-[#C9A84C]/50 text-xs">/</span>
+                            <span className="text-[9px] md:text-[10px] font-semibold tracking-[0.15em] text-[#E8E0CC]/70 uppercase">Everyday</span>
+                          </div>
+                        </div>
+
+                        {/* CTA Button */}
+                        <div>
+                          <motion.div 
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#C9A84C]/60 bg-black/40 group-hover:bg-[#C9A84C]/10 group-hover:border-[#C9A84C] transition-all duration-500"
+                            whileHover={{ x: 3 }}
+                          >
+                            <span className="text-[9px] md:text-[10px] font-bold tracking-[0.2em] text-[#C9A84C] uppercase">
+                              Explore Collection
+                            </span>
+                            <ArrowRight className="w-3.5 h-3.5 text-[#C9A84C] group-hover:translate-x-1 transition-transform duration-300" />
+                          </motion.div>
+                        </div>
+                      </div>
+                    </motion.div>
+
+                    {/* ─── Card 2: VEROX Premium ─── */}
+                    <motion.div
+                      whileHover={{ y: -4, scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={() => handleSelectTier('premium')}
+                      className="group relative rounded-2xl overflow-hidden cursor-pointer bg-[#0D0C0A] border border-[#C9A84C]/30 hover:border-[#C9A84C]/60 hover:shadow-[0_0_30px_rgba(201,168,76,0.15)] transition-all duration-500 shadow-xl flex flex-col sm:flex-row min-h-[320px] md:min-h-[360px]"
+                    >
+                      {/* Premium gold border glow */}
+                      <div className="absolute inset-0 rounded-2xl border border-transparent group-hover:border-[#C9A84C]/50 transition-all duration-700 pointer-events-none z-20" />
+
+                      {/* Image Side (Left) */}
+                      <div className="w-full sm:w-1/2 relative min-h-[220px] sm:min-h-full overflow-hidden flex-shrink-0">
+                        <img 
+                          src={(typeof siteAssets.productsWomensBanner === 'string' ? siteAssets.productsWomensBanner : siteAssets.productsWomensBanner?.url || siteAssets.products_premium_card?.url) || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1000&q=80"}
+                          alt="Premium Collection"
+                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-[1200ms] ease-out"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-transparent via-black/20 to-[#0D0C0A]" />
+                      </div>
+
+                      {/* Text Side (Right) */}
+                      <div className="w-full sm:w-1/2 p-6 md:p-8 flex flex-col justify-between relative z-10 bg-[#0D0C0A]">
+                        {/* Top Section */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-4">
+                            <svg className="w-3.5 h-3.5 text-[#C9A84C]" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+                            </svg>
+                            <span className="text-[9px] font-bold tracking-[0.25em] text-[#C9A84C] uppercase">
+                              Premium Collection
+                            </span>
+                          </div>
+
+                          {/* Title */}
+                          <h2 className="text-2xl sm:text-2xl md:text-3xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight leading-tight mb-4">
+                            VÆROX<br />PREMIUM
+                          </h2>
+
+                          {/* Category Tags */}
+                          <div className="flex items-center gap-1.5 md:gap-2 mb-6 flex-wrap">
+                            <span className="text-[9px] md:text-[10px] font-semibold tracking-[0.15em] text-[#E8E0CC]/70 uppercase">Tailored</span>
+                            <span className="text-[#C9A84C]/50 text-xs">/</span>
+                            <span className="text-[9px] md:text-[10px] font-semibold tracking-[0.15em] text-[#E8E0CC]/70 uppercase">Luxury</span>
+                            <span className="text-[#C9A84C]/50 text-xs">/</span>
+                            <span className="text-[9px] md:text-[10px] font-semibold tracking-[0.15em] text-[#E8E0CC]/70 uppercase">Exclusive</span>
+                          </div>
+                        </div>
+
+                        {/* CTA Button */}
+                        <div>
+                          <motion.div 
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#C9A84C]/60 bg-black/40 group-hover:bg-[#C9A84C]/10 group-hover:border-[#C9A84C] transition-all duration-500"
+                            whileHover={{ x: 3 }}
+                          >
+                            <span className="text-[9px] md:text-[10px] font-bold tracking-[0.2em] text-[#C9A84C] uppercase">
+                              Explore Collection
+                            </span>
+                            <ArrowRight className="w-3.5 h-3.5 text-[#C9A84C] group-hover:translate-x-1 transition-transform duration-300" />
+                          </motion.div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+
+                  {/* ═══ BOTTOM FEATURES BAR ═══ */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7, duration: 0.6 }}
+                    className="max-w-6xl mx-auto"
+                  >
+                    <div className="border-t border-[#26241E]/60 pt-8 pb-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+                        {/* Feature 1: Premium Fabrics */}
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#C9A84C]/5 border border-[#C9A84C]/20 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-5 h-5 text-[#C9A84C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <span className="text-[10px] md:text-xs font-bold text-[#E8E0CC]/90 uppercase tracking-[0.15em] block leading-tight">Premium Fabrics</span>
+                            <span className="text-[9px] md:text-[10px] text-[#A39E93] uppercase tracking-[0.1em]">Luxury in every thread</span>
+                          </div>
+                        </div>
+
+                        {/* Feature 2: Expert Tailoring */}
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#C9A84C]/5 border border-[#C9A84C]/20 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-5 h-5 text-[#C9A84C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <span className="text-[10px] md:text-xs font-bold text-[#E8E0CC]/90 uppercase tracking-[0.15em] block leading-tight">Expert Tailoring</span>
+                            <span className="text-[9px] md:text-[10px] text-[#A39E93] uppercase tracking-[0.1em]">Perfect fit, always.</span>
+                          </div>
+                        </div>
+
+                        {/* Feature 3: Secure Shopping */}
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#C9A84C]/5 border border-[#C9A84C]/20 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-5 h-5 text-[#C9A84C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <span className="text-[10px] md:text-xs font-bold text-[#E8E0CC]/90 uppercase tracking-[0.15em] block leading-tight">Secure Shopping</span>
+                            <span className="text-[9px] md:text-[10px] text-[#A39E93] uppercase tracking-[0.1em]">Safe & trusted</span>
+                          </div>
+                        </div>
+
+                        {/* Feature 4: Fast Delivery */}
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#C9A84C]/5 border border-[#C9A84C]/20 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-5 h-5 text-[#C9A84C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <span className="text-[10px] md:text-xs font-bold text-[#E8E0CC]/90 uppercase tracking-[0.15em] block leading-tight">Fast Delivery</span>
+                            <span className="text-[9px] md:text-[10px] text-[#A39E93] uppercase tracking-[0.1em]">Worldwide</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-
-                {/* Card 2: Premium Clothes */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleSelectTier('premium')}
-                  className="group relative rounded-3xl overflow-hidden border-2 border-[#C9A84C]/50 bg-[#0A0A0A] p-8 md:p-10 cursor-pointer shadow-2xl hover:border-[#C9A84C] hover:shadow-[0_0_50px_rgba(201,168,76,0.4)] transition-all duration-500 flex flex-col justify-between min-h-[380px]"
-                >
-                  {/* Background Image Overlay */}
-                  <div
-                    className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-50 transition-opacity duration-700"
-                    style={{
-                      backgroundImage: `url('https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1000&q=80')`,
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
-
-                  <div className="relative z-10">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-extrabold tracking-[0.25em] text-black bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] uppercase mb-4 shadow-lg">
-                      <Sparkles className="w-3 h-3 fill-current" />
-                      HAUTE COUTURE ATELIER
-                    </span>
-                    <h2 className="text-3xl md:text-4xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-3">
-                      VÆROX PREMIUM
-                    </h2>
-                    <p className="text-xs md:text-sm text-[#E8E0CC]/80 font-light leading-relaxed mb-6">
-                      Handcrafted gold label double-breasted tuxedos & executive role outfits (CEO, Manager, C.A, Lawyer, Doctor) tailor-made for distinction.
-                    </p>
-                  </div>
-
-                  <div className="relative z-10 pt-4 border-t border-[#C9A84C]/30 flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#FFF5D6] tracking-widest uppercase">
-                      EXPLORE VÆROX PREMIUM
-                    </span>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FFF5D6] to-[#C9A84C] text-black flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                      <ArrowRight className="w-5 h-5" />
-                    </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                </div>
               </div>
             </motion.div>
           )}
@@ -318,92 +493,108 @@ const Products = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}
-              className="py-8"
+              className="py-8 px-4 md:px-8"
             >
-              {/* Back Button */}
-              <button
-                onClick={handleResetSelection}
-                className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-[#121212] border border-[#26241E] text-xs font-bold text-[#C9A84C] hover:border-[#C9A84C] transition-all"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>BACK TO TIER SELECTION</span>
-              </button>
-
-              <div className="text-center mb-12">
-                <span className="inline-block px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold tracking-[0.3em] text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40 uppercase mb-3 font-serif">
-                  {selectedTier === 'premium' ? 'VÆROX PREMIUM HAUTE COUTURE' : 'STANDARD CLASSICS'}
-                </span>
-                <h1 className="text-3xl sm:text-5xl font-extrabold text-[#FFF5D6] font-serif tracking-tight mb-4 uppercase">
-                  SELECT CATEGORY
-                </h1>
-                <p className="text-[#E8E0CC]/70 text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed">
-                  Choose between Men's Formal Suiting or Women's Evening Atelier.
-                </p>
-              </div>
-
-              {/* 2 Gender Modal Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                {/* Category 1: Men's */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleSelectGender('men')}
-                  className="group relative rounded-3xl overflow-hidden border border-[#26241E] bg-[#0A0A0A] aspect-[4/5] cursor-pointer shadow-2xl hover:border-[#C9A84C] hover:shadow-[0_0_40px_rgba(201,168,76,0.3)] transition-all duration-500 flex flex-col justify-end p-8 md:p-10"
+              <div className="max-w-7xl mx-auto">
+                {/* Back Button */}
+                <button
+                  onClick={handleResetSelection}
+                  className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-[#121212] border border-[#26241E] text-xs font-bold text-[#C9A84C] hover:border-[#C9A84C] transition-all"
                 >
-                  <img
-                    src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1000&q=80"
-                    alt="Men's Collection"
-                    className="absolute inset-0 w-full h-full object-cover object-top group-hover:scale-108 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>BACK TO TIER SELECTION</span>
+                </button>
 
-                  <div className="relative z-10">
-                    <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-[0.25em] text-[#C9A84C] bg-black/80 border border-[#C9A84C]/40 uppercase mb-3 inline-block">
-                      HIGH FORMAL TAILORING
-                    </span>
-                    <h2 className="text-3xl md:text-5xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-2">
-                      MEN'S WEAR
-                    </h2>
-                    <p className="text-xs text-[#E8E0CC]/80 mb-6 font-light">
-                      Bespoke double-breasted tuxedos, sharp wool blazers, handcrafted oxford silhouettes & accessories.
-                    </p>
-                    <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#C9A84C] to-[#9B782B] text-black font-extrabold text-xs tracking-widest uppercase shadow-lg">
-                      <span>VIEW MEN'S WEAR</span>
-                      <ArrowRight className="w-4 h-4" />
+                <div className="text-center mb-12">
+                  <span className="inline-block px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold tracking-[0.3em] text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40 uppercase mb-3 font-serif">
+                    {selectedTier === 'premium' ? 'VÆROX PREMIUM HAUTE COUTURE' : 'STANDARD CLASSICS'}
+                  </span>
+                  <h1 className="text-3xl sm:text-5xl font-extrabold text-[#FFF5D6] font-serif tracking-tight mb-4 uppercase">
+                    SELECT CATEGORY
+                  </h1>
+                  <p className="text-[#E8E0CC]/70 text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed">
+                    Choose between Men's Formal Suiting or Women's Evening Atelier.
+                  </p>
+                </div>
+
+                {/* 2 Gender Modal Cards (Horizontal Standard Size: Image Left, Text Right) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+                  {/* Category 1: Men's */}
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleSelectGender('men')}
+                    className="group relative rounded-2xl overflow-hidden border border-[#26241E] bg-[#0A0A0A] cursor-pointer shadow-xl hover:border-[#C9A84C] hover:shadow-[0_0_25px_rgba(201,168,76,0.2)] transition-all duration-300 flex flex-row h-44 sm:h-48"
+                  >
+                    {/* Image Side (Left) */}
+                    <div className="w-2/5 sm:w-1/2 relative h-full overflow-hidden shrink-0">
+                      <img
+                        src={(typeof siteAssets.homeMensCard === 'string' ? siteAssets.homeMensCard : siteAssets.homeMensCard?.url || siteAssets.home_mens_card?.url) || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80"}
+                        alt="Men's Collection"
+                        className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0A0A0A]" />
                     </div>
-                  </div>
-                </motion.div>
 
-                {/* Category 2: Women's */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleSelectGender('women')}
-                  className="group relative rounded-3xl overflow-hidden border border-[#26241E] bg-[#0A0A0A] aspect-[4/5] cursor-pointer shadow-2xl hover:border-[#C9A84C] hover:shadow-[0_0_40px_rgba(201,168,76,0.3)] transition-all duration-500 flex flex-col justify-end p-8 md:p-10"
-                >
-                  <img
-                    src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1000&q=80"
-                    alt="Women's Collection"
-                    className="absolute inset-0 w-full h-full object-cover object-top group-hover:scale-108 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+                    {/* Text Side (Right) */}
+                    <div className="w-3/5 sm:w-1/2 p-4 sm:p-5 flex flex-col justify-between z-10 bg-[#0A0A0A]">
+                      <div>
+                        <span className="text-[9px] font-bold tracking-[0.2em] text-[#C9A84C] uppercase block mb-1">
+                          HIGH FORMAL TAILORING
+                        </span>
+                        <h2 className="text-lg sm:text-xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-1">
+                          MEN'S WEAR
+                        </h2>
+                        <p className="text-[11px] text-[#E8E0CC]/75 line-clamp-2 font-light leading-snug">
+                          Bespoke tuxedos, wool blazers, oxford suits & accessories.
+                        </p>
+                      </div>
 
-                  <div className="relative z-10">
-                    <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-[0.25em] text-[#C9A84C] bg-black/80 border border-[#C9A84C]/40 uppercase mb-3 inline-block">
-                      ATELIER EVENING COUTURE
-                    </span>
-                    <h2 className="text-3xl md:text-5xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-2">
-                      WOMEN'S WEAR
-                    </h2>
-                    <p className="text-xs text-[#E8E0CC]/80 mb-6 font-light">
-                      Sculpted satin evening gowns, tailored power pant-suits & hand-embroidered velvet wraps.
-                    </p>
-                    <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#C9A84C] to-[#9B782B] text-black font-extrabold text-xs tracking-widest uppercase shadow-lg">
-                      <span>VIEW WOMEN'S WEAR</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <div className="inline-flex items-center gap-1.5 text-[#C9A84C] font-extrabold text-[10px] tracking-wider uppercase group-hover:translate-x-1 transition-transform">
+                        <span>EXPLORE MEN'S</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+
+                  {/* Category 2: Women's */}
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleSelectGender('women')}
+                    className="group relative rounded-2xl overflow-hidden border border-[#26241E] bg-[#0A0A0A] cursor-pointer shadow-xl hover:border-[#C9A84C] hover:shadow-[0_0_25px_rgba(201,168,76,0.2)] transition-all duration-300 flex flex-row h-44 sm:h-48"
+                  >
+                    {/* Image Side (Left) */}
+                    <div className="w-2/5 sm:w-1/2 relative h-full overflow-hidden shrink-0">
+                      <img
+                        src={(typeof siteAssets.homeWomensCard === 'string' ? siteAssets.homeWomensCard : siteAssets.homeWomensCard?.url || siteAssets.home_womens_card?.url) || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80"}
+                        alt="Women's Collection"
+                        className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0A0A0A]" />
+                    </div>
+
+                    {/* Text Side (Right) */}
+                    <div className="w-3/5 sm:w-1/2 p-4 sm:p-5 flex flex-col justify-between z-10 bg-[#0A0A0A]">
+                      <div>
+                        <span className="text-[9px] font-bold tracking-[0.2em] text-[#C9A84C] uppercase block mb-1">
+                          ATELIER EVENING COUTURE
+                        </span>
+                        <h2 className="text-lg sm:text-xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-1">
+                          WOMEN'S WEAR
+                        </h2>
+                        <p className="text-[11px] text-[#E8E0CC]/75 line-clamp-2 font-light leading-snug">
+                          Sculpted satin evening gowns, tailored power pant-suits.
+                        </p>
+                      </div>
+
+                      <div className="inline-flex items-center gap-1.5 text-[#C9A84C] font-extrabold text-[10px] tracking-wider uppercase group-hover:translate-x-1 transition-transform">
+                        <span>EXPLORE WOMEN'S</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
               </div>
             </motion.div>
           )}
@@ -416,109 +607,202 @@ const Products = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4 }}
+              className="py-4 px-3 sm:px-6"
             >
-              {/* Top Navigation Bar / Breadcrumb */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 bg-[#0A0A0A] p-4 md:p-6 rounded-2xl border border-[#26241E]">
-                <div>
-                  <span className="text-[10px] font-bold text-[#C9A84C] uppercase tracking-widest block mb-1 font-serif">
-                    PRODUCTS &gt; {selectedTier === 'premium' ? 'VÆROX PREMIUM' : 'STANDARD CLOTHES'} &gt; {selectedGender.toUpperCase()}'S WEAR
-                  </span>
-                  <h1 className="text-xl md:text-2xl font-bold text-[#FFF5D6] font-serif uppercase">
-                    {selectedTier === 'premium' ? `VÆROX PREMIUM ${selectedGender.toUpperCase()}'S ATELIER` : `${selectedGender.toUpperCase()}'S FORMAL COLLECTION`}
-                  </h1>
-                </div>
-
-                <div className="flex items-center gap-3">
+              <div className="max-w-7xl mx-auto">
+                {/* Mobile Filter Toggle Button */}
+                <div className="lg:hidden mb-4 flex justify-between items-center bg-[#0A0A0A] p-3.5 rounded-2xl border border-[#26241E]">
+                  <div>
+                    <span className="text-[9px] font-bold text-[#C9A84C] uppercase tracking-widest block font-serif">
+                      {selectedTier === 'premium' ? 'VÆROX PREMIUM' : 'STANDARD'} &gt; {selectedGender.toUpperCase()}'S WEAR
+                    </span>
+                  </div>
                   <button
-                    onClick={handleResetSelection}
-                    className="px-4 py-2 rounded-xl bg-black border border-[#C9A84C]/40 text-[#C9A84C] hover:bg-[#C9A84C] hover:text-black transition-all text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+                    onClick={() => setIsFilterSidebarOpen(!isFilterSidebarOpen)}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#141414] border border-[#C9A84C]/50 text-[#C9A84C] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
                   >
-                    <ArrowLeft className="w-4 h-4" />
-                    CHANGE SELECTION
+                    <Filter className="w-3.5 h-3.5" />
+                    <span>SIDEBAR FILTERS</span>
                   </button>
                 </div>
-              </div>
 
-              {/* ROLE SUB-CATEGORY PILL BUTTONS (ONLY FOR VAEROX PREMIUM) */}
-              {selectedTier === 'premium' && (
-                <div className="mb-6 bg-[#0A0A0A] p-4 rounded-2xl border border-[#C9A84C]/30">
-                  <span className="text-[10px] font-bold text-[#C9A84C] uppercase tracking-widest block mb-3 font-serif">
-                    SELECT EXECUTIVE / PROFESSION OUTFIT ROLE
-                  </span>
-                  <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
-                    {ROLES_LIST.map((role) => (
+                {/* MAIN CATALOGUE LAYOUT WITH ANIMATED SIDEBAR FILTER */}
+                <div className="flex flex-col lg:flex-row gap-6 md:gap-8 items-start relative">
+                  
+                  {/* ═══ PREMIUM ANIMATED LEFT SIDEBAR ═══ */}
+                  <motion.aside
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className={`w-full lg:w-80 bg-[#0A0A0A] border border-[#26241E] rounded-3xl p-5 sm:p-6 shadow-2xl lg:sticky lg:top-24 z-30 transition-all duration-300 shrink-0 ${
+                      isFilterSidebarOpen ? 'block' : 'hidden lg:block'
+                    }`}
+                  >
+                    {/* Active Collection Header & Selection Reset */}
+                    <div className="pb-5 border-b border-[#26241E] mb-5">
+                      <span className="text-[9px] font-bold text-[#C9A84C] uppercase tracking-widest block mb-1 font-serif">
+                        PRODUCTS &gt; {selectedTier === 'premium' ? 'VÆROX PREMIUM' : 'STANDARD'} &gt; {selectedGender.toUpperCase()}'S WEAR
+                      </span>
+                      <h2 className="text-base sm:text-lg font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-3 leading-snug">
+                        {selectedTier === 'premium' ? `VÆROX PREMIUM ${selectedGender.toUpperCase()}'S ATELIER` : `${selectedGender.toUpperCase()}'S FORMAL COLLECTION`}
+                      </h2>
                       <button
-                        key={role}
-                        onClick={() => setSelectedRole(role)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all border ${
-                          selectedRole === role
-                            ? 'bg-[#C9A84C] text-black border-[#C9A84C] shadow-lg'
-                            : 'bg-black text-[#E8E0CC] border-[#26241E] hover:border-[#C9A84C]/60'
-                        }`}
+                        onClick={handleResetSelection}
+                        className="w-full py-2 px-3 rounded-xl bg-[#141414] border border-[#26241E] text-[#E8E0CC] hover:border-[#C9A84C] hover:text-[#C9A84C] transition-all text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
                       >
-                        {role === 'ALL' ? 'ALL ROLES' : `${role} OUTFITS`}
+                        <ArrowLeft className="w-3.5 h-3.5 text-[#C9A84C]" />
+                        <span>CHANGE SELECTION</span>
                       </button>
-                    ))}
+                    </div>
+
+                    {/* Sidebar Header Title */}
+                    <div className="flex items-center justify-between pb-4 border-b border-[#26241E] mb-5">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-[#C9A84C]" />
+                        <h3 className="font-serif font-bold text-xs text-[#FFF5D6] uppercase tracking-wider">
+                          VÆROX FILTERS
+                        </h3>
+                      </div>
+                      <span className="text-[9px] font-bold text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/30 px-2.5 py-0.5 rounded-full uppercase">
+                        {sortedProducts.length} ITEMS
+                      </span>
+                    </div>
+
+                    {/* SEARCH INPUT */}
+                    <div className="mb-5">
+                      <label className="block text-[10px] font-bold text-[#C9A84C] uppercase tracking-widest mb-1.5 font-serif">
+                        SEARCH COLLECTION
+                      </label>
+                      <div className="relative">
+                        <Search className="w-4 h-4 text-[#C9A84C] absolute left-3.5 top-3" />
+                        <input
+                          type="text"
+                          placeholder="Search suits, tuxedos..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full pl-10 pr-3 py-2.5 bg-[#121212] border border-[#26241E] rounded-xl text-xs text-[#E8E0CC] placeholder-[#A39E93] focus:outline-none focus:border-[#C9A84C] font-sans transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    {/* EXECUTIVE / PROFESSION ROLE FILTER */}
+                    <div className="mb-5">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-[10px] font-bold text-[#C9A84C] uppercase tracking-widest font-serif">
+                          PROFESSION OUTFIT ROLE
+                        </label>
+                        <span className="text-[9px] text-[#A39E93] uppercase font-mono">
+                          {selectedRole}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1 scrollbar-thin">
+                        {ROLES_LIST.map((role) => {
+                          const isSelected = selectedRole === role
+                          return (
+                            <motion.button
+                              key={role}
+                              whileHover={{ x: 3 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => setSelectedRole(role)}
+                              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                                isSelected
+                                  ? 'bg-gradient-to-r from-[#C9A84C] to-[#9B782B] text-black border border-[#C9A84C] shadow-md font-extrabold'
+                                  : 'bg-[#121212] text-[#E8E0CC]/80 border border-[#26241E] hover:border-[#C9A84C]/50 hover:text-[#FFF5D6]'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                {role === 'CEO' && <span className="text-xs">👑</span>}
+                                {role === 'LAWYER' && <span className="text-xs">⚖️</span>}
+                                {role === 'DOCTOR' && <span className="text-xs">🩺</span>}
+                                {role === 'C.A' && <span className="text-xs">📊</span>}
+                                {role === 'MANAGER' && <span className="text-xs">💼</span>}
+                                {role === 'TEACHER' && <span className="text-xs">🎓</span>}
+                                {role === 'ARTIST' && <span className="text-xs">🎨</span>}
+                                {role === 'OWNER' && <span className="text-xs">🏛️</span>}
+                                <span>{role === 'ALL' ? 'ALL EXECUTIVE ROLES' : `${role} OUTFITS`}</span>
+                              </div>
+                              {isSelected && (
+                                <span className="w-2 h-2 rounded-full bg-black" />
+                              )}
+                            </motion.button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* TIER FILTER */}
+                    <div className="mb-5 border-t border-[#26241E] pt-4">
+                      <label className="block text-[10px] font-bold text-[#C9A84C] uppercase tracking-widest mb-1.5 font-serif">
+                        COLLECTION TIER
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => setSelectedTier('standard')}
+                          className={`py-2 px-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border cursor-pointer ${
+                            selectedTier === 'standard'
+                              ? 'bg-[#C9A84C]/15 border-[#C9A84C] text-[#C9A84C]'
+                              : 'bg-[#121212] border-[#26241E] text-[#A39E93] hover:border-[#C9A84C]/40'
+                          }`}
+                        >
+                          STANDARD
+                        </button>
+                        <button
+                          onClick={() => setSelectedTier('premium')}
+                          className={`py-2 px-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border cursor-pointer ${
+                            selectedTier === 'premium'
+                              ? 'bg-[#C9A84C]/15 border-[#C9A84C] text-[#C9A84C]'
+                              : 'bg-[#121212] border-[#26241E] text-[#A39E93] hover:border-[#C9A84C]/40'
+                          }`}
+                        >
+                          VÆROX PREMIUM
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* SORT BY */}
+                    <div className="border-t border-[#26241E] pt-4">
+                      <label className="block text-[10px] font-bold text-[#C9A84C] uppercase tracking-widest mb-1.5 font-serif">
+                        SORT PRODUCTS
+                      </label>
+                      <select
+                        value={sort}
+                        onChange={(e) => setSort(e.target.value)}
+                        className="w-full px-3 py-2 bg-[#121212] border border-[#26241E] rounded-xl text-xs text-[#E8E0CC] focus:outline-none focus:border-[#C9A84C] font-semibold cursor-pointer"
+                      >
+                        <option value="name">Name (A - Z)</option>
+                        <option value="price-low">Price: Low to High</option>
+                        <option value="price-high">Price: High to Low</option>
+                        <option value="newest">Newest Arrivals</option>
+                      </select>
+                    </div>
+                  </motion.aside>
+
+                  {/* ═══ RIGHT COLUMN: PRODUCTS GRID ═══ */}
+                  <div className="flex-1 w-full">
+                    {sortedProducts.length > 0 ? (
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-5">
+                        {sortedProducts.map((product) => (
+                          <ProductCard key={product._id || product.id} product={product} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-[#0A0A0A] border border-[#26241E] rounded-3xl p-12 text-center">
+                        <p className="text-[#A39E93] text-sm mb-4 font-serif">No products found matching your active filter criteria.</p>
+                        <button
+                          onClick={() => {
+                            setSelectedRole('ALL')
+                            setSearchQuery('')
+                          }}
+                          className="px-6 py-2.5 rounded-full bg-[#C9A84C] text-black font-extrabold text-xs uppercase tracking-wider cursor-pointer"
+                        >
+                          Clear Filters
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
-
-              {/* Search & Sort Controls */}
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-                <div className="relative w-full md:w-96">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
-                    <Search className="w-4 h-4 text-[#C9A84C]" />
-                  </span>
-                  <input
-                    type="text"
-                    placeholder={`Search ${selectedGender}'s collection...`}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#0A0A0A] border border-[#26241E] rounded-xl text-xs text-[#E8E0CC] placeholder-[#A39E93] focus:outline-none focus:border-[#C9A84C]"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-                  <label className="text-xs font-bold text-[#C9A84C] uppercase tracking-wider">
-                    Sort By:
-                  </label>
-                  <select
-                    value={sort}
-                    onChange={(e) => setSort(e.target.value)}
-                    className="px-3 py-2 bg-[#0A0A0A] border border-[#26241E] rounded-xl text-xs text-[#E8E0CC] focus:outline-none focus:border-[#C9A84C]"
-                  >
-                    <option value="name">Name (A - Z)</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                    <option value="newest">Newest Arrivals</option>
-                  </select>
-                </div>
               </div>
-
-              {/* Product Cards Grid */}
-              {sortedProducts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {sortedProducts.map((product) => (
-                    <ProductCard key={product._id || product.id} product={product} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-16 bg-[#0A0A0A] rounded-3xl border border-[#26241E] p-8">
-                  <p className="text-lg font-bold text-[#FFF5D6] font-serif mb-2">No Products Found</p>
-                  <p className="text-xs text-[#A39E93] mb-6">
-                    Try adjusting your role filter or search query.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setSearchQuery('')
-                      setSelectedRole('ALL')
-                    }}
-                    className="px-6 py-2.5 bg-[#C9A84C] text-black text-xs font-extrabold rounded-full uppercase tracking-widest"
-                  >
-                    CLEAR FILTERS
-                  </button>
-                </div>
-              )}
             </motion.div>
           )}
         </AnimatePresence>

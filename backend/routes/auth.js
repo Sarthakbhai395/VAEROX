@@ -13,11 +13,11 @@ const router = express.Router();
 
 const { protect } = require('../middleware/auth');
 
-// Auth rate limiter: 15 attempts per 15 minutes per IP
+// Strict Auth Rate Limiter: 5 attempts per 5 minutes per IP
 const authLimiter = rateLimiter({
-  windowMs: 15 * 60 * 1000,
-  max: 15,
-  message: 'Too many authentication attempts. Please try again after 15 minutes.'
+  windowMs: 5 * 60 * 1000,
+  max: 5,
+  message: 'Too many authentication attempts from this IP. Please wait 5 minutes before trying again.'
 });
 
 router.post('/register', authLimiter, register);

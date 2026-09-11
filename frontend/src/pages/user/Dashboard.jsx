@@ -268,18 +268,18 @@ const UserDashboard = () => {
       case 'cart':
         return (
           <motion.div 
-            className="bg-white rounded-2xl border border-slate-100 p-6 md:p-8 shadow-xs"
+            className="bg-[#0A0A0A] rounded-2xl border border-[#26241E] p-6 md:p-8 shadow-2xl text-[#E8E0CC]"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+            <div className="flex justify-between items-center mb-6 flex-wrap gap-4 border-b border-[#26241E] pb-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-800">Your Cart Preview</h2>
-                <p className="text-slate-400 text-xs mt-0.5">Quickly adjust quantities of saved cart items</p>
+                <h2 className="text-lg font-serif font-bold text-[#FFF5D6]">Your Cart Preview</h2>
+                <p className="text-[#A39E93] text-xs mt-0.5">Quickly adjust quantities of saved cart items</p>
               </div>
               <Link 
                 to="/user/cart" 
-                className="text-xs font-bold text-indigo-650 bg-indigo-50 hover:bg-indigo-100/50 px-4 py-2 rounded-xl transition duration-150 border border-indigo-100/30 flex items-center gap-1"
+                className="text-xs font-bold text-[#C9A84C] bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20 px-4 py-2 rounded-xl transition duration-150 border border-[#C9A84C]/30 flex items-center gap-1"
               >
                 Go to Full Cart
                 <ChevronRight size={14} />
@@ -300,10 +300,10 @@ const UserDashboard = () => {
                   return (
                     <div 
                       key={productId}
-                      className="flex items-center p-3.5 border border-slate-100 bg-slate-50/30 rounded-2xl hover:shadow-2xs transition-all duration-300 gap-3 sm:gap-4"
+                      className="flex items-center p-3.5 border border-[#26241E] bg-[#121212] rounded-2xl hover:border-[#C9A84C]/40 transition-all duration-300 gap-3 sm:gap-4"
                     >
                       {product?.image ? (
-                        <div className="w-16 h-16 bg-white border border-slate-100 p-1.5 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <div className="w-16 h-16 bg-[#0A0A0A] border border-[#26241E] p-1.5 rounded-xl flex items-center justify-center flex-shrink-0">
                           <img 
                             src={getProductImageUrl(product.image)} 
                             alt={product.name} 
@@ -314,33 +314,33 @@ const UserDashboard = () => {
                           />
                         </div>
                       ) : (
-                        <div className="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                          <ShoppingBag className="text-slate-300" size={20} />
+                        <div className="w-16 h-16 bg-[#181818] rounded-xl flex items-center justify-center flex-shrink-0">
+                          <ShoppingBag className="text-[#C9A84C]/60" size={20} />
                         </div>
                       )}
                       
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-slate-800 text-xs sm:text-sm line-clamp-1">{product.name}</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide mt-0.5">{product.category}</p>
-                        <p className="font-bold text-slate-900 text-xs sm:text-sm mt-1">{formatCurrency(totalPrice)}</p>
+                        <h3 className="font-bold text-[#FFF5D6] text-xs sm:text-sm line-clamp-1">{product.name}</h3>
+                        <p className="text-[10px] text-[#C9A84C] font-bold uppercase tracking-wide mt-0.5">{product.category}</p>
+                        <p className="font-bold text-[#C9A84C] text-xs sm:text-sm mt-1">{formatCurrency(totalPrice)}</p>
                       </div>
                       
                       {/* Compact quantity controls */}
-                      <div className="flex items-center bg-white border border-slate-200/80 rounded-full shadow-2xs overflow-hidden h-7 w-[68px] sm:w-[84px] px-0.5 justify-between">
+                      <div className="flex items-center bg-[#0A0A0A] border border-[#26241E] rounded-full shadow-2xs overflow-hidden h-7 w-[68px] sm:w-[84px] px-0.5 justify-between">
                         <motion.button 
                           whileTap={{ scale: 0.85 }}
                           onClick={() => handleUpdateQuantity(productId, quantity - 1)}
-                          className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 border border-transparent shadow-3xs transition-all duration-150 text-xs font-bold cursor-pointer select-none"
+                          className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[#E8E0CC] hover:text-[#FFF5D6] hover:bg-[#26241E] transition-all duration-150 text-xs font-bold cursor-pointer select-none"
                         >
                           <Minus size={9} strokeWidth={3} />
                         </motion.button>
-                        <span className="text-[10px] sm:text-xs font-bold text-slate-800 select-none text-center flex-1">
+                        <span className="text-[10px] sm:text-xs font-bold text-[#FFF5D6] select-none text-center flex-1">
                           {quantity}
                         </span>
                         <motion.button 
                           whileTap={{ scale: 0.85 }}
                           onClick={() => handleUpdateQuantity(productId, quantity + 1)}
-                          className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 border border-transparent shadow-3xs transition-all duration-150 text-xs font-bold cursor-pointer select-none"
+                          className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[#E8E0CC] hover:text-[#FFF5D6] hover:bg-[#26241E] transition-all duration-150 text-xs font-bold cursor-pointer select-none"
                         >
                           <Plus size={9} strokeWidth={3} />
                         </motion.button>
@@ -350,7 +350,7 @@ const UserDashboard = () => {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => handleUpdateQuantity(productId, 0)}
-                        className="p-2 text-rose-500 hover:text-rose-700 bg-rose-50 rounded-xl transition duration-150 cursor-pointer"
+                        className="p-2 text-rose-400 hover:text-rose-300 bg-rose-950/40 border border-rose-900/40 rounded-xl transition duration-150 cursor-pointer"
                         title="Remove Item"
                       >
                         <Trash2 size={13} />
@@ -360,10 +360,10 @@ const UserDashboard = () => {
                 })}
               </div>
             ) : (
-              <div className="text-center py-10 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 p-6">
-                <ShoppingBag className="w-10 h-10 text-slate-350 mx-auto mb-3" />
-                <p className="text-slate-450 text-xs sm:text-sm font-semibold">Your shopping cart is currently empty.</p>
-                <Link to="/products" className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-white bg-indigo-650 hover:bg-indigo-755 px-5 py-2.5 rounded-xl transition duration-150 shadow-sm shadow-indigo-100">
+              <div className="text-center py-10 bg-[#121212] rounded-2xl border border-dashed border-[#26241E] p-6">
+                <ShoppingBag className="w-10 h-10 text-[#C9A84C]/40 mx-auto mb-3" />
+                <p className="text-[#FFF5D6] text-xs sm:text-sm font-semibold">Your shopping cart is currently empty.</p>
+                <Link to="/products" className="mt-4 inline-flex items-center gap-1.5 text-xs font-extrabold text-black bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] px-5 py-2.5 rounded-xl transition duration-150 shadow-md">
                   Shop Products
                   <ArrowRight size={12} />
                 </Link>
@@ -375,18 +375,18 @@ const UserDashboard = () => {
       case 'wishlist':
         return (
           <motion.div 
-            className="bg-white rounded-2xl border border-slate-100 p-6 md:p-8 shadow-xs"
+            className="bg-[#0A0A0A] rounded-2xl border border-[#26241E] p-6 md:p-8 shadow-2xl text-[#E8E0CC]"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+            <div className="flex justify-between items-center mb-6 flex-wrap gap-4 border-b border-[#26241E] pb-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-800">My Saved Wishlist</h2>
-                <p className="text-slate-400 text-xs mt-0.5">Quick look at items saved to buy later</p>
+                <h2 className="text-lg font-serif font-bold text-[#FFF5D6]">My Saved Wishlist</h2>
+                <p className="text-[#A39E93] text-xs mt-0.5">Quick look at items saved to buy later</p>
               </div>
               <Link 
                 to="/user/wishlist" 
-                className="text-xs font-bold text-indigo-650 bg-indigo-50 hover:bg-indigo-100/50 px-4 py-2 rounded-xl transition duration-150 border border-indigo-100/30 flex items-center gap-1"
+                className="text-xs font-bold text-[#C9A84C] bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20 px-4 py-2 rounded-xl transition duration-150 border border-[#C9A84C]/30 flex items-center gap-1"
               >
                 Go to Wishlist
                 <ChevronRight size={14} />
@@ -405,10 +405,10 @@ const UserDashboard = () => {
                   return (
                     <div 
                       key={productId}
-                      className="flex items-center p-3.5 border border-slate-100 bg-slate-50/30 rounded-2xl hover:shadow-2xs transition-all duration-300 gap-3"
+                      className="flex items-center p-3.5 border border-[#26241E] bg-[#121212] rounded-2xl hover:border-[#C9A84C]/40 transition-all duration-300 gap-3"
                     >
                       {product?.image ? (
-                        <div className="w-16 h-16 bg-white border border-slate-100 p-1.5 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <div className="w-16 h-16 bg-[#0A0A0A] border border-[#26241E] p-1.5 rounded-xl flex items-center justify-center flex-shrink-0">
                           <img 
                             src={getProductImageUrl(product.image)} 
                             alt={product.name} 
@@ -419,20 +419,20 @@ const UserDashboard = () => {
                           />
                         </div>
                       ) : (
-                        <div className="w-16 h-16 bg-slate-150 rounded-xl flex-shrink-0 flex items-center justify-center text-slate-400">
+                        <div className="w-16 h-16 bg-[#181818] rounded-xl flex-shrink-0 flex items-center justify-center text-[#C9A84C]/60">
                           <ShoppingBag size={18} />
                         </div>
                       )}
                       
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-slate-800 text-xs sm:text-sm line-clamp-1">{product.name}</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide mt-0.5">{product.category}</p>
-                        <p className="font-bold text-slate-900 text-xs sm:text-sm mt-1">{formatCurrency(discountedPrice)}</p>
+                        <h3 className="font-bold text-[#FFF5D6] text-xs sm:text-sm line-clamp-1">{product.name}</h3>
+                        <p className="text-[10px] text-[#C9A84C] font-bold uppercase tracking-wide mt-0.5">{product.category}</p>
+                        <p className="font-bold text-[#C9A84C] text-xs sm:text-sm mt-1">{formatCurrency(discountedPrice)}</p>
                       </div>
                       
                       <Link 
                         to={`/product/${productId}`}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition duration-200 shadow-xs flex items-center gap-1 flex-shrink-0"
+                        className="bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold py-2 px-4 rounded-xl text-xs transition duration-200 shadow-md flex items-center gap-1 flex-shrink-0 uppercase tracking-wider"
                       >
                         View Product
                         <ChevronRight size={12} />
@@ -445,7 +445,7 @@ const UserDashboard = () => {
                   <div className="text-center pt-2">
                     <button 
                       onClick={() => setActiveSection('wishlist')}
-                      className="text-indigo-650 hover:text-indigo-850 text-xs font-bold transition duration-150 cursor-pointer"
+                      className="text-[#C9A84C] hover:text-[#FFF5D6] text-xs font-bold transition duration-150 cursor-pointer"
                     >
                       + {wishlistItems.length - 3} more items in your wishlist
                     </button>
@@ -453,10 +453,10 @@ const UserDashboard = () => {
                 )}
               </div>
             ) : (
-              <div className="text-center py-10 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 p-6">
-                <Heart className="w-10 h-10 text-slate-350 mx-auto mb-3" />
-                <p className="text-slate-450 text-xs sm:text-sm font-semibold">Your wishlist is currently empty.</p>
-                <Link to="/products" className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-white bg-indigo-650 hover:bg-indigo-755 px-5 py-2.5 rounded-xl transition duration-150 shadow-sm shadow-indigo-100">
+              <div className="text-center py-10 bg-[#121212] rounded-2xl border border-dashed border-[#26241E] p-6">
+                <Heart className="w-10 h-10 text-[#C9A84C]/40 mx-auto mb-3" />
+                <p className="text-[#FFF5D6] text-xs sm:text-sm font-semibold">Your wishlist is currently empty.</p>
+                <Link to="/products" className="mt-4 inline-flex items-center gap-1.5 text-xs font-extrabold text-black bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] px-5 py-2.5 rounded-xl transition duration-150 shadow-md">
                   Find Favorites
                   <ArrowRight size={12} />
                 </Link>
@@ -465,21 +465,140 @@ const UserDashboard = () => {
           </motion.div>
         )
       
-      case 'messages':
+      case 'queries':
         return (
           <motion.div 
-            className="bg-white rounded-2xl border border-slate-100 p-6 md:p-8 shadow-xs"
+            className="bg-[#0A0A0A] rounded-2xl border border-[#26241E] p-6 md:p-8 shadow-2xl text-[#E8E0CC]"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+            <div className="flex items-center justify-between mb-6 flex-wrap gap-4 border-b border-[#26241E] pb-5">
               <div>
-                <h2 className="text-lg font-bold text-slate-800">Support Messages</h2>
-                <p className="text-slate-400 text-xs mt-0.5">Tickets and messages sent to our seller support</p>
+                <span className="text-[10px] font-bold text-[#C9A84C] uppercase tracking-widest font-serif block">
+                  MY CONTACT FORM INQUIRIES
+                </span>
+                <h2 className="text-xl font-serif font-bold text-[#FFF5D6] uppercase">My Queries & Replies</h2>
+                <p className="text-[#A39E93] text-xs mt-0.5 font-light">
+                  Track all your contact form submissions and official admin replies.
+                </p>
               </div>
               <Link 
                 to="/contact" 
-                className="text-xs font-bold text-indigo-650 bg-indigo-50 hover:bg-indigo-100/50 px-4 py-2 rounded-xl transition duration-150 border border-indigo-100/30 flex items-center gap-1"
+                className="text-xs font-bold text-black bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] hover:scale-105 px-4 py-2.5 rounded-xl transition-all duration-200 uppercase tracking-wider flex items-center gap-1.5 shadow-md"
+              >
+                <Plus size={14} />
+                Submit New Query
+              </Link>
+            </div>
+
+            {loadingMessages ? (
+              <div className="flex flex-col justify-center items-center py-12 gap-3 bg-[#121212] rounded-2xl border border-[#26241E]">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#C9A84C] border-t-transparent"></div>
+                <span className="text-xs font-semibold text-[#A39E93]">Loading your queries...</span>
+              </div>
+            ) : contactMessages.length > 0 ? (
+              <div className="space-y-6">
+                {contactMessages.map((msg) => {
+                  const hasReply = msg.isReplied || msg.replyMessage || msg.response;
+                  const replyText = msg.replyMessage || msg.response?.message;
+                  const replyDate = msg.replyDate || msg.response?.createdAt;
+
+                  return (
+                    <div 
+                      key={msg._id} 
+                      className="border border-[#26241E] hover:border-[#C9A84C]/40 rounded-2xl p-5 sm:p-6 bg-[#121212] transition-all duration-300 shadow-xl"
+                    >
+                      {/* Top Bar: Subject & Status */}
+                      <div className="flex justify-between items-start gap-4 flex-wrap pb-3 border-b border-[#26241E]">
+                        <div>
+                          <span className="text-[10px] font-bold text-[#C9A84C] uppercase tracking-widest font-serif block">
+                            SUBJECT
+                          </span>
+                          <h3 className="font-bold font-serif text-[#FFF5D6] text-base sm:text-lg">
+                            {msg.subject || 'General Contact Inquiry'}
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-[#A39E93] font-mono">
+                            {new Date(msg.createdAt).toLocaleString()}
+                          </span>
+                          <span className={`px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-full border ${
+                            hasReply 
+                              ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40' 
+                              : 'bg-amber-950/60 text-amber-300 border-amber-500/40'
+                          }`}>
+                            {hasReply ? 'Admin Replied' : 'Pending Response'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* User's Original Message */}
+                      <div className="py-4">
+                        <span className="text-[10px] font-bold text-[#A39E93] uppercase tracking-wider block mb-1">
+                          Your Submitted Query:
+                        </span>
+                        <div className="text-[#E8E0CC]/90 text-xs sm:text-sm leading-relaxed bg-[#0A0A0A] p-4 rounded-xl border border-[#26241E] font-sans">
+                          {msg.message}
+                        </div>
+                      </div>
+
+                      {/* Official Admin Reply Banner */}
+                      {hasReply ? (
+                        <div className="mt-2 p-5 bg-gradient-to-br from-[#1F1B10] to-[#121212] border-2 border-[#C9A84C]/40 rounded-xl space-y-2 shadow-inner">
+                          <div className="flex justify-between items-center flex-wrap gap-2 pb-2 border-b border-[#C9A84C]/20">
+                            <h4 className="font-serif font-bold text-[#FFF5D6] text-xs sm:text-sm flex items-center gap-2">
+                              <Sparkles size={14} className="text-[#C9A84C]" />
+                              Official Admin Response
+                            </h4>
+                            {replyDate && (
+                              <span className="text-[10px] font-mono text-[#C9A84C]">
+                                {new Date(replyDate).toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[#FFF5D6] text-xs sm:text-sm leading-relaxed font-serif italic pt-1">
+                            "{replyText}"
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="mt-2 p-3 bg-[#181612] border border-[#26241E] rounded-xl flex items-center gap-2 text-xs text-[#A39E93] italic">
+                          <AlertCircle size={14} className="text-[#C9A84C]" />
+                          <span>Our support team is reviewing your query. Response will appear here once replied.</span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-[#121212] rounded-2xl border border-dashed border-[#26241E] p-6">
+                <MessageSquare className="w-12 h-12 text-[#C9A84C]/40 mx-auto mb-3" />
+                <p className="text-[#FFF5D6] font-serif text-sm font-semibold">You haven't submitted any queries yet.</p>
+                <p className="text-[#A39E93] text-xs mt-1">If you have any questions or feedback, feel free to contact us.</p>
+                <Link to="/contact" className="mt-5 inline-flex items-center gap-2 text-xs font-extrabold text-black bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] px-6 py-3 rounded-xl uppercase tracking-wider transition-all duration-200 shadow-md">
+                  Contact Us Now
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+            )}
+          </motion.div>
+        )
+
+      case 'messages':
+        return (
+          <motion.div 
+            className="bg-[#0A0A0A] rounded-2xl border border-[#26241E] p-6 md:p-8 shadow-2xl text-[#E8E0CC]"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="flex items-center justify-between mb-6 flex-wrap gap-4 border-b border-[#26241E] pb-4">
+              <div>
+                <h2 className="text-lg font-serif font-bold text-[#FFF5D6]">Support Messages</h2>
+                <p className="text-[#A39E93] text-xs mt-0.5">Tickets and messages sent to our seller support</p>
+              </div>
+              <Link 
+                to="/contact" 
+                className="text-xs font-bold text-[#C9A84C] bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20 px-4 py-2 rounded-xl transition duration-150 border border-[#C9A84C]/30 flex items-center gap-1"
               >
                 Send New Message
                 <Plus size={14} />
@@ -487,56 +606,56 @@ const UserDashboard = () => {
             </div>
 
             {loadingMessages ? (
-              <div className="flex flex-col justify-center items-center py-10 gap-3 bg-slate-50/40 rounded-2xl border border-slate-100">
-                <div className="animate-spin rounded-full h-7 w-7 border-2 border-indigo-600 border-t-transparent"></div>
-                <span className="text-xs font-semibold text-slate-450">Loading ticket threads...</span>
+              <div className="flex flex-col justify-center items-center py-10 gap-3 bg-[#121212] rounded-2xl border border-[#26241E]">
+                <div className="animate-spin rounded-full h-7 w-7 border-2 border-[#C9A84C] border-t-transparent"></div>
+                <span className="text-xs font-semibold text-[#A39E93]">Loading ticket threads...</span>
               </div>
             ) : contactMessages.length > 0 ? (
               <div className="space-y-5">
                 {contactMessages.map((message) => (
                   <div 
                     key={message._id} 
-                    className="border border-slate-100 rounded-2xl p-4 bg-slate-50/30 hover:shadow-2xs transition-all duration-300"
+                    className="border border-[#26241E] rounded-2xl p-4 bg-[#121212] hover:border-[#C9A84C]/40 transition-all duration-300"
                   >
                     <div className="flex justify-between items-start gap-4 flex-wrap">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-bold text-slate-800 text-sm sm:text-base">{message.subject}</h3>
-                          <span className={`px-2 py-0.5 text-[9px] font-bold rounded-full border ${
+                          <h3 className="font-bold text-[#FFF5D6] text-sm sm:text-base">{message.subject}</h3>
+                          <span className={`px-2 py-0.5 text-[9px] font-extrabold rounded-full border uppercase ${
                             message.response 
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100/60' 
-                              : 'bg-amber-50 text-amber-700 border-amber-100/60'
+                              ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40' 
+                              : 'bg-amber-950/60 text-amber-300 border-amber-500/40'
                           }`}>
                             {message.response ? 'Replied' : 'Sent'}
                           </span>
                         </div>
-                        <p className="text-slate-600 text-xs sm:text-sm mt-2 leading-relaxed bg-white/70 p-3 rounded-xl border border-slate-100/50">{message.message}</p>
+                        <p className="text-[#E8E0CC]/90 text-xs sm:text-sm mt-2 leading-relaxed bg-[#0A0A0A] p-3 rounded-xl border border-[#26241E]">{message.message}</p>
                       </div>
-                      <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap bg-slate-100 px-2 py-0.5 rounded">
+                      <span className="text-[10px] font-bold text-[#A39E93] whitespace-nowrap bg-[#181818] px-2 py-0.5 rounded border border-[#26241E]">
                         {new Date(message.createdAt).toLocaleDateString()}
                       </span>
                     </div>
 
-                    <div className="mt-3 flex items-center text-[10px] text-slate-400 gap-1.5 px-1 font-semibold">
+                    <div className="mt-3 flex items-center text-[10px] text-[#A39E93] gap-1.5 px-1 font-semibold">
                       <span>Ticket ID:</span>
-                      <span className="font-mono text-slate-550">{message._id.substring(0, 10).toUpperCase()}</span>
+                      <span className="font-mono text-[#C9A84C]">{message._id.substring(0, 10).toUpperCase()}</span>
                     </div>
                     
                     {/* Seller Response */}
                     {message.response && (
-                      <div className="mt-4 p-4 bg-gradient-to-r from-indigo-50/40 to-violet-50/40 border border-indigo-150/40 rounded-xl relative overflow-hidden">
+                      <div className="mt-4 p-4 bg-gradient-to-br from-[#1F1B10] to-[#121212] border border-[#C9A84C]/40 rounded-xl relative overflow-hidden">
                         <div className="flex justify-between items-center gap-4 flex-wrap">
-                          <h4 className="font-bold text-indigo-900 text-xs sm:text-sm flex items-center gap-1.5">
-                            <MessageSquare size={13} className="text-indigo-600 animate-pulse" />
+                          <h4 className="font-bold text-[#FFF5D6] text-xs sm:text-sm flex items-center gap-1.5 font-serif">
+                            <MessageSquare size={13} className="text-[#C9A84C] animate-pulse" />
                             Seller Response
                           </h4>
-                          <span className="text-[9px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded">
+                          <span className="text-[9px] font-bold text-[#C9A84C] bg-[#0A0A0A] px-2 py-0.5 rounded border border-[#26241E]">
                             {new Date(message.response.createdAt).toLocaleDateString()}
                           </span>
                         </div>
                         <div className="mt-2.5">
-                          <p className="text-slate-650 text-xs sm:text-sm leading-relaxed bg-white/70 p-3 rounded-lg border border-indigo-55/20">{message.response.message}</p>
-                          <div className="mt-2.5 flex items-center text-[10px] text-indigo-500/80 font-bold gap-1 pl-1">
+                          <p className="text-[#FFF5D6] text-xs sm:text-sm leading-relaxed bg-[#0A0A0A] p-3 rounded-lg border border-[#26241E] font-serif italic">{message.response.message}</p>
+                          <div className="mt-2.5 flex items-center text-[10px] text-[#C9A84C] font-bold gap-1 pl-1">
                             <Sparkles size={10} />
                             <span>Staff Agent: {message.response.name}</span>
                           </div>
@@ -547,10 +666,10 @@ const UserDashboard = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-10 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 p-6">
-                <MessageSquare className="w-10 h-10 text-slate-350 mx-auto mb-3" />
-                <p className="text-slate-450 text-xs sm:text-sm font-semibold">No messages or support tickets found.</p>
-                <Link to="/contact" className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-white bg-indigo-650 hover:bg-indigo-755 px-5 py-2.5 rounded-xl transition duration-150 shadow-sm shadow-indigo-100">
+              <div className="text-center py-10 bg-[#121212] rounded-2xl border border-dashed border-[#26241E] p-6">
+                <MessageSquare className="w-10 h-10 text-[#C9A84C]/40 mx-auto mb-3" />
+                <p className="text-[#FFF5D6] text-xs sm:text-sm font-semibold">No messages or support tickets found.</p>
+                <Link to="/contact" className="mt-4 inline-flex items-center gap-1.5 text-xs font-extrabold text-black bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] px-5 py-2.5 rounded-xl transition duration-150 shadow-md uppercase tracking-wider">
                   Contact Support
                   <ArrowRight size={12} />
                 </Link>
@@ -569,14 +688,14 @@ const UserDashboard = () => {
               <motion.div 
                 whileHover={{ scale: 1.02, y: -2 }}
                 onClick={() => setActiveSection('cart')}
-                className="bg-white p-4.5 rounded-2xl border border-slate-100 shadow-3xs flex items-center gap-3.5 cursor-pointer hover:border-indigo-150 transition-all duration-200"
+                className="bg-[#0A0A0A] p-4.5 rounded-2xl border border-[#26241E] shadow-xl flex items-center gap-3.5 cursor-pointer hover:border-[#C9A84C]/70 transition-all duration-200"
               >
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-650 flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#141414] border border-[#26241E] flex items-center justify-center text-[#C9A84C] flex-shrink-0">
                   <ShoppingCart size={18} />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Cart Items</span>
-                  <h4 className="text-base sm:text-lg font-black text-slate-800 mt-0.5">{cartItems.length}</h4>
+                  <span className="text-[10px] font-bold text-[#A39E93] uppercase tracking-wide">Cart Items</span>
+                  <h4 className="text-base sm:text-lg font-serif font-black text-[#FFF5D6] mt-0.5">{cartItems.length}</h4>
                 </div>
               </motion.div>
 
@@ -584,14 +703,14 @@ const UserDashboard = () => {
               <motion.div 
                 whileHover={{ scale: 1.02, y: -2 }}
                 onClick={() => setActiveSection('wishlist')}
-                className="bg-white p-4.5 rounded-2xl border border-slate-100 shadow-3xs flex items-center gap-3.5 cursor-pointer hover:border-rose-150 transition-all duration-200"
+                className="bg-[#0A0A0A] p-4.5 rounded-2xl border border-[#26241E] shadow-xl flex items-center gap-3.5 cursor-pointer hover:border-[#C9A84C]/70 transition-all duration-200"
               >
-                <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500 flex-shrink-0">
-                  <Heart size={18} className="fill-rose-50" />
+                <div className="w-10 h-10 rounded-xl bg-[#141414] border border-[#26241E] flex items-center justify-center text-rose-400 flex-shrink-0">
+                  <Heart size={18} className="fill-rose-950" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Saved Items</span>
-                  <h4 className="text-base sm:text-lg font-black text-slate-800 mt-0.5">{wishlistItems.length}</h4>
+                  <span className="text-[10px] font-bold text-[#A39E93] uppercase tracking-wide">Saved Items</span>
+                  <h4 className="text-base sm:text-lg font-serif font-black text-[#FFF5D6] mt-0.5">{wishlistItems.length}</h4>
                 </div>
               </motion.div>
 
@@ -599,14 +718,14 @@ const UserDashboard = () => {
               <motion.div 
                 whileHover={{ scale: 1.02, y: -2 }}
                 onClick={() => setActiveSection('messages')}
-                className="bg-white p-4.5 rounded-2xl border border-slate-100 shadow-3xs flex items-center gap-3.5 cursor-pointer hover:border-amber-150 transition-all duration-200"
+                className="bg-[#0A0A0A] p-4.5 rounded-2xl border border-[#26241E] shadow-xl flex items-center gap-3.5 cursor-pointer hover:border-[#C9A84C]/70 transition-all duration-200"
               >
-                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#141414] border border-[#26241E] flex items-center justify-center text-[#C9A84C] flex-shrink-0">
                   <MessageSquare size={18} />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Messages</span>
-                  <h4 className="text-base sm:text-lg font-black text-slate-800 mt-0.5">
+                  <span className="text-[10px] font-bold text-[#A39E93] uppercase tracking-wide">Messages</span>
+                  <h4 className="text-base sm:text-lg font-serif font-black text-[#FFF5D6] mt-0.5">
                     {loadingMessages ? '...' : contactMessages.length}
                   </h4>
                 </div>
@@ -616,14 +735,14 @@ const UserDashboard = () => {
               <motion.div 
                 whileHover={{ scale: 1.02, y: -2 }}
                 onClick={() => setActiveSection('profile')}
-                className="bg-white p-4.5 rounded-2xl border border-slate-100 shadow-3xs flex items-center gap-3.5 cursor-pointer hover:border-emerald-150 transition-all duration-200"
+                className="bg-[#0A0A0A] p-4.5 rounded-2xl border border-[#26241E] shadow-xl flex items-center gap-3.5 cursor-pointer hover:border-[#C9A84C]/70 transition-all duration-200"
               >
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-650 flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#141414] border border-[#26241E] flex items-center justify-center text-emerald-400 flex-shrink-0">
                   <ShieldCheck size={18} />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Account Status</span>
-                  <h4 className="text-xs sm:text-sm font-extrabold text-emerald-600 mt-1 capitalize">{user?.role || 'User'}</h4>
+                  <span className="text-[10px] font-bold text-[#A39E93] uppercase tracking-wide">Account Status</span>
+                  <h4 className="text-xs sm:text-sm font-extrabold text-emerald-400 mt-1 capitalize">{user?.role || 'User'}</h4>
                 </div>
               </motion.div>
             </div>
@@ -632,12 +751,12 @@ const UserDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               
               {/* Profile Overview Card */}
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-xs p-5 sm:p-6 space-y-4">
+              <div className="bg-[#0A0A0A] rounded-2xl border border-[#26241E] shadow-2xl p-5 sm:p-6 space-y-4 text-[#E8E0CC]">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wide">Account Summary</h3>
+                  <h3 className="text-sm font-serif font-extrabold text-[#FFF5D6] uppercase tracking-wide">Account Summary</h3>
                   <button 
                     onClick={() => setActiveSection('profile')}
-                    className="text-xs font-bold text-indigo-650 hover:underline flex items-center gap-0.5 cursor-pointer"
+                    className="text-xs font-bold text-[#C9A84C] hover:underline flex items-center gap-0.5 cursor-pointer"
                   >
                     Details
                     <ChevronRight size={12} />
@@ -645,31 +764,31 @@ const UserDashboard = () => {
                 </div>
                 
                 {/* Circular Profile Avatar info */}
-                <div className="flex items-center gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100/60">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center text-white font-black text-sm">
+                <div className="flex items-center gap-4 bg-[#121212] p-4 rounded-xl border border-[#26241E]">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] flex items-center justify-center text-black font-black text-sm shadow-md">
                     {getInitials(user?.name)}
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-bold text-slate-800 text-sm truncate">{user?.name}</h4>
-                    <p className="text-slate-400 text-xs truncate mt-0.5">{user?.email}</p>
-                    <span className="text-[9px] font-extrabold text-indigo-650 bg-indigo-50/80 px-2 py-0.5 rounded-full uppercase tracking-wider mt-1.5 inline-block">
+                    <h4 className="font-serif font-bold text-[#FFF5D6] text-sm truncate">{user?.name}</h4>
+                    <p className="text-[#A39E93] text-xs truncate mt-0.5">{user?.email}</p>
+                    <span className="text-[9px] font-extrabold text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/30 px-2.5 py-0.5 rounded-full uppercase tracking-wider mt-1.5 inline-block">
                       {user?.role}
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-2.5 text-xs sm:text-sm text-slate-650 pt-1">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400 font-semibold">User ID</span>
-                    <span className="font-mono text-slate-800 font-bold">{user?._id?.substring(0, 12)}...</span>
+                <div className="space-y-2.5 text-xs sm:text-sm text-[#E8E0CC]/80 pt-1">
+                  <div className="flex justify-between border-b border-[#26241E] pb-2">
+                    <span className="text-[#A39E93] font-semibold">User ID</span>
+                    <span className="font-mono text-[#FFF5D6] font-bold">{user?._id?.substring(0, 12)}...</span>
+                  </div>
+                  <div className="flex justify-between border-b border-[#26241E] pb-2">
+                    <span className="text-[#A39E93] font-semibold">Security Level</span>
+                    <span className="text-[#FFF5D6] font-bold">Standard Client</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400 font-semibold">Security Level</span>
-                    <span className="text-slate-800 font-bold">Standard Client</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400 font-semibold">Creation Date</span>
-                    <span className="text-slate-800 font-bold">
+                    <span className="text-[#A39E93] font-semibold">Creation Date</span>
+                    <span className="text-[#FFF5D6] font-bold">
                       {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                     </span>
                   </div>
@@ -677,12 +796,12 @@ const UserDashboard = () => {
               </div>
 
               {/* Cart Summary Card */}
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-xs p-5 sm:p-6 space-y-4">
+              <div className="bg-[#0A0A0A] rounded-2xl border border-[#26241E] shadow-2xl p-5 sm:p-6 space-y-4 text-[#E8E0CC]">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wide">Cart Overview</h3>
+                  <h3 className="text-sm font-serif font-extrabold text-[#FFF5D6] uppercase tracking-wide">Cart Overview</h3>
                   <button 
                     onClick={() => setActiveSection('cart')}
-                    className="text-xs font-bold text-indigo-650 hover:underline flex items-center gap-0.5 cursor-pointer"
+                    className="text-xs font-bold text-[#C9A84C] hover:underline flex items-center gap-0.5 cursor-pointer"
                   >
                     Edit Cart
                     <ChevronRight size={12} />
@@ -698,24 +817,24 @@ const UserDashboard = () => {
                         : product.price
 
                       return (
-                        <div key={product._id || product.id} className="flex justify-between items-center text-xs py-1.5 border-b border-slate-100/50">
-                          <span className="text-slate-700 font-medium truncate max-w-[200px]">{product.name}</span>
-                          <span className="font-bold text-slate-900">{formatCurrency(discountedPrice * (item.quantity || 1))}</span>
+                        <div key={product._id || product.id} className="flex justify-between items-center text-xs py-2 border-b border-[#26241E]">
+                          <span className="text-[#E8E0CC] font-medium truncate max-w-[200px]">{product.name}</span>
+                          <span className="font-bold text-[#C9A84C]">{formatCurrency(discountedPrice * (item.quantity || 1))}</span>
                         </div>
                       )
                     })}
                     {cartItems.length > 2 && (
-                      <p className="text-[10px] font-bold text-slate-400 pt-1">+ {cartItems.length - 2} more items in cart</p>
+                      <p className="text-[10px] font-bold text-[#A39E93] pt-1">+ {cartItems.length - 2} more items in cart</p>
                     )}
-                    <Link to="/checkout" className="w-full mt-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider shadow-xs flex items-center justify-center gap-1.5 transition duration-150">
+                    <Link to="/user/cart" className="w-full mt-3 bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold py-2.5 rounded-xl text-xs uppercase tracking-wider shadow-md flex items-center justify-center gap-1.5 transition duration-150">
                       Place Order
                       <ArrowRight size={12} />
                     </Link>
                   </div>
                 ) : (
-                  <div className="text-center py-6 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-                    <ShoppingBag size={18} className="text-slate-350 mx-auto mb-2" />
-                    <p className="text-slate-400 text-xs font-semibold">Your cart is currently empty.</p>
+                  <div className="text-center py-6 bg-[#121212] rounded-xl border border-dashed border-[#26241E]">
+                    <ShoppingBag size={18} className="text-[#C9A84C]/40 mx-auto mb-2" />
+                    <p className="text-[#A39E93] text-xs font-semibold">Your cart is currently empty.</p>
                   </div>
                 )}
               </div>
@@ -723,12 +842,12 @@ const UserDashboard = () => {
             </div>
 
             {/* Support Messages Widget */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-xs p-5 sm:p-6 space-y-4">
+            <div className="bg-[#0A0A0A] rounded-2xl border border-[#26241E] shadow-2xl p-5 sm:p-6 space-y-4 text-[#E8E0CC]">
               <div className="flex justify-between items-center">
-                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wide">Recent Help Message</h3>
+                <h3 className="text-sm font-serif font-extrabold text-[#FFF5D6] uppercase tracking-wide">Recent Help Message</h3>
                 <button 
                   onClick={() => setActiveSection('messages')}
-                  className="text-xs font-bold text-indigo-650 hover:underline flex items-center gap-0.5 cursor-pointer"
+                  className="text-xs font-bold text-[#C9A84C] hover:underline flex items-center gap-0.5 cursor-pointer"
                 >
                   View All
                   <ChevronRight size={12} />
@@ -736,58 +855,58 @@ const UserDashboard = () => {
               </div>
 
               {loadingMessages ? (
-                <div className="flex items-center justify-center py-6 bg-slate-50/40 rounded-xl">
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-indigo-650 border-t-transparent"></div>
+                <div className="flex items-center justify-center py-6 bg-[#121212] rounded-xl border border-[#26241E]">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#C9A84C] border-t-transparent"></div>
                 </div>
               ) : contactMessages.length > 0 ? (
-                <div className="p-3 border border-slate-100 bg-slate-50/40 rounded-xl space-y-2">
+                <div className="p-3 border border-[#26241E] bg-[#121212] rounded-xl space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="font-bold text-slate-800 text-xs sm:text-sm truncate max-w-[200px]">
+                    <span className="font-bold text-[#FFF5D6] text-xs sm:text-sm truncate max-w-[200px]">
                       {contactMessages[0].subject}
                     </span>
-                    <span className={`px-2 py-0.5 text-[8px] font-bold rounded-full ${
-                      contactMessages[0].response ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                    <span className={`px-2 py-0.5 text-[8px] font-extrabold rounded-full uppercase border ${
+                      contactMessages[0].response ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40' : 'bg-amber-950/60 text-amber-300 border-amber-500/40'
                     }`}>
                       {contactMessages[0].response ? 'Replied' : 'Sent'}
                     </span>
                   </div>
-                  <p className="text-slate-500 text-xs line-clamp-2 leading-relaxed bg-white/70 p-2.5 rounded-lg border border-slate-100/50">
+                  <p className="text-[#A39E93] text-xs line-clamp-2 leading-relaxed bg-[#0A0A0A] p-2.5 rounded-lg border border-[#26241E]">
                     {contactMessages[0].message}
                   </p>
                 </div>
               ) : (
-                <div className="text-center py-6 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-                  <MessageSquare size={18} className="text-slate-350 mx-auto mb-2" />
-                  <p className="text-slate-400 text-xs font-semibold">No recent messages.</p>
+                <div className="text-center py-6 bg-[#121212] rounded-xl border border-dashed border-[#26241E]">
+                  <MessageSquare size={18} className="text-[#C9A84C]/40 mx-auto mb-2" />
+                  <p className="text-[#A39E93] text-xs font-semibold">No recent messages.</p>
                 </div>
               )}
             </div>
 
             {/* Quick Actions Panel */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-xs p-5 sm:p-6">
-              <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wide mb-4">Quick Actions</h3>
+            <div className="bg-[#0A0A0A] rounded-2xl border border-[#26241E] shadow-2xl p-5 sm:p-6 text-[#E8E0CC]">
+              <h3 className="text-sm font-serif font-extrabold text-[#FFF5D6] uppercase tracking-wide mb-4">Quick Actions</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <button 
                   onClick={() => navigate('/products')}
-                  className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 px-3 rounded-xl transition duration-150 text-xs uppercase tracking-wider text-center border border-slate-150/40 cursor-pointer"
+                  className="bg-[#121212] hover:bg-[#1A1A1A] text-[#FFF5D6] font-bold py-3 px-3 rounded-xl transition duration-150 text-xs uppercase tracking-wider text-center border border-[#26241E] hover:border-[#C9A84C]/40 cursor-pointer"
                 >
                   Browse Catalog
                 </button>
                 <button 
                   onClick={() => navigate('/contact')}
-                  className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 px-3 rounded-xl transition duration-150 text-xs uppercase tracking-wider text-center border border-slate-150/40 cursor-pointer"
+                  className="bg-[#121212] hover:bg-[#1A1A1A] text-[#FFF5D6] font-bold py-3 px-3 rounded-xl transition duration-150 text-xs uppercase tracking-wider text-center border border-[#26241E] hover:border-[#C9A84C]/40 cursor-pointer"
                 >
                   Contact Support
                 </button>
                 <button 
                   onClick={() => setActiveSection('profile')}
-                  className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 px-3 rounded-xl transition duration-150 text-xs uppercase tracking-wider text-center border border-slate-150/40 cursor-pointer"
+                  className="bg-[#121212] hover:bg-[#1A1A1A] text-[#FFF5D6] font-bold py-3 px-3 rounded-xl transition duration-150 text-xs uppercase tracking-wider text-center border border-[#26241E] hover:border-[#C9A84C]/40 cursor-pointer"
                 >
                   Edit Profile
                 </button>
                 <button 
                   onClick={() => navigate('/user/cart')}
-                  className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 px-3 rounded-xl transition duration-150 text-xs uppercase tracking-wider text-center border border-slate-150/40 cursor-pointer"
+                  className="bg-[#121212] hover:bg-[#1A1A1A] text-[#FFF5D6] font-bold py-3 px-3 rounded-xl transition duration-150 text-xs uppercase tracking-wider text-center border border-[#26241E] hover:border-[#C9A84C]/40 cursor-pointer"
                 >
                   Order Details
                 </button>
@@ -808,7 +927,8 @@ const UserDashboard = () => {
         setIsOpen={setIsSidebarOpen}
         counts={{
           cart: cartItems.length,
-          wishlist: wishlistItems.length
+          wishlist: wishlistItems.length,
+          queries: contactMessages.length
         }}
       />
       
