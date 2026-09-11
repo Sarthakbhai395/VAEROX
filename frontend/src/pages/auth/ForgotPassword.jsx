@@ -14,7 +14,6 @@ const ForgotPassword = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [devOtp, setDevOtp] = useState('');
   const navigate = useNavigate();
   const otpRefs = useRef([]);
 
@@ -90,9 +89,6 @@ const ForgotPassword = () => {
 
       if (response.success) {
         setMessage(response.message);
-        if (response.devOtp) {
-          setDevOtp(response.devOtp);
-        }
         setStep(2);
         setCountdown(60); // 60-second resend cooldown
       } else {
@@ -284,18 +280,7 @@ const ForgotPassword = () => {
           </motion.div>
         )}
 
-        {devOtp && step === 2 && (
-          <motion.div
-            className="bg-[#C9A84C]/10 border border-[#C9A84C]/40 text-[#FFF5D6] px-4 py-3 rounded-xl text-sm"
-            role="alert"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <span className="block font-bold text-[#C9A84C] text-xs uppercase tracking-wider mb-1">Dev Mode OTP:</span>
-            <span className="block text-2xl font-mono font-bold tracking-widest text-center">{devOtp}</span>
-          </motion.div>
-        )}
+
 
         {error && (
           <motion.div
