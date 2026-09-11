@@ -9,6 +9,7 @@ const Register = () => {
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('user')
   const navigate = useNavigate()
+  const { handleRegister, error, loading } = useAuthHook()
   const [validationError, setValidationError] = useState('')
   const [attemptCount, setAttemptCount] = useState(0)
   const [lockoutTimer, setLockoutTimer] = useState(0)

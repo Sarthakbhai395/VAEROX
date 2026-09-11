@@ -9,6 +9,8 @@ const Login = () => {
   const [role, setRole] = useState('user')
   const navigate = useNavigate()
   const location = useLocation()
+  const { handleLogin, error, loading } = useAuthHook()
+  const redirectMessage = location.state?.message
   const [validationError, setValidationError] = useState('')
   const [attemptCount, setAttemptCount] = useState(0)
   const [lockoutTimer, setLockoutTimer] = useState(0)
