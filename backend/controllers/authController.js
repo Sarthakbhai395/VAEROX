@@ -225,152 +225,109 @@ exports.forgotPassword = async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     // Check if SMTP credentials are configured
-    const hasSMTPConfig = process.env.SMTP_HOST && process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD;
-
-    if (hasSMTPConfig) {
-      // Create OTP email message with Akario Mart branding
-      const message = `
-        <div style="font-family: 'Inter', sans-serif; max-width: 500px; margin: 0 auto; background: #0A0A0A; border: 1px solid #26241E; border-radius: 16px; overflow: hidden;">
-          <div style="background: linear-gradient(135deg, #C9A84C, #9B782B); padding: 24px; text-align: center;">
-            <h1 style="color: #000; margin: 0; font-size: 24px; letter-spacing: 4px;">AKARIO MART</h1>
-            <p style="color: #000; margin: 4px 0 0; font-size: 12px; letter-spacing: 2px;">PASSWORD RESET VERIFICATION</p>
-          </div>
-          <div style="padding: 32px; text-align: center;">
-            <p style="color: #E8E0CC; font-size: 14px; margin-bottom: 24px;">You requested a password reset for your Akario Mart account. Use the verification OTP below to proceed:</p>
-            <div style="background: #141414; border: 2px solid #C9A84C; border-radius: 12px; padding: 20px; margin: 20px 0;">
-              <p style="color: #C9A84C; font-size: 36px; font-weight: bold; letter-spacing: 12px; margin: 0;">${otp}</p>
-            </div>
-            <p style="color: #A39E93; font-size: 12px; margin-top: 16px;">This OTP is valid for <strong style="color: #C9A84C;">10 minutes</strong>.</p>
-            <p style="color: #A39E93; font-size: 12px;">If you didn't request this password reset, please secure your account.</p>
-          </div>
-          <div style="background: #050505; padding: 16px; text-align: center; border-top: 1px solid #26241E;">
-            <p style="color: #666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} Akario Mart — Premier Shopping Experience</p>
-          </div>
-        </div>
-      `;
-
-      // Mail options
-      const mailOptions = {
-        from: `"Akario Mart" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL}>`,
-        to: user.email,
-        subject: 'Your Password Reset OTP — Akario Mart',
-        html: message
-      };
-
-      let emailSent = false;
-      let lastError = null;
-
-      // Method 1: Primary MailerCloud / SMTP Server (smtp-prod.mailrcld.com:587)
-      try {
-        const transporter1 = nodemailer.createTransport({
-          host: process.env.SMTP_HOST || 'smtp-prod.mailrcld.com',
-          port: parseInt(process.env.SMTP_PORT, 10) || 587,
-          secure: parseInt(process.env.SMTP_PORT, 10) === 465,
-          auth: {
-            user: process.env.SMTP_EMAIL,
-            pass: process.env.SMTP_PASSWORD
-          },
-          tls: { rejectUnauthorized: false }
-        });
-        await transporter1.sendMail(mailOptions);
-        emailSent = true;
-        console.log(`[EMAIL SUCCESS] OTP email delivered to ${user.email} via Primary MailerCloud SMTP`);
-      } catch (err1) {
-        lastError = err1;
-        console.warn(`[SMTP METHOD 1 FAILED] ${err1.message}`);
-
-        // Method 2: SMTP with API Key as Auth Password
-        if (process.env.MAILRCLD_API_KEY && process.env.MAILRCLD_API_KEY !== process.env.SMTP_PASSWORD) {
-          try {
-            const transporter2 = nodemailer.createTransport({
-              host: process.env.SMTP_HOST || 'smtp-prod.mailrcld.com',
-              port: parseInt(process.env.SMTP_PORT, 10) || 587,
-              secure: false,
-              auth: {
-                user: process.env.SMTP_EMAIL,
-                pass: process.env.MAILRCLD_API_KEY
-              },
-              tls: { rejectUnauthorized: false }
-            });
-            await transporter2.sendMail(mailOptions);
-            emailSent = true;
-            console.log(`[EMAIL SUCCESS] OTP email delivered to ${user.email} via API Key SMTP`);
-          } catch (err2) {
-            lastError = err2;
-            console.warn(`[SMTP METHOD 2 FAILED] ${err2.message}`);
-          }
-        }
-      }
-
-      // Method 3: Direct Gmail SSL Transport (port 465 / 587) if using Gmail App Password
-      if (!emailSent && process.env.SMTP_EMAIL?.includes('@gmail.com')) {
-        try {
-          const transporter3 = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-              user: process.env.SMTP_EMAIL,
-              pass: process.env.SMTP_PASSWORD
-            }
-          });
-          await transporter3.sendMail(mailOptions);
-          emailSent = true;
-          console.log(`[EMAIL SUCCESS] OTP email delivered to ${user.email} via Direct Gmail Service`);
-        } catch (err3) {
-          console.warn(`[SMTP METHOD 3 FAILED] ${err3.message}`);
-        }
-      }
-
-      // Method 4: MailerCloud HTTP REST API over HTTPS (Bypasses local ISP port 587 blocks)
-      if (!emailSent && process.env.MAILRCLD_API_KEY) {
-        try {
-          const apiRes = await fetch('https://api.mailercloud.com/v1/send/transactional', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'api-key': process.env.MAILRCLD_API_KEY
-            },
-            body: JSON.stringify({
-              from: { email: process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL, name: 'Akario Mart' },
-              to: [{ email: user.email }],
-              subject: 'Your Password Reset OTP — Akario Mart',
-              html: message
-            })
-          });
-
-          if (apiRes.ok) {
-            emailSent = true;
-            console.log(`[REST API SUCCESS] OTP email delivered to ${user.email} via MailerCloud REST API`);
-          } else {
-            const resText = await apiRes.text();
-            console.warn(`[REST API FAILED] Status ${apiRes.status}: ${resText}`);
-          }
-        } catch (err4) {
-          console.warn(`[REST API EXCEPTION] ${err4.message}`);
-        }
-      }
-
-      if (emailSent) {
-        return res.status(200).json({
-          success: true,
-          message: 'OTP sent to your registered email address'
-        });
-      } else {
-        console.error(`[EMAIL DELIVERY FAILURE] Failed to send OTP to ${user.email}: ${lastError?.message || 'Provider connection error'}`);
-        
-        // Clean up OTP fields so invalid un-sent state is not preserved
-        user.otpCode = undefined;
-        user.otpExpire = undefined;
-        await user.save({ validateBeforeSave: false });
-
-        return res.status(500).json({
-          success: false,
-          error: 'Unable to deliver OTP email. Please verify your email address or try again later.'
-        });
-      }
-    } else {
+    if (!process.env.SMTP_HOST || !process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
+      console.error('[SMTP CONFIG ERROR] Missing required SMTP credentials in environment variables.');
       return res.status(500).json({
         success: false,
         error: 'SMTP email service is not configured on the server.'
+      });
+    }
+
+    // MailerCloud HTML message with Akario Mart branding
+    const message = `
+      <div style="font-family: 'Inter', sans-serif; max-width: 500px; margin: 0 auto; background: #0A0A0A; border: 1px solid #26241E; border-radius: 16px; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #C9A84C, #9B782B); padding: 24px; text-align: center;">
+          <h1 style="color: #000; margin: 0; font-size: 24px; letter-spacing: 4px;">AKARIO MART</h1>
+          <p style="color: #000; margin: 4px 0 0; font-size: 12px; letter-spacing: 2px;">PASSWORD RESET VERIFICATION</p>
+        </div>
+        <div style="padding: 32px; text-align: center;">
+          <p style="color: #E8E0CC; font-size: 14px; margin-bottom: 24px;">You requested a password reset for your Akario Mart account. Use the verification OTP below to proceed:</p>
+          <div style="background: #141414; border: 2px solid #C9A84C; border-radius: 12px; padding: 20px; margin: 20px 0;">
+            <p style="color: #C9A84C; font-size: 36px; font-weight: bold; letter-spacing: 12px; margin: 0;">${otp}</p>
+          </div>
+          <p style="color: #A39E93; font-size: 12px; margin-top: 16px;">This OTP is valid for <strong style="color: #C9A84C;">10 minutes</strong>.</p>
+          <p style="color: #A39E93; font-size: 12px;">If you didn't request this password reset, please secure your account.</p>
+        </div>
+        <div style="background: #050505; padding: 16px; text-align: center; border-top: 1px solid #26241E;">
+          <p style="color: #666; font-size: 11px; margin: 0;">© ${new Date().getFullYear()} Akario Mart — Premier Shopping Experience</p>
+        </div>
+      </div>
+    `;
+
+    // Configure MailerCloud Transporter
+    const smtpPort = parseInt(process.env.SMTP_PORT, 10) || 587;
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      requireTLS: smtpPort === 587,
+      auth: {
+        user: process.env.SMTP_EMAIL,
+        pass: process.env.SMTP_PASSWORD
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000
+    });
+
+    // Step 1: Verify SMTP Connection & Authentication
+    try {
+      await transporter.verify();
+      console.log('[MAILERCLOUD SMTP VERIFY SUCCESS] Established connection with MailerCloud SMTP.');
+    } catch (verifyErr) {
+      console.error('[MAILERCLOUD SMTP VERIFY FAILED]', {
+        code: verifyErr.code,
+        responseCode: verifyErr.responseCode,
+        command: verifyErr.command,
+        response: verifyErr.response,
+        message: verifyErr.message
+      });
+      return res.status(502).json({
+        success: false,
+        error: 'Unable to connect to email provider. Please try again later.'
+      });
+    }
+
+    // Step 2: Attempt Email Delivery
+    const mailOptions = {
+      from: `"Akario Mart" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL}>`,
+      to: user.email,
+      subject: 'Your Password Reset OTP — Akario Mart',
+      html: message
+    };
+
+    try {
+      const info = await transporter.sendMail(mailOptions);
+
+      if (!info || !info.messageId) {
+        throw new Error('Email provider did not return a valid message ID');
+      }
+
+      console.log('[MAILERCLOUD DISPATCH SUCCESS]', {
+        messageId: info.messageId,
+        accepted: info.accepted,
+        rejected: info.rejected,
+        response: info.response
+      });
+
+      // Step 3: Persist OTP in MongoDB ONLY after email delivery is accepted by MailerCloud
+      await user.save({ validateBeforeSave: false });
+
+      return res.status(200).json({
+        success: true,
+        message: 'OTP sent to your registered email address'
+      });
+    } catch (emailErr) {
+      console.error('[MAILERCLOUD DISPATCH FAILED]', {
+        code: emailErr.code,
+        responseCode: emailErr.responseCode,
+        command: emailErr.command,
+        response: emailErr.response,
+        message: emailErr.message
+      });
+
+      return res.status(502).json({
+        success: false,
+        error: 'Unable to send OTP email. Please try again later.'
       });
     }
   } catch (err) {
