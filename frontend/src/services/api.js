@@ -1,7 +1,8 @@
 // This file will contain all API calls to the backend
 
-// Use environment variable for production, fallback to empty for development proxy
-const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+// Configure Production API Base URL targeting live Render backend
+const rawBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'https://backend-1-tf17.onrender.com';
+const API_BASE_URL = rawBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
 // Simple in-memory cache
 const apiCache = new Map()
