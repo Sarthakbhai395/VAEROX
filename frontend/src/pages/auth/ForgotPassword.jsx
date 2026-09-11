@@ -113,9 +113,6 @@ const ForgotPassword = () => {
       const response = await authAPI.forgotPassword(email.trim());
       if (response.success) {
         setMessage('New OTP sent to your email!');
-        if (response.devOtp) {
-          setDevOtp(response.devOtp);
-        }
         setCountdown(60);
       } else {
         setError(response.error || 'Failed to resend OTP.');
