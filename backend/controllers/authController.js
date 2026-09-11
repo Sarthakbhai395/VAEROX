@@ -287,9 +287,20 @@ exports.forgotPassword = async (req, res, next) => {
       });
     }
 
+    // Extract clean email address without quotes or display names for strict SMTP envelope compliance
+    const rawFrom = (process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL || '').trim();
+    const emailMatch = rawFrom.match(/<([^>]+)>/);
+    const cleanFromEmail = emailMatch ? emailMatch[1].trim() : rawFrom.replace(/["']/g, '').trim();
+
     // Step 2: Attempt Email Delivery
     const mailOptions = {
-      from: `"Akario Mart" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL}>`,
+      from: cleanFromEmail,
+      sender: cleanFromEmail,
+      replyTo: cleanFromEmail,
+      envelope: {
+        from: cleanFromEmail,
+        to: [user.email]
+      },
       to: user.email,
       subject: 'Your Password Reset OTP — Akario Mart',
       html: message
