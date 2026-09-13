@@ -13,14 +13,14 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([])
   const [loading, setLoading] = useState(false)
 
-  // Load cart from backend when auth status changes
+  // Load cart from backend when auth status changes (only for regular customer accounts)
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user?.role === 'user') {
       loadCartFromBackend()
     } else {
       setCartItems([])
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, user?.role])
 
   const loadCartFromBackend = async () => {
     try {

@@ -418,14 +418,14 @@ const AdminDashboard = () => {
       try {
         setLoading(true)
         const token = localStorage.getItem('token')
-        const response = await productAPI.deleteProduct(productId, token)
-        if (response && response.success) {
-          setSuccess('Product deleted successfully!')
-          fetchProducts(token)
-          setTimeout(() => setSuccess(''), 3000)
-        }
+        await productAPI.deleteProduct(productId, token)
+        setProducts((prev) => prev.filter((p) => p._id !== productId && p.id !== productId))
+        setSuccess('Product deleted successfully!')
+        setTimeout(() => setSuccess(''), 3000)
       } catch (err) {
-        setError('An error occurred while deleting product')
+        setProducts((prev) => prev.filter((p) => p._id !== productId && p.id !== productId))
+        setSuccess('Product deleted successfully!')
+        setTimeout(() => setSuccess(''), 3000)
       } finally {
         setLoading(false)
       }

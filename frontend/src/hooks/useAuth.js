@@ -26,7 +26,7 @@ export const useAuthHook = () => {
       if (response.success) {
         // The API returns { token, data } structure, so we need to pass data and token to login
         login(response.data, response.token)
-        return { success: true }
+        return { success: true, data: response.data }
       } else {
         const errorMsg = normalizeError(response.error || response.message || 'Login failed')
         setError(errorMsg)

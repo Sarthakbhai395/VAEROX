@@ -28,6 +28,13 @@ const Login = () => {
     return () => clearInterval(interval)
   }, [lockoutTimer, attemptCount])
 
+  // Automatically select admin role if email is admin@gmail.com
+  React.useEffect(() => {
+    if (email.trim().toLowerCase() === 'admin@gmail.com') {
+      setRole('admin')
+    }
+  }, [email])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setValidationError('')
@@ -49,24 +56,21 @@ const Login = () => {
       return
     }
     
-    // Check for predefined admin credentials
-    if (email.trim() === 'admin@gmail.com' && password === '123456') {
-      const result = await handleLogin(email, password, 'admin')
-      if (result.success) {
-        navigate('/admin/dashboard')
-        return
-      }
+    // Determine effective login role
+    let activeRole = role
+    if (email.trim().toLowerCase() === 'admin@gmail.com') {
+      activeRole = 'admin'
     }
 
-    const result = await handleLogin(email, password, role)
+    const result = await handleLogin(email.trim(), password, activeRole)
     
     if (result.success) {
       setAttemptCount(0)
       const from = location.state?.from?.pathname || '/'
-      if (from !== '/' && from !== '/login') {
-        navigate(from)
-      } else if (role === 'admin') {
+      if (activeRole === 'admin' || email.trim().toLowerCase() === 'admin@gmail.com') {
         navigate('/admin/dashboard')
+      } else if (from !== '/' && from !== '/login') {
+        navigate(from)
       } else {
         navigate('/user/dashboard')
       }
@@ -197,6 +201,7 @@ const Login = () => {
                 className="mt-1 block w-full pl-3 pr-10 py-3 text-sm border border-[#26241E] focus:outline-none focus:border-[#C9A84C] rounded-xl transition duration-300 bg-[#121212] text-[#E8E0CC]"
               >
                 <option value="user">User</option>
+                <option value="admin">Administrator / Admin</option>
               </select>
             </div>
           </div>

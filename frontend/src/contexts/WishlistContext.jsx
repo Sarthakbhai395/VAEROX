@@ -13,14 +13,14 @@ export const WishlistProvider = ({ children }) => {
   const [wishlistItems, setWishlistItems] = useState([])
   const [loading, setLoading] = useState(false)
 
-  // Load wishlist from backend when auth status changes
+  // Load wishlist from backend when auth status changes (only for regular customer accounts)
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user?.role === 'user') {
       loadWishlistFromBackend()
     } else {
       setWishlistItems([])
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, user?.role])
 
   const loadWishlistFromBackend = async () => {
     try {
