@@ -123,10 +123,10 @@ const Navbar = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
-        <div className="bg-[#050505]/95 backdrop-blur-2xl px-2 sm:px-5 py-1.5 sm:py-2.5 flex items-center justify-between rounded-full border border-[#C9A84C]/40 shadow-[0_12px_35px_rgba(0,0,0,0.9)] w-full min-w-0 flex-nowrap">
+        <div className="bg-[#050505]/95 backdrop-blur-2xl px-3.5 sm:px-6 py-1.5 sm:py-2.5 flex items-center justify-between rounded-full border border-[#C9A84C]/40 shadow-[0_12px_35px_rgba(0,0,0,0.9)] w-full min-w-0 flex-nowrap">
 
           {/* 1. LEFT SECTION: HAMBURGER MENU & LOGO */}
-          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -182,7 +182,7 @@ const Navbar = () => {
           </div>
 
           {/* 3. RIGHT SECTION: ACTION BUTTONS (SEARCH, WISHLIST, CART, U.D / LOGIN) */}
-          <div className="flex items-center justify-end gap-1 sm:gap-2 shrink-0 flex-nowrap">
+          <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0 flex-nowrap">
 
             {/* Search Icon Button */}
             <button
@@ -238,17 +238,16 @@ const Navbar = () => {
               <div className="flex items-center gap-1.5 shrink-0">
                 <Link
                   to={getDashboardLink()}
-                  className="relative inline-flex items-center gap-1 px-2 py-1 sm:px-4 sm:py-2 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-[9px] sm:text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-[0_0_12px_rgba(201,168,76,0.5)] hover:scale-105 border border-[#FFF5D6]/60 overflow-hidden group shrink-0 cursor-pointer whitespace-nowrap"
+                  className="relative inline-flex items-center justify-center w-7 h-7 sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-[0_0_12px_rgba(201,168,76,0.5)] hover:scale-105 border border-[#FFF5D6]/60 overflow-hidden group shrink-0 cursor-pointer whitespace-nowrap"
                   title={user?.role === 'admin' ? 'Admin Management Panel' : 'User Account Dashboard Panel'}
                 >
                   <span className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
                   {user?.role === 'admin' ? (
-                    <ShieldCheck className="w-3 h-3 sm:w-4 sm:h-4 text-black shrink-0" />
+                    <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black shrink-0" />
                   ) : (
-                    <UserCheck className="w-3 h-3 sm:w-4 sm:h-4 text-black shrink-0" />
+                    <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black shrink-0" />
                   )}
-                  <span className="sm:hidden font-extrabold">{user?.role === 'admin' ? 'A.P' : 'U.D'}</span>
-                  <span className="hidden sm:inline">{getDashboardLabel()}</span>
+                  <span className="hidden sm:inline ml-1">{getDashboardLabel()}</span>
                 </Link>
 
                 {/* Shiny Red Logout Button (Desktop) */}
@@ -263,10 +262,12 @@ const Navbar = () => {
             ) : (
               <Link
                 to="/login"
-                className="relative inline-flex items-center justify-center px-2.5 py-1 sm:px-5 sm:py-2 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-[9px] sm:text-xs tracking-[0.1em] uppercase leading-none transition-all duration-300 shadow-[0_0_12px_rgba(201,168,76,0.4)] hover:scale-105 overflow-hidden group shrink-0 cursor-pointer whitespace-nowrap"
+                className="relative inline-flex items-center justify-center w-7 h-7 sm:w-auto sm:h-auto sm:px-5 sm:py-2 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-xs tracking-[0.1em] uppercase leading-none transition-all duration-300 shadow-[0_0_12px_rgba(201,168,76,0.4)] hover:scale-105 overflow-hidden group shrink-0 cursor-pointer whitespace-nowrap"
+                title="Login / Register"
               >
                 <span className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
-                Login
+                <UserCheck className="w-3.5 h-3.5 sm:hidden text-black" />
+                <span className="hidden sm:inline">Login</span>
               </Link>
             )}
           </div>
