@@ -50,20 +50,20 @@ export const LogoEmblem = ({ className = 'w-10 h-10' }) => (
 
 export const LogoWordmarkSVG = ({ className = '', size = 'md' }) => {
   const svgHeights = {
-    sm: 'h-4 sm:h-5',
-    md: 'h-6 sm:h-7',
-    lg: 'h-8 sm:h-9',
-    xl: 'h-10 sm:h-12',
-    hero: 'h-14 sm:h-16',
+    sm: 'h-3.5 sm:h-5',
+    md: 'h-5 sm:h-7',
+    lg: 'h-7 sm:h-9',
+    xl: 'h-9 sm:h-12',
+    hero: 'h-12 sm:h-16',
   };
 
   return (
     <svg
-      viewBox="0 0 280 40"
+      viewBox="0 0 190 34"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={`${svgHeights[size] || 'h-7'} ${className}`}
-      style={{ overflow: 'visible' }}
+      className={`${svgHeights[size] || 'h-5'} ${className} w-auto max-w-full`}
+      style={{ overflow: 'hidden' }}
     >
       <defs>
         <linearGradient id="goldGradWordmark" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -74,11 +74,11 @@ export const LogoWordmarkSVG = ({ className = '', size = 'md' }) => {
       </defs>
       <text
         x="0"
-        y="30"
+        y="25"
         fontFamily="'Bodoni Moda', serif"
-        fontSize="30"
+        fontSize="24"
         fontWeight="300"
-        letterSpacing="0.38em"
+        letterSpacing="0.25em"
         fill="url(#goldGradWordmark)"
         style={{ fontOpticalSizing: 'auto' }}
       >

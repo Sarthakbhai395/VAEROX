@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../contexts/CartContext'
 import { useWishlist } from '../contexts/WishlistContext'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, ShieldCheck, UserCheck, Search, X } from 'lucide-react'
+import { Menu, Shield, User, LogIn, Search, X } from 'lucide-react'
 import Logo from './Logo'
 import { getSiteAssets } from '../utils/siteAssets'
 
@@ -126,7 +126,7 @@ const Navbar = () => {
         <div className="bg-[#050505]/95 backdrop-blur-2xl px-2.5 sm:px-6 py-1.5 sm:py-2.5 flex items-center justify-between rounded-full border border-[#C9A84C]/40 shadow-[0_12px_35px_rgba(0,0,0,0.9)] w-full min-w-0 flex-nowrap">
 
           {/* 1. LEFT SECTION: HAMBURGER MENU & LOGO */}
-          <div className="flex items-center gap-1 sm:gap-2.5 shrink min-w-0">
+          <div className="flex items-center gap-1 sm:gap-2.5 shrink min-w-0 max-w-[48%] overflow-hidden mr-1 sm:mr-2">
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -138,7 +138,7 @@ const Navbar = () => {
               <Menu className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
             </button>
 
-            <Link to="/" className="flex items-center py-0.5 group shrink min-w-0">
+            <Link to="/" className="flex items-center py-0.5 group shrink min-w-0 overflow-hidden">
               <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.2 }} className="flex items-center scale-80 xs:scale-90 sm:scale-100 origin-left">
                 <Logo layout="horizontal" size="sm" />
               </motion.div>
@@ -238,16 +238,15 @@ const Navbar = () => {
               <div className="flex items-center gap-1.5 shrink-0">
                 <Link
                   to={getDashboardLink()}
-                  className="relative inline-flex items-center justify-center w-[27px] h-[27px] sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-[0_0_12px_rgba(201,168,76,0.5)] hover:scale-105 border border-[#FFF5D6]/60 overflow-hidden group shrink-0 cursor-pointer whitespace-nowrap"
+                  className="relative inline-flex items-center justify-center w-[27px] h-[27px] sm:w-auto sm:h-8 sm:px-3.5 sm:py-1.5 rounded-full bg-[#121212] border border-[#C9A84C]/60 hover:border-[#C9A84C] text-[#C9A84C] hover:text-[#FFF5D6] font-extrabold text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-[0_0_10px_rgba(201,168,76,0.25)] hover:scale-105 shrink-0 cursor-pointer whitespace-nowrap"
                   title={user?.role === 'admin' ? 'Admin Management Panel' : 'User Account Dashboard Panel'}
                 >
-                  <span className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
                   {user?.role === 'admin' ? (
-                    <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black shrink-0" />
+                    <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C9A84C] shrink-0 stroke-[2]" />
                   ) : (
-                    <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black shrink-0" />
+                    <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C9A84C] shrink-0 stroke-[2]" />
                   )}
-                  <span className="hidden sm:inline ml-1">{getDashboardLabel()}</span>
+                  <span className="hidden sm:inline ml-1.5 text-[11px] font-bold tracking-wider">{getDashboardLabel()}</span>
                 </Link>
 
                 {/* Shiny Red Logout Button (Desktop) */}
@@ -262,12 +261,11 @@ const Navbar = () => {
             ) : (
               <Link
                 to="/login"
-                className="relative inline-flex items-center justify-center w-[27px] h-[27px] sm:w-auto sm:h-auto sm:px-5 sm:py-2 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-xs tracking-[0.1em] uppercase leading-none transition-all duration-300 shadow-[0_0_12px_rgba(201,168,76,0.4)] hover:scale-105 overflow-hidden group shrink-0 cursor-pointer whitespace-nowrap"
+                className="relative inline-flex items-center justify-center w-[27px] h-[27px] sm:w-auto sm:h-8 sm:px-3.5 sm:py-1.5 rounded-full bg-[#121212] border border-[#C9A84C]/60 hover:border-[#C9A84C] text-[#C9A84C] hover:text-[#FFF5D6] font-extrabold text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-[0_0_10px_rgba(201,168,76,0.25)] hover:scale-105 shrink-0 cursor-pointer whitespace-nowrap"
                 title="Login / Register"
               >
-                <span className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
-                <UserCheck className="w-3.5 h-3.5 sm:hidden text-black" />
-                <span className="hidden sm:inline">Login</span>
+                <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C9A84C] shrink-0 stroke-[2]" />
+                <span className="hidden sm:inline ml-1.5 text-[11px] font-bold tracking-wider">Login</span>
               </Link>
             )}
           </div>

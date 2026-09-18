@@ -25,6 +25,13 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token')
       }
     }
+
+    const handleAuthExpired = () => {
+      setUser(null)
+      setIsAuthenticated(false)
+    }
+    window.addEventListener('vaerox_auth_expired', handleAuthExpired)
+    return () => window.removeEventListener('vaerox_auth_expired', handleAuthExpired)
   }, [])
 
   const login = (userData, token) => {

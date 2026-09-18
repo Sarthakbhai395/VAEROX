@@ -58,13 +58,23 @@ const apiRequest = async (url, options = {}) => {
       headers
     });
 
-    // Graceful handling of non-JSON response types (e.g. HTML 404 pages from Vercel/CDN)
+    // Centralized 401 Unauthorized handling for protected endpoints
+    if (response.status === 401 && !url.includes('/auth/login') && !url.includes('/auth/register') && !url.includes('/auth/forgotpassword')) {
+      console.warn(`Protected API request ${url} returned 401 Unauthorized. Clearing expired auth token.`);
+      localStorage.removeItem('token');
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('user');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('vaerox_auth_expired'));
+      }
+    }
+
+    // Graceful handling of non-JSON response types (e.g. HTML 404 pages from Vercel/Render)
     let data = {};
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       data = await response.json();
     } else {
-      // Non-JSON response (likely HTML error page from Vercel/Render 404)
       const text = await response.text();
       const shortError = response.status === 404
         ? 'API endpoint not found. Please check backend URL configuration.'
@@ -73,7 +83,6 @@ const apiRequest = async (url, options = {}) => {
     }
 
     // CRITICAL: Normalize 'error' field to always be a string (prevents React Error #31)
-    // The backend sometimes returns error as an array (e.g., validation errors)
     if (data.error && typeof data.error !== 'string') {
       if (Array.isArray(data.error)) {
         data.error = data.error.join('. ');
@@ -122,31 +131,11 @@ export const clearAllCache = () => {
 // Auth API
 export const authAPI = {
   login: async (email, password, role) => {
-    // Clear cache on login
     clearAllCache()
-    const res = await apiRequest('/api/auth/login', {
+    return apiRequest('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password, role: email.trim().toLowerCase() === 'admin@gmail.com' ? 'admin' : role })
     })
-
-    // FAIL-SAFE FALLBACK FOR PREDEFINED ADMIN CREDENTIALS
-    if (!res.success && email.trim().toLowerCase() === 'admin@gmail.com' && password === '123456') {
-      console.warn('Remote server returned error for admin credentials, activating client admin session authorization.');
-      const fallbackToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluX2ZhbGxiYWNrX2lkIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjE5MDAwMDAwMDB9.admin_signature';
-      const fallbackData = {
-        id: 'admin_predefined_id',
-        name: 'VÆROX Admin',
-        email: 'admin@gmail.com',
-        role: 'admin'
-      };
-      return {
-        success: true,
-        token: fallbackToken,
-        data: fallbackData
-      };
-    }
-
-    return res;
   },
 
   register: async (name, email, password, role) => {
@@ -185,136 +174,65 @@ export const authAPI = {
   }
 }
 
-// Product API
+// Product API (MongoDB Atlas backend is the single source of truth)
 export const productAPI = {
   getProducts: async () => {
-    let res = { success: false }
-    try {
-      res = await apiRequest('/api/products')
-    } catch (e) { }
-
-    let custom = []
-    try {
-      custom = JSON.parse(localStorage.getItem('vaerox_custom_products') || '[]')
-    } catch (e) { }
-
+    const res = await apiRequest('/api/products');
     if (res && res.success) {
-      const serverProds = res.data || res.products || []
-      const customIds = new Set(custom.map(p => p._id || p.id))
-      const filteredServer = serverProds.filter(p => !customIds.has(p._id) && !customIds.has(p.id))
-      const merged = [...custom, ...filteredServer]
-      return { ...res, data: merged, products: merged }
+      const serverProds = res.data || res.products || [];
+      return { success: true, data: serverProds, products: serverProds };
     }
-    return { success: true, data: custom, products: custom }
+    return { success: false, data: [], products: [], error: res?.error || 'Failed to fetch products' };
   },
 
   getProductById: async (id) => {
-    let custom = []
-    try {
-      custom = JSON.parse(localStorage.getItem('vaerox_custom_products') || '[]')
-    } catch (e) { }
-    const foundCustom = custom.find(p => p._id === id || p.id === id)
-    if (foundCustom) return { success: true, data: foundCustom, product: foundCustom }
-
-    let res = { success: false }
-    try {
-      res = await apiRequest(`/api/products/${id}`)
-    } catch (e) { }
-    if (!res || !res.success) {
-      return { success: false, error: 'Product not found' }
+    const res = await apiRequest(`/api/products/${id}`);
+    if (res && res.success) {
+      const prod = res.data || res.product;
+      return { success: true, data: prod, product: prod };
     }
-    return res
+    return { success: false, error: res?.error || 'Product not found' };
   },
 
   createProduct: async (productData, token) => {
-    clearCache('/api/products', 'GET')
-    const newProd = {
-      ...productData,
-      _id: 'prod-' + Date.now(),
-      id: 'prod-' + Date.now(),
-      createdAt: new Date().toISOString(),
+    clearAllCache();
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const res = await apiRequest('/api/products', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(productData)
+    });
+    if (res && res.success) {
+      clearAllCache();
     }
-    try {
-      const custom = JSON.parse(localStorage.getItem('vaerox_custom_products') || '[]')
-      const updated = [newProd, ...custom]
-      localStorage.setItem('vaerox_custom_products', JSON.stringify(updated))
-    } catch (e) { }
-
-    // Also attempt server creation silently
-    try {
-      if (token) {
-        apiRequest('/api/products', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(productData)
-        })
-      }
-    } catch (e) {
-      // safe fallback
-    }
-
-    return { success: true, data: newProd, product: newProd }
+    return res;
   },
 
   updateProduct: async (id, productData, token) => {
-    clearCache('/api/products', 'GET')
-    clearCache(`/api/products/${id}`, 'GET')
-
-    try {
-      const custom = JSON.parse(localStorage.getItem('vaerox_custom_products') || '[]')
-      const idx = custom.findIndex(p => p._id === id || p.id === id)
-      if (idx !== -1) {
-        custom[idx] = { ...custom[idx], ...productData }
-        localStorage.setItem('vaerox_custom_products', JSON.stringify(custom))
-      }
-    } catch (e) { }
-
-    let res = { success: false }
-    try {
-      res = await apiRequest(`/api/products/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(productData)
-      })
-    } catch (e) { }
-
-    if (!res || !res.success) {
-      const updatedItem = { ...productData, _id: id, id }
-      return { success: true, data: updatedItem, product: updatedItem }
+    clearAllCache();
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const res = await apiRequest(`/api/products/${id}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(productData)
+    });
+    if (res && res.success) {
+      clearAllCache();
     }
-    return res
+    return res;
   },
 
   deleteProduct: async (id, token) => {
-    clearCache('/api/products', 'GET')
-    clearCache(`/api/products/${id}`, 'GET')
-
-    try {
-      const custom = JSON.parse(localStorage.getItem('vaerox_custom_products') || '[]')
-      const filtered = custom.filter(p => p._id !== id && p.id !== id)
-      localStorage.setItem('vaerox_custom_products', JSON.stringify(filtered))
-    } catch (e) { }
-
-    let res = { success: false }
-    try {
-      res = await apiRequest(`/api/products/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-    } catch (e) { }
-
-    if (!res || !res.success) {
-      return { success: true, message: 'Product deleted successfully' }
+    clearAllCache();
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const res = await apiRequest(`/api/products/${id}`, {
+      method: 'DELETE',
+      headers
+    });
+    if (res && res.success) {
+      clearAllCache();
     }
-    return res
+    return res;
   },
 
   // Upload product photo
@@ -420,8 +338,7 @@ export const userAPI = {
     })
   },
 
-  addToCart: async (productId, quantity, token, productObj = null) => {
-    // Clear cart cache when adding to cart
+  addToCart: async (productId, quantity, token) => {
     clearCache('/api/users/cart', 'GET')
     return apiRequest('/api/users/cart', {
       method: 'POST',
@@ -429,7 +346,7 @@ export const userAPI = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ productId, quantity, product: productObj })
+      body: JSON.stringify({ productId, quantity })
     })
   },
 

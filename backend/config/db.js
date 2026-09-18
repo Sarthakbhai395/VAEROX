@@ -140,13 +140,23 @@ const connectDB = async () => {
       await seedDatabase();
       return;
     } catch (error) {
-      console.warn(`Primary MongoDB Atlas connection attempt failed (${error.message}).`);
+      console.error(`Primary MongoDB Atlas connection attempt failed (${error.message}).`);
+      if (process.env.NODE_ENV === 'production') {
+        console.error('FATAL: Production database connection failed. Shutting down process to prevent ephemeral memory fallback.');
+        process.exit(1);
+      }
     }
   }
 
-  // Fallback to MongoMemoryServer for uninterrupted application availability
+  // In production, forbid fallback to MongoMemoryServer
+  if (process.env.NODE_ENV === 'production') {
+    console.error('FATAL ERROR: MONGO_URI is missing or invalid in production. Ephemeral MongoMemoryServer fallback is forbidden in production.');
+    process.exit(1);
+  }
+
+  // Fallback to MongoMemoryServer ONLY for local development
   try {
-    console.log('Starting MongoMemoryServer for development fallback...');
+    console.log('Starting MongoMemoryServer for local development fallback...');
     const { MongoMemoryServer } = require('mongodb-memory-server');
     const mongoServer = await MongoMemoryServer.create();
     const fallbackUri = mongoServer.getUri();
