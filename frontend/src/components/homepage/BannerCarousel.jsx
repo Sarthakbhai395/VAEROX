@@ -113,19 +113,19 @@ export const BannerCarousel = () => {
       <div className="absolute top-1/4 left-1/4 w-72 md:w-96 h-72 md:h-96 bg-[#C9A84C]/15 rounded-full blur-[100px] pointer-events-none" />
 
       {/* ── Content ── */}
-      <div className="relative z-10 h-full flex items-center">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-8 md:px-12 lg:px-20 py-8">
+      <div className="relative z-10 h-full flex items-end pb-12 sm:pb-16 md:pb-20 lg:pb-22">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-8 md:px-12 lg:px-20">
           <AnimatePresence mode="wait">
             <motion.div
               key={`content-${slide.id || currentSlide}`}
               className="max-w-2xl"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.5, ease: 'easeOut' }}
             >
               {/* Tag with Anime.js ref */}
-              <div ref={heroBadgeRef} className="inline-block mb-3 sm:mb-6">
+              <div ref={heroBadgeRef} className="inline-block mb-2 sm:mb-4">
                 <span className="px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-[9px] sm:text-[11px] font-extrabold tracking-[0.25em] sm:tracking-[0.3em] text-[#C9A84C] bg-black/85 backdrop-blur-md border border-[#C9A84C]/60 uppercase shadow-[0_0_15px_rgba(201,168,76,0.3)]">
                   {slide.tag || 'VÆROX LUXURY'}
                 </span>
@@ -133,7 +133,7 @@ export const BannerCarousel = () => {
 
               {/* Title */}
               <motion.h1
-                className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#E8E0CC] mb-3 sm:mb-6 leading-[1.12] tracking-tight font-serif drop-shadow-[0_0_25px_rgba(201,168,76,0.4)]"
+                className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#E8E0CC] mb-2 sm:mb-4 leading-[1.12] tracking-tight font-serif drop-shadow-[0_0_25px_rgba(201,168,76,0.4)]"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
@@ -143,7 +143,7 @@ export const BannerCarousel = () => {
 
               {/* Subtitle */}
               <motion.p
-                className="text-xs sm:text-base md:text-xl text-[#E8E0CC]/90 mb-5 sm:mb-8 font-light leading-relaxed max-w-lg line-clamp-3 sm:line-clamp-none"
+                className="text-xs sm:text-sm md:text-base text-[#E8E0CC]/90 mb-4 sm:mb-6 font-light leading-relaxed max-w-lg line-clamp-2 sm:line-clamp-none"
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25, duration: 0.4 }}
@@ -154,7 +154,7 @@ export const BannerCarousel = () => {
               {/* CTA Button */}
               <motion.button
                 onClick={() => navigate(slide.ctaLink || '/products')}
-                className="group relative px-6 py-3 sm:px-8 sm:py-3.5 md:py-4 bg-gradient-to-r from-[#C9A84C] via-[#D4B559] to-[#9B782B] rounded-full text-black font-extrabold text-[11px] sm:text-xs md:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] overflow-hidden transition-all duration-500 shadow-[0_0_20px_rgba(201,168,76,0.4)] hover:shadow-[0_0_35px_rgba(201,168,76,0.8)]"
+                className="group relative px-6 py-2.5 sm:px-8 sm:py-3 md:py-3.5 bg-gradient-to-r from-[#C9A84C] via-[#D4B559] to-[#9B782B] rounded-full text-black font-extrabold text-[11px] sm:text-xs md:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] overflow-hidden transition-all duration-500 shadow-[0_0_20px_rgba(201,168,76,0.4)] hover:shadow-[0_0_35px_rgba(201,168,76,0.8)]"
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35, duration: 0.4 }}
@@ -200,21 +200,21 @@ export const BannerCarousel = () => {
       </button>
 
       {/* ── Progress Indicators ── */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 px-4 sm:px-8 md:px-12 pb-4 sm:pb-6 md:pb-8">
+      <div className="absolute bottom-0 left-0 right-0 z-20 px-4 sm:px-8 md:px-12 pb-3 sm:pb-4 md:pb-5">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {banners.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => goTo(idx)}
-                className="relative h-[3px] rounded-full overflow-hidden transition-all duration-500"
-                style={{ width: idx === currentSlide ? '2.5rem' : '1rem' }}
+                className="relative h-[3px] rounded-full overflow-hidden transition-all duration-500 cursor-pointer"
+                style={{ width: idx === currentSlide ? '1.75rem' : '0.65rem' }}
                 aria-label={`Go to slide ${idx + 1}`}
               >
                 <div className="absolute inset-0 bg-[#C9A84C]/30 rounded-full" />
                 {idx === currentSlide && (
                   <div
-                    className="absolute inset-y-0 left-0 bg-[#C9A84C] rounded-full transition-[width] duration-100 ease-linear"
+                    className="absolute inset-y-0 left-0 bg-[#C9A84C] rounded-full transition-[width] duration-100 ease-linear shadow-[0_0_8px_rgba(201,168,76,0.8)]"
                     style={{ width: `${progress}%` }}
                   />
                 )}
@@ -222,7 +222,7 @@ export const BannerCarousel = () => {
             ))}
           </div>
 
-          <span className="text-[#C9A84C] text-[10px] sm:text-xs md:text-sm font-medium tracking-widest tabular-nums">
+          <span className="text-[#C9A84C] text-[10px] sm:text-xs md:text-sm font-semibold tracking-widest tabular-nums font-mono">
             {String(currentSlide + 1).padStart(2, '0')}&nbsp;/&nbsp;{String(banners.length).padStart(2, '0')}
           </span>
         </div>
