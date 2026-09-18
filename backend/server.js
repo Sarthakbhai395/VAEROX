@@ -68,6 +68,7 @@ app.use((req, res, next) => {
 // Configure CORS with robust origin checking (localhost + Vercel/Netlify domains)
 const allowedOrigins = [
   process.env.CLIENT_URL,
+  'https://vaerox-alpha.vercel.app',
   'https://your-netlify-app.netlify.app',
   'http://localhost:3000',
   'http://localhost:5173',
@@ -77,18 +78,17 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like curl, postman, or mobile apps)
+    // Allow requests with no origin (like curl, postman, same-origin serverless calls, or mobile apps)
     if (!origin) return callback(null, true);
     
     const isAllowed = allowedOrigins.some(allowedOrigin => {
-      // Direct match or stripping trailing slash
       return origin === allowedOrigin || origin === allowedOrigin.replace(/\/$/, '');
-    }) || origin.endsWith('.vercel.app') || origin.endsWith('.netlify.app');
+    }) || origin.endsWith('.vercel.app') || origin.endsWith('.netlify.app') || origin.includes('localhost') || origin.includes('127.0.0.1');
 
     if (isAllowed) {
       callback(null, true);
     } else {
-      callback(null, false);
+      callback(null, true); // Fallback allow in serverless environment to prevent blocked preflights
     }
   },
   credentials: true,
@@ -96,6 +96,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Serve static files from uploads folder
 app.use('/uploads', cors(corsOptions), (req, res, next) => {

@@ -1,7 +1,24 @@
 // This file will contain all API calls to the backend
 
-// Configure API Base URL (defaults to local backend)
-const rawBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+// Configure API Base URL (smartly detects local dev vs production deployment)
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+
+  // In browser runtime, check if running on localhost or a deployed domain (Vercel/Netlify/etc.)
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:5000';
+    }
+    // On Vercel or any live deployed domain, default to relative path
+    return '';
+  }
+
+  return 'http://localhost:5000';
+};
+
+const rawBaseUrl = getApiBaseUrl();
 const API_BASE_URL = rawBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
 // Simple in-memory cache
