@@ -118,28 +118,28 @@ const Navbar = () => {
   return (
     <>
       <motion.nav
-        className="sticky top-2 z-50 px-2 sm:px-4 md:px-6 w-full max-w-7xl mx-auto navbar-container"
+        className="sticky top-2 z-50 px-1 sm:px-4 md:px-6 w-full max-w-7xl mx-auto navbar-container"
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
-        <div className="bg-[#050505]/95 backdrop-blur-2xl px-3.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between rounded-full border border-[#C9A84C]/40 shadow-[0_12px_35px_rgba(0,0,0,0.9)] w-full min-w-0">
+        <div className="bg-[#050505]/95 backdrop-blur-2xl px-2 sm:px-5 py-1.5 sm:py-2.5 flex items-center justify-between rounded-full border border-[#C9A84C]/40 shadow-[0_12px_35px_rgba(0,0,0,0.9)] w-full min-w-0 flex-nowrap">
 
           {/* 1. LEFT SECTION: HAMBURGER MENU & LOGO */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0 min-w-0">
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 setIsMenuOpen((prev) => !prev)
               }}
-              className="md:hidden p-1.5 sm:p-2 text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors focus:outline-none shrink-0 hamburger-menu-btn cursor-pointer active:scale-95 flex items-center justify-center border-none outline-none"
+              className="md:hidden p-1 text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors focus:outline-none shrink-0 hamburger-menu-btn cursor-pointer active:scale-95 flex items-center justify-center border-none outline-none"
               aria-label="Toggle menu"
             >
-              <Menu className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.5]" />
+              <Menu className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
             </button>
 
-            <Link to="/" className="flex items-center py-0.5 group shrink-0">
-              <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.2 }} className="flex items-center">
+            <Link to="/" className="flex items-center py-0.5 group shrink-0 min-w-0">
+              <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.2 }} className="flex items-center scale-85 sm:scale-100 origin-left">
                 <Logo layout="horizontal" size="sm" />
               </motion.div>
             </Link>
@@ -151,7 +151,7 @@ const Navbar = () => {
           </div>
 
           {/* 2. CENTER SECTION: DESKTOP NAVIGATION LINKS */}
-          <div className="hidden md:flex flex-1 items-center justify-center space-x-6 lg:space-x-8 px-4">
+          <div className="hidden md:flex flex-1 items-center justify-center space-x-5 lg:space-x-8 px-2">
             {navItems.map((item) => (
               <NavLink
                 key={item.path}
@@ -181,32 +181,32 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* 3. RIGHT SECTION: LINEAR ACTION BUTTONS (WISHLIST, CART, ACCOUNT) */}
-          <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
+          {/* 3. RIGHT SECTION: ACTION BUTTONS (SEARCH, WISHLIST, CART, U.D / LOGIN) */}
+          <div className="flex items-center justify-end gap-1 sm:gap-2 shrink-0 flex-nowrap">
 
             {/* Search Icon Button */}
             <button
               onClick={toggleSearch}
-              className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#121212] border border-[#26241E] hover:border-[#C9A84C]/60 flex items-center justify-center text-[#FFF5D6] hover:text-[#C9A84C] transition-all duration-300 shrink-0 cursor-pointer"
+              className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#121212] border border-[#26241E] hover:border-[#C9A84C]/60 flex items-center justify-center text-[#FFF5D6] hover:text-[#C9A84C] transition-all duration-300 shrink-0 cursor-pointer"
               title="Search Products"
             >
-              <Search className="w-4 h-4" />
+              <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
 
             {/* Wishlist Icon Button */}
             {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
               <Link
                 to="/user/wishlist"
-                className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#121212] border border-[#26241E] hover:border-[#C9A84C]/60 flex items-center justify-center text-[#FFF5D6] hover:text-[#C9A84C] transition-all duration-300 shrink-0 ${
+                className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#121212] border border-[#26241E] hover:border-[#C9A84C]/60 flex items-center justify-center text-[#FFF5D6] hover:text-[#C9A84C] transition-all duration-300 shrink-0 ${
                   wishlistAnimation ? 'scale-110 border-[#C9A84C] text-[#C9A84C]' : ''
                 }`}
                 title="Wishlist"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
                 {wishlistItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center leading-none shadow-[0_0_8px_rgba(201,168,76,0.8)]">
+                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black text-[8px] sm:text-[9px] font-extrabold w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center leading-none shadow-[0_0_8px_rgba(201,168,76,0.8)]">
                     {wishlistItems.length}
                   </span>
                 )}
@@ -217,16 +217,16 @@ const Navbar = () => {
             {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
               <Link
                 to="/user/cart"
-                className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#121212] border border-[#26241E] hover:border-[#C9A84C]/60 flex items-center justify-center text-[#FFF5D6] hover:text-[#C9A84C] transition-all duration-300 shrink-0 ${
+                className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#121212] border border-[#26241E] hover:border-[#C9A84C]/60 flex items-center justify-center text-[#FFF5D6] hover:text-[#C9A84C] transition-all duration-300 shrink-0 ${
                   cartAnimation ? 'scale-110 border-[#C9A84C] text-[#C9A84C]' : ''
                 }`}
                 title="Cart"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 {getCartCount() > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center leading-none shadow-[0_0_8px_rgba(201,168,76,0.8)]">
+                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black text-[8px] sm:text-[9px] font-extrabold w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center leading-none shadow-[0_0_8px_rgba(201,168,76,0.8)]">
                     {getCartCount()}
                   </span>
                 )}
@@ -235,17 +235,17 @@ const Navbar = () => {
 
             {/* Account / Login / Panel Action Button */}
             {isAuthenticated ? (
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <Link
                   to={getDashboardLink()}
-                  className="relative inline-flex items-center gap-1 px-3 py-1.5 sm:px-5 sm:py-2 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-[10px] sm:text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-[0_0_18px_rgba(201,168,76,0.5)] hover:shadow-[0_0_28px_rgba(201,168,76,0.85)] hover:scale-105 border border-[#FFF5D6]/60 overflow-hidden group shrink-0 cursor-pointer"
+                  className="relative inline-flex items-center gap-1 px-2 py-1 sm:px-4 sm:py-2 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-[9px] sm:text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-[0_0_12px_rgba(201,168,76,0.5)] hover:scale-105 border border-[#FFF5D6]/60 overflow-hidden group shrink-0 cursor-pointer whitespace-nowrap"
                   title={user?.role === 'admin' ? 'Admin Management Panel' : 'User Account Dashboard Panel'}
                 >
                   <span className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
                   {user?.role === 'admin' ? (
-                    <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black shrink-0" />
+                    <ShieldCheck className="w-3 h-3 sm:w-4 sm:h-4 text-black shrink-0" />
                   ) : (
-                    <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black shrink-0" />
+                    <UserCheck className="w-3 h-3 sm:w-4 sm:h-4 text-black shrink-0" />
                   )}
                   <span className="sm:hidden font-extrabold">{user?.role === 'admin' ? 'A.P' : 'U.D'}</span>
                   <span className="hidden sm:inline">{getDashboardLabel()}</span>
@@ -254,7 +254,7 @@ const Navbar = () => {
                 {/* Shiny Red Logout Button (Desktop) */}
                 <button
                   onClick={handleLogout}
-                  className="relative hidden md:inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-gradient-to-r from-red-600 via-red-500 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-extrabold text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-[0_0_15px_rgba(239,68,68,0.7)] hover:shadow-[0_0_25px_rgba(239,68,68,0.95)] hover:scale-105 overflow-hidden group cursor-pointer border border-red-400/50"
+                  className="relative hidden md:inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-gradient-to-r from-red-600 via-red-500 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-extrabold text-xs tracking-wider uppercase leading-none transition-all duration-300 shadow-[0_0_15px_rgba(239,68,68,0.7)] hover:scale-105 overflow-hidden group cursor-pointer border border-red-400/50"
                 >
                   <span className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
                   Logout
@@ -263,7 +263,7 @@ const Navbar = () => {
             ) : (
               <Link
                 to="/login"
-                className="relative inline-flex items-center justify-center px-4 py-1.5 sm:px-6 sm:py-2 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-[10px] sm:text-xs tracking-[0.1em] uppercase leading-none transition-all duration-300 shadow-[0_0_15px_rgba(201,168,76,0.4)] hover:shadow-[0_0_25px_rgba(201,168,76,0.85)] hover:scale-105 overflow-hidden group shrink-0 cursor-pointer"
+                className="relative inline-flex items-center justify-center px-2.5 py-1 sm:px-5 sm:py-2 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-[9px] sm:text-xs tracking-[0.1em] uppercase leading-none transition-all duration-300 shadow-[0_0_12px_rgba(201,168,76,0.4)] hover:scale-105 overflow-hidden group shrink-0 cursor-pointer whitespace-nowrap"
               >
                 <span className="absolute inset-0 bg-white/30 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
                 Login

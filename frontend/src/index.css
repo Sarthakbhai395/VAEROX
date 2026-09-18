@@ -542,7 +542,13 @@ img {
 
 /* Responsive navbar */
 .navbar-container {
-  padding: 0 1rem;
+  padding: 0 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .navbar-container {
+    padding: 0 1rem;
+  }
 }
 
 @media (min-width: 768px) {

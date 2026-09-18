@@ -104,11 +104,11 @@ const Logo = ({ variant = 'full', size = 'md', layout = 'horizontal', className 
 
   if (layout === 'horizontal') {
     return (
-      <div className={`flex items-center gap-3 select-none ${className}`}>
-        <LogoEmblem className={emblemSizes[size] || 'w-9 h-9'} />
+      <div className={`flex items-center gap-1.5 sm:gap-3 select-none ${className}`}>
+        <LogoEmblem className={emblemSizes[size] || 'w-7 h-7 sm:w-9 sm:h-9'} />
         <div className="flex flex-col items-start leading-none">
           <LogoWordmarkSVG size={size} />
-          <span className="text-[8px] md:text-[9px] font-light tracking-[0.35em] text-[#E8E0CC]/80 uppercase mt-0.5">
+          <span className="hidden sm:block text-[8px] md:text-[9px] font-light tracking-[0.35em] text-[#E8E0CC]/80 uppercase mt-0.5">
             Elevate Everyday
           </span>
         </div>
