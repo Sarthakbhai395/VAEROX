@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Upload, Image as ImageIcon, CheckCircle, RefreshCw, Sparkles, Layers } from 'lucide-react'
+import { Upload, Image as ImageIcon, CheckCircle, RefreshCw, Layers } from 'lucide-react'
 import { getSiteAssets, saveSiteAssets } from '../../../utils/siteAssets'
 import { compressImage } from '../../../utils/imageCompressor'
 
@@ -11,16 +11,40 @@ export const SiteAssetsManager = () => {
 
   const assetConfigs = [
     {
+      key: 'classicCardImage',
+      title: 'Classic Clothes Card Image',
+      section: 'Regular Wear Collection Card',
+      page: 'Home Page & Products Page'
+    },
+    {
+      key: 'premiumCardImage',
+      title: 'VAEROX Premium Card Image',
+      section: 'Haute Couture Bespoke Card',
+      page: 'Home Page & Products Page'
+    },
+    {
+      key: 'standardTierCardImage',
+      title: 'VAEROX Standard Tier Card Image',
+      section: 'Full Pair Custom Stitch Card',
+      page: 'Products Page (/products)'
+    },
+    {
+      key: 'luxuryTierCardImage',
+      title: 'VAEROX Luxury Tier Card Image',
+      section: 'Executive Persona Outfits Card',
+      page: 'Products Page (/products)'
+    },
+    {
       key: 'homeMensCard',
-      title: "Homepage - Men's Wear Collection Card",
-      section: 'Homepage (Explores Collections)',
-      page: 'Home Page (/)'
+      title: "Men's Wear Collection Card",
+      section: 'Bespoke Atelier Gender Selection',
+      page: 'Home Page & Products Page'
     },
     {
       key: 'homeWomensCard',
-      title: "Homepage - Women's Wear Collection Card",
-      section: 'Homepage (Explores Collections)',
-      page: 'Home Page (/)'
+      title: "Women's Wear Collection Card",
+      section: 'Bespoke Atelier Gender Selection',
+      page: 'Home Page & Products Page'
     },
     {
       key: 'productsMensBanner',

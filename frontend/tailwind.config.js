@@ -27,9 +27,10 @@ export default {
         'neutral': '#A39E93',
       },
       fontFamily: {
-        'sans': ['"Open Sans"', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        'serif': ['"Playfair Display"', 'serif'],
-        'display': ['"Playfair Display"', 'serif'],
+        'sans': ['"Bodoni Moda"', 'serif'],
+        'serif': ['"Bodoni Moda"', 'serif'],
+        'display': ['"Bodoni Moda"', 'serif'],
+        'bodoni': ['"Bodoni Moda"', 'serif'],
       },
       boxShadow: {
         'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',

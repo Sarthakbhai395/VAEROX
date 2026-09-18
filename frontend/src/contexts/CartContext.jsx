@@ -77,7 +77,7 @@ export const CartProvider = ({ children }) => {
       const token = localStorage.getItem('token')
       if (token) {
         const productId = product._id || product.id
-        const response = await userAPI.addToCart(productId, quantity, token)
+        const response = await userAPI.addToCart(productId, quantity, token, product)
         if (response.success) {
           setCartItems(response.data)
           addModalNotification('Success', 'Item added to cart successfully!', 'success')

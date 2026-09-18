@@ -123,6 +123,66 @@ app.use(['/api/payment', '/payment'], paymentRoutes);
 app.use(['/api/seller/contact', '/seller/contact'], sellerContactRoutes);
 app.use(['/api/activities', '/activities'], activityRoutes);
 
+const { sendInvoiceEmail } = require('./utils/sendEmail');
+app.get('/api/test-email', async (req, res) => {
+  try {
+    const targetEmail = req.query.email || process.env.SMTP_EMAIL || 'sb1258954@gmail.com';
+    const targetName = req.query.name || 'Sarthak Bhatnagar';
+    const productName = req.query.product || 'VÆROX Executive Double-Breasted Wool Tuxedo';
+    const itemPrice = Number(req.query.price) || 18499;
+    const itemSize = req.query.size || 'XL';
+    const itemQty = Number(req.query.qty) || 1;
+
+    const subtotal = itemPrice * itemQty;
+    const tax = req.query.tax != null ? Number(req.query.tax) : 0;
+    const totalAmount = subtotal + tax;
+
+    const mockOrder = {
+      id: `VRX-${Math.floor(100000 + Math.random() * 900000)}`,
+      paymentId: `pay_${Math.random().toString(36).substring(2, 12)}`,
+      date: new Date().toISOString(),
+      user: {
+        name: targetName,
+        email: targetEmail,
+        phone: req.query.phone || '+91 98785 43210',
+        address: req.query.address || 'Baad Post - Kakua gwalior road agra',
+        city: req.query.city || 'Agra',
+        state: req.query.state || 'Uttar Pradesh',
+        zipCode: req.query.zip || '282009'
+      },
+      items: [
+        {
+          id: 'p1',
+          name: productName,
+          price: itemPrice,
+          quantity: itemQty,
+          size: itemSize
+        }
+      ],
+      subtotal,
+      tax,
+      totalAmount,
+      paymentMethod: 'Razorpay Secure (Online)'
+    };
+
+    const result = await sendInvoiceEmail(mockOrder);
+    res.json({
+      success: true,
+      message: `Invoice email dispatched to ${targetEmail}`,
+      orderDetails: {
+        orderId: mockOrder.id,
+        recipient: targetEmail,
+        customerName: targetName,
+        product: productName,
+        total: totalAmount
+      },
+      smtpResult: result
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 
 // Serve frontend files in production

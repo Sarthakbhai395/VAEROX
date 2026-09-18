@@ -166,51 +166,58 @@ const Checkout = () => {
         handler: async function (response) {
           try {
             console.log('Payment completed on client, verifying with server:', response);
+            
+            // Build order object with customer and item details
+            const newOrderRecord = {
+              id: response.razorpay_order_id || `VRX-${Math.floor(100000 + Math.random() * 900000)}`,
+              paymentId: response.razorpay_payment_id || `PAY-${Date.now()}`,
+              date: new Date().toISOString(),
+              user: {
+                name: formData.fullName,
+                email: formData.email,
+                phone: formData.phone,
+                address: formData.address,
+                city: formData.city,
+                state: formData.state,
+                zipCode: formData.zipCode,
+              },
+              items: cartItems.map(item => {
+                const product = item.product || item
+                return {
+                  id: product._id || product.id,
+                  name: product.name,
+                  image: getProductImageUrl(product.image),
+                  price: product.discount ? product.price * (1 - product.discount / 100) : product.price,
+                  quantity: item.quantity || 1,
+                  size: product.selectedSize || item.selectedSize || 'L',
+                  customMeasurements: product.customMeasurements || item.customMeasurements || null,
+                  tier: product.tier || 'standard',
+                  category: product.category || 'clothes'
+                }
+              }),
+              subtotal,
+              tax,
+              totalAmount: total,
+              paymentMethod: 'Razorpay Secure (Online)',
+              paymentStatus: 'Paid',
+              orderStatus: 'Processing'
+            }
+
             const verifyRes = await paymentAPI.verifyPayment({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
+              orderData: newOrderRecord
             });
 
             if (verifyRes.success) {
-              // Create full order record with user & product details
-              const newOrderRecord = {
-                id: response.razorpay_order_id || `VRX-${Math.floor(100000 + Math.random() * 900000)}`,
-                paymentId: response.razorpay_payment_id || `PAY-${Date.now()}`,
-                date: new Date().toISOString(),
-                user: {
-                  name: formData.fullName,
-                  email: formData.email,
-                  phone: formData.phone,
-                  address: formData.address,
-                  city: formData.city,
-                  state: formData.state,
-                  zipCode: formData.zipCode,
-                },
-                items: cartItems.map(item => {
-                  const product = item.product || item
-                  return {
-                    id: product._id || product.id,
-                    name: product.name,
-                    image: getProductImageUrl(product.image),
-                    price: product.discount ? product.price * (1 - product.discount / 100) : product.price,
-                    quantity: item.quantity || 1,
-                    size: product.selectedSize || item.selectedSize || 'L',
-                    tier: product.tier || 'standard',
-                    category: product.category || 'clothes'
-                  }
-                }),
-                subtotal,
-                tax,
-                totalAmount: total,
-                paymentMethod: 'Razorpay Secure (Online)',
-                paymentStatus: 'Paid',
-                orderStatus: 'Processing'
-              }
-
               const existingOrders = JSON.parse(localStorage.getItem('vaerox_admin_orders') || '[]')
               existingOrders.unshift(newOrderRecord)
               localStorage.setItem('vaerox_admin_orders', JSON.stringify(existingOrders))
+
+              const userOrders = JSON.parse(localStorage.getItem('vaerox_user_orders') || '[]')
+              userOrders.unshift(newOrderRecord)
+              localStorage.setItem('vaerox_user_orders', JSON.stringify(userOrders))
 
               setOrderPlaced(true);
               clearCart();

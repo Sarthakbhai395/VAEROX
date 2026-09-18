@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Trash2, CheckCircle2, Eye, EyeOff, Sparkles, Image as ImageIcon } from 'lucide-react'
+import { Plus, Trash2, CheckCircle2, Eye, EyeOff, Image as ImageIcon } from 'lucide-react'
 import { heroBannerService } from '../../../services/heroBannerService'
 
 export const HeroBannerManager = () => {
@@ -150,7 +150,7 @@ export const HeroBannerManager = () => {
         >
           <div className="flex justify-between items-center border-b border-[#26241E] pb-3">
             <h3 className="text-sm font-bold text-[#C9A84C] uppercase tracking-wider font-serif flex items-center gap-2">
-              <Sparkles className="w-4 h-4" /> Create Hero Banner Slide
+              Create Hero Banner Slide
             </h3>
             <span className="text-[10px] text-[#A39E93]">
               * Required fields: Image, Headline Title & Description
@@ -167,22 +167,20 @@ export const HeroBannerManager = () => {
                 <button
                   type="button"
                   onClick={() => setImageUploadMode('file')}
-                  className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase tracking-wider transition-colors ${
-                    imageUploadMode === 'file'
+                  className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase tracking-wider transition-colors ${imageUploadMode === 'file'
                       ? 'bg-[#C9A84C] text-black'
                       : 'bg-[#1A1A1A] text-[#A39E93] hover:text-white'
-                  }`}
+                    }`}
                 >
                   Upload From Local PC
                 </button>
                 <button
                   type="button"
                   onClick={() => setImageUploadMode('url')}
-                  className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase tracking-wider transition-colors ${
-                    imageUploadMode === 'url'
+                  className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase tracking-wider transition-colors ${imageUploadMode === 'url'
                       ? 'bg-[#C9A84C] text-black'
                       : 'bg-[#1A1A1A] text-[#A39E93] hover:text-white'
-                  }`}
+                    }`}
                 >
                   Image URL
                 </button>
@@ -321,11 +319,10 @@ export const HeroBannerManager = () => {
         {banners.map((banner) => (
           <div
             key={banner.id}
-            className={`p-4 rounded-xl border flex flex-col md:flex-row items-center gap-4 transition-all ${
-              banner.active !== false
+            className={`p-4 rounded-xl border flex flex-col md:flex-row items-center gap-4 transition-all ${banner.active !== false
                 ? 'bg-[#121212] border-[#26241E]'
                 : 'bg-black/50 border-red-900/30 opacity-60'
-            }`}
+              }`}
           >
             <img
               src={banner.image}

@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowRight,
   Truck,
   Headphones,
   ShieldCheck,
   CreditCard,
-  Sparkles,
 } from 'lucide-react'
 import { BannerCarousel } from '../components/homepage/BannerCarousel'
-import { UGCVideoSection } from '../components/homepage/UGCVideoSection'
 import { FAQSection } from '../components/homepage/FAQSection'
 import ProductCard from '../components/product/ProductCard'
 import { productAPI } from '../services/api'
@@ -62,6 +60,11 @@ const NewHome = () => {
   const [error, setError] = useState(null)
   const [siteAssets, setSiteAssets] = useState(getSiteAssets())
 
+  // Interactive Bespoke Fitting Slider States:
+  const [isBespokeSliderOpen, setIsBespokeSliderOpen] = useState(false)
+  const [bespokeStep, setBespokeStep] = useState('main') // 'main' | 'gender' | 'tier'
+  const [selectedBespokeGender, setSelectedBespokeGender] = useState('men')
+
   useEffect(() => {
     fetchFeaturedProducts()
     const handleAssetsUpdate = () => setSiteAssets(getSiteAssets())
@@ -110,6 +113,11 @@ const NewHome = () => {
     }
   }
 
+  const handleBookBespokeClick = () => {
+    setIsBespokeSliderOpen((prev) => !prev)
+    setBespokeStep('main')
+  }
+
   return (
     <div className="min-h-screen bg-black text-[#E8E0CC] w-full overflow-x-hidden select-none">
       {/* Hero Banner Section */}
@@ -123,173 +131,7 @@ const NewHome = () => {
         </motion.div>
       </section>
 
-      {/* ═══ VÆROX CUSTOM STITCH & BESPOKE ATELIER SECTION ═══ */}
-      <section className="py-12 md:py-24 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        {/* Section Header */}
-        <motion.div
-          className="text-center mb-10 md:mb-16"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.7 }}
-        >
-          <motion.span 
-            initial={{ scale: 0.9, opacity: 0 }}
-            whileInView={{ scale: 1, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold tracking-[0.3em] text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40 uppercase mb-3 shadow-[0_0_15px_rgba(201,168,76,0.15)] font-serif"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#C9A84C] animate-pulse" />
-            <span>VÆROX BESPOKE CRAFTSMANSHIP</span>
-          </motion.span>
-          
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#FFF5D6] font-serif tracking-tight mb-4 uppercase">
-            THE ART OF <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B]">CUSTOM STITCH</span>
-          </h2>
-          
-          <p className="text-[#E8E0CC]/80 text-xs sm:text-base max-w-2xl mx-auto font-light leading-relaxed tracking-wide font-sans">
-            Every VÆROX garment is custom stitched by master artisans, sculpted to your exact body posture, chest drop, and personal executive identity.
-          </p>
-        </motion.div>
-
-        {/* Animated Points & Motion Showcase Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-12">
-          {/* Point 1 */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            whileHover={{ y: -8, scale: 1.02 }}
-            className="group relative bg-gradient-to-b from-[#0D0C0A] via-[#11100D] to-[#0A0A0A] border border-[#26241E] hover:border-[#C9A84C] p-6 sm:p-8 rounded-3xl transition-all duration-500 shadow-xl hover:shadow-[0_0_35px_rgba(201,168,76,0.2)] flex flex-col justify-between overflow-hidden"
-          >
-            {/* Animated Golden Corner Glow */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A84C]/5 rounded-bl-full blur-2xl group-hover:bg-[#C9A84C]/20 transition-all duration-500 pointer-events-none" />
-            
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <span className="text-2xl font-serif font-black text-[#C9A84C]/40 group-hover:text-[#C9A84C] transition-colors">01</span>
-                <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-widest text-[#C9A84C] bg-black border border-[#C9A84C]/30 uppercase font-sans">
-                  HAND CRAFTED
-                </span>
-              </div>
-              <h3 className="text-xl font-bold text-[#FFF5D6] font-serif uppercase tracking-wide mb-3 group-hover:text-[#C9A84C] transition-colors">
-                Hand-Crafted Custom Stitching
-              </h3>
-              <p className="text-xs sm:text-sm text-[#E8E0CC]/70 font-light leading-relaxed mb-6 font-sans">
-                Over 80+ hours of hand-stitching by senior master tailors ensure that every seam, shoulder canvas, and lapel rolls with natural flexibility and lifetime structure.
-              </p>
-            </div>
-
-            <div className="pt-4 border-t border-[#26241E] flex items-center justify-between text-xs font-semibold text-[#C9A84C] font-sans">
-              <span className="tracking-wider uppercase text-[10px]">Zero Glue • Full Canvas</span>
-              <Sparkles className="w-4 h-4 group-hover:rotate-180 transition-transform duration-700" />
-            </div>
-          </motion.div>
-
-          {/* Point 2 */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            whileHover={{ y: -8, scale: 1.02 }}
-            className="group relative bg-gradient-to-b from-[#0D0C0A] via-[#11100D] to-[#0A0A0A] border border-[#26241E] hover:border-[#C9A84C] p-6 sm:p-8 rounded-3xl transition-all duration-500 shadow-xl hover:shadow-[0_0_35px_rgba(201,168,76,0.2)] flex flex-col justify-between overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A84C]/5 rounded-bl-full blur-2xl group-hover:bg-[#C9A84C]/20 transition-all duration-500 pointer-events-none" />
-
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <span className="text-2xl font-serif font-black text-[#C9A84C]/40 group-hover:text-[#C9A84C] transition-colors">02</span>
-                <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-widest text-[#C9A84C] bg-black border border-[#C9A84C]/30 uppercase font-sans">
-                  3D CONTOUR
-                </span>
-              </div>
-              <h3 className="text-xl font-bold text-[#FFF5D6] font-serif uppercase tracking-wide mb-3 group-hover:text-[#C9A84C] transition-colors">
-                3D Body Contour & Patterning
-              </h3>
-              <p className="text-xs sm:text-sm text-[#E8E0CC]/70 font-light leading-relaxed mb-6 font-sans">
-                We craft individual paper patterns for your unique stance, drop, and shoulder slope. The garment wraps around your body like a second skin with zero restriction.
-              </p>
-            </div>
-
-            <div className="pt-4 border-t border-[#26241E] flex items-center justify-between text-xs font-semibold text-[#C9A84C] font-sans">
-              <span className="tracking-wider uppercase text-[10px]">Bespoke Measurement Fit</span>
-              <Sparkles className="w-4 h-4 group-hover:rotate-180 transition-transform duration-700" />
-            </div>
-          </motion.div>
-
-          {/* Point 3 */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            whileHover={{ y: -8, scale: 1.02 }}
-            className="group relative bg-gradient-to-b from-[#0D0C0A] via-[#11100D] to-[#0A0A0A] border border-[#26241E] hover:border-[#C9A84C] p-6 sm:p-8 rounded-3xl transition-all duration-500 shadow-xl hover:shadow-[0_0_35px_rgba(201,168,76,0.2)] flex flex-col justify-between overflow-hidden md:col-span-2 lg:col-span-1"
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A84C]/5 rounded-bl-full blur-2xl group-hover:bg-[#C9A84C]/20 transition-all duration-500 pointer-events-none" />
-
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <span className="text-2xl font-serif font-black text-[#C9A84C]/40 group-hover:text-[#C9A84C] transition-colors">03</span>
-                <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-widest text-[#C9A84C] bg-black border border-[#C9A84C]/30 uppercase font-sans">
-                  LUXURY TEXTILES
-                </span>
-              </div>
-              <h3 className="text-xl font-bold text-[#FFF5D6] font-serif uppercase tracking-wide mb-3 group-hover:text-[#C9A84C] transition-colors">
-                Superfine Italian Wools & Silks
-              </h3>
-              <p className="text-xs sm:text-sm text-[#E8E0CC]/70 font-light leading-relaxed mb-6 font-sans">
-                Hand-selected Super 150s Merino wools, pure Mulberry silk linings, and genuine horn buttons imported from Biella and Savile Row mills.
-              </p>
-            </div>
-
-            <div className="pt-4 border-t border-[#26241E] flex items-center justify-between text-xs font-semibold text-[#C9A84C] font-sans">
-              <span className="tracking-wider uppercase text-[10px]">Pure Natural Fibers</span>
-              <Sparkles className="w-4 h-4 group-hover:rotate-180 transition-transform duration-700" />
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Highlighted Banner & CTA for Custom Stitch Clothes */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{ duration: 0.7 }}
-          className="relative rounded-3xl overflow-hidden border border-[#C9A84C]/60 bg-gradient-to-r from-[#0F0E0B] via-[#1A1710] to-[#0A0A0A] p-6 sm:p-10 md:p-12 shadow-[0_0_40px_rgba(201,168,76,0.25)] flex flex-col lg:flex-row items-center justify-between gap-8"
-        >
-          {/* Ambient Lighting FX */}
-          <div className="absolute -top-24 -left-24 w-80 h-80 bg-[#C9A84C]/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-[#C9A84C]/15 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 space-y-4 max-w-2xl text-left">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-extrabold tracking-[0.25em] text-[#C9A84C] bg-black border border-[#C9A84C]/40 uppercase font-sans">
-              VÆROX BESPOKE ATELIER
-            </span>
-            <h3 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight leading-tight">
-              EXPERIENCE THE VÆROX <span className="text-[#C9A84C]">CUSTOM STITCH</span> DIFFERENCE
-            </h3>
-            <p className="text-xs sm:text-base text-[#E8E0CC]/80 font-light leading-relaxed font-sans">
-              Step into the world of tailor-made excellence. Choose between Men's Wear & Women's Wear, then explore VÆROX Standard or VÆROX Luxury for executive personas like CEO, Lawyer, Doctor, and more.
-            </p>
-          </div>
-
-          <div className="relative z-10 shrink-0 w-full sm:w-auto">
-            <Link
-              to="/products"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-xs tracking-[0.2em] uppercase hover:scale-105 hover:shadow-[0_0_35px_rgba(201,168,76,0.6)] transition-all duration-300 shadow-2xl font-sans"
-            >
-              <span>EXPLORE CUSTOM CLOTHES</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ═══ 2.5 VÆROX BESPOKE TAILORING (COMPACT & ANIMATED SHOWCASE) ═══ */}
+      {/* ═══ HANDMADE HAUTE COUTURE BESPOKE TAILORING SECTION WITH SMOOTH SLIDER CARDS ═══ */}
       <section className="py-8 md:py-12 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto font-sans">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -313,7 +155,6 @@ const NewHome = () => {
           {/* Left / Main Text Block */}
           <div className="flex-1 text-left relative z-10 space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-bold tracking-[0.22em] text-[#C9A84C] bg-black/80 border border-[#C9A84C]/40 uppercase shadow-md">
-              <Sparkles className="w-3 h-3 text-[#C9A84C] animate-pulse" />
               <span>CRAFTED FOR DISTINCTION • 100% BESPOKE TAILORING</span>
             </div>
 
@@ -341,23 +182,301 @@ const NewHome = () => {
 
           {/* Right Action Call Button */}
           <div className="relative z-10 shrink-0 w-full sm:w-auto">
-            <div>
-              <Link
-                to="/contact"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-7 py-3.5 sm:px-8 sm:py-4 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-xs tracking-[0.2em] uppercase hover:shadow-[0_0_30px_rgba(201,168,76,0.6)] transition-all duration-300 shadow-xl font-sans"
-              >
-                <span>BOOK BESPOKE FITTING</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
+            <button
+              onClick={handleBookBespokeClick}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-7 py-3.5 sm:px-8 sm:py-4 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-xs tracking-[0.2em] uppercase hover:shadow-[0_0_30px_rgba(201,168,76,0.6)] transition-all duration-300 shadow-xl font-sans cursor-pointer"
+            >
+              <span>{isBespokeSliderOpen ? 'CLOSE OPTIONS' : 'BOOK BESPOKE FITTING'}</span>
+              <ArrowRight className={`w-4 h-4 transition-transform duration-300 ${isBespokeSliderOpen ? 'rotate-90' : ''}`} />
+            </button>
           </div>
         </motion.div>
+
+        {/* ═══ SMOOTH SLIDER OPTIONS CONTAINER (JUST BELOW THE BANNER) ═══ */}
+        <AnimatePresence>
+          {isBespokeSliderOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, y: -20 }}
+              animate={{ opacity: 1, height: 'auto', y: 0 }}
+              exit={{ opacity: 0, height: 0, y: -20 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-6 pt-4 border-t border-[#C9A84C]/30 overflow-hidden"
+            >
+              {/* STEP 1: TWO MAIN CARDS (Classic Clothes & VAEROX Premium) */}
+              {bespokeStep === 'main' && (
+                <motion.div
+                  key="bespoke-main"
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.4 }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                >
+                  {/* Card 1: Classic Clothes */}
+                  <motion.div
+                    whileHover={{ y: -6, scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate('/products?mode=classic')}
+                    className="group relative rounded-2xl overflow-hidden cursor-pointer bg-gradient-to-b from-[#14120E] via-[#0F0E0B] to-[#0A0A0A] border border-[#26241E] hover:border-[#C9A84C] shadow-xl transition-all duration-300 flex flex-col justify-between min-h-[320px]"
+                  >
+                    <div className="relative h-48 w-full overflow-hidden shrink-0">
+                      <img
+                        src={(typeof siteAssets.classicCardImage === 'string' ? siteAssets.classicCardImage : siteAssets.classicCardImage?.url) || "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=1000&q=80"}
+                        alt="Classic Clothes"
+                        className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-black/40 to-transparent" />
+                      <div className="absolute top-3 left-3">
+                        <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-widest text-[#C9A84C] bg-black/85 border border-[#C9A84C]/40 uppercase font-sans">
+                          EVERYDAY REGULAR WEAR
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-xl sm:text-2xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-wide mb-2 group-hover:text-[#C9A84C] transition-colors">
+                          CLASSIC CLOTHES
+                        </h3>
+                        <p className="text-xs sm:text-sm text-[#E8E0CC]/75 font-light leading-relaxed mb-4 font-sans">
+                          It is used for regular use and it includes all regular clothes. Click to view all clothes directly with instant sorting & filtering options.
+                        </p>
+                      </div>
+                      <div className="pt-4 border-t border-[#26241E] flex items-center justify-between text-xs font-extrabold text-[#C9A84C] font-sans uppercase tracking-wider">
+                        <span>EXPLORE ALL CLASSIC CLOTHES</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Card 2: VAEROX Premium */}
+                  <motion.div
+                    whileHover={{ y: -6, scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setBespokeStep('gender')}
+                    className="group relative rounded-2xl overflow-hidden cursor-pointer bg-gradient-to-b from-[#1E190E] via-[#141008] to-[#0A0A0A] border border-[#C9A84C]/60 hover:border-[#C9A84C] shadow-xl hover:shadow-[0_0_35px_rgba(201,168,76,0.3)] transition-all duration-300 flex flex-col justify-between min-h-[320px]"
+                  >
+                    <div className="relative h-48 w-full overflow-hidden shrink-0">
+                      <img
+                        src={(typeof siteAssets.premiumCardImage === 'string' ? siteAssets.premiumCardImage : siteAssets.premiumCardImage?.url) || "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=1000&q=80"}
+                        alt="VAEROX Premium"
+                        className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-black/40 to-transparent" />
+                      <div className="absolute top-3 left-3">
+                        <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-widest text-black bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] uppercase font-sans">
+                          BESPOKE HAUTE COUTURE
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-xl sm:text-2xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-wide mb-2 group-hover:text-[#C9A84C] transition-colors">
+                          VAEROX PREMIUM
+                        </h3>
+                        <p className="text-xs sm:text-sm text-[#E8E0CC]/80 font-light leading-relaxed mb-4 font-sans">
+                          Explore VAEROX Standard (full pair custom stitch) & VAEROX Luxury (look-alike executive outfits like CEO, Manager, Teacher, Lawyer, Doctor, etc.).
+                        </p>
+                      </div>
+                      <div className="pt-4 border-t border-[#26241E] flex items-center justify-between text-xs font-extrabold text-[#C9A84C] font-sans uppercase tracking-wider">
+                        <span>CHOOSE MEN'S OR WOMEN'S</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+
+              {/* STEP 2: GENDER SELECTION (Men's vs Women's) */}
+              {bespokeStep === 'gender' && (
+                <motion.div
+                  key="bespoke-gender"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.4 }}
+                  className="space-y-4"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <button
+                      onClick={() => setBespokeStep('main')}
+                      className="text-xs font-extrabold text-[#C9A84C] hover:underline flex items-center gap-1 uppercase tracking-wider cursor-pointer font-sans"
+                    >
+                      ← BACK TO MAIN OPTIONS
+                    </button>
+                    <span className="text-xs font-bold text-[#FFF5D6] uppercase tracking-widest font-serif">
+                      VAEROX PREMIUM • SELECT GENDER
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Men's Option */}
+                    <motion.div
+                      whileHover={{ scale: 1.015 }}
+                      whileTap={{ scale: 0.985 }}
+                      onClick={() => {
+                        setSelectedBespokeGender('men')
+                        setBespokeStep('tier')
+                      }}
+                      className="group rounded-2xl overflow-hidden bg-[#12100C] border border-[#C9A84C]/40 hover:border-[#C9A84C] cursor-pointer transition-all flex flex-col justify-between"
+                    >
+                      <div className="h-40 relative overflow-hidden">
+                        <img
+                          src={(typeof siteAssets.homeMensCard === 'string' ? siteAssets.homeMensCard : siteAssets.homeMensCard?.url) || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80"}
+                          alt="Men's Wear"
+                          className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#12100C] via-transparent to-transparent" />
+                      </div>
+                      <div className="p-5">
+                        <h4 className="text-lg font-extrabold text-[#FFF5D6] font-serif uppercase group-hover:text-[#C9A84C]">
+                          MEN'S WEAR
+                        </h4>
+                        <p className="text-xs text-[#E8E0CC]/70 mt-1 font-sans">
+                          Bespoke suiting, double-breasted blazers & executive persona outfits.
+                        </p>
+                        <div className="mt-4 text-xs font-bold text-[#C9A84C] flex items-center gap-1 font-sans uppercase">
+                          <span>SELECT MEN'S WEAR</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+                    </motion.div>
+
+                    {/* Women's Option */}
+                    <motion.div
+                      whileHover={{ scale: 1.015 }}
+                      whileTap={{ scale: 0.985 }}
+                      onClick={() => {
+                        setSelectedBespokeGender('women')
+                        setBespokeStep('tier')
+                      }}
+                      className="group rounded-2xl overflow-hidden bg-[#12100C] border border-[#C9A84C]/40 hover:border-[#C9A84C] cursor-pointer transition-all flex flex-col justify-between"
+                    >
+                      <div className="h-40 relative overflow-hidden">
+                        <img
+                          src={(typeof siteAssets.homeWomensCard === 'string' ? siteAssets.homeWomensCard : siteAssets.homeWomensCard?.url) || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80"}
+                          alt="Women's Wear"
+                          className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#12100C] via-transparent to-transparent" />
+                      </div>
+                      <div className="p-5">
+                        <h4 className="text-lg font-extrabold text-[#FFF5D6] font-serif uppercase group-hover:text-[#C9A84C]">
+                          WOMEN'S WEAR
+                        </h4>
+                        <p className="text-xs text-[#E8E0CC]/70 mt-1 font-sans">
+                          Atelier evening gowns, executive pant-suits & bespoke persona couture.
+                        </p>
+                        <div className="mt-4 text-xs font-bold text-[#C9A84C] flex items-center gap-1 font-sans uppercase">
+                          <span>SELECT WOMEN'S WEAR</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* STEP 3: TIER SELECTION (VAEROX Standard vs VAEROX Luxury) */}
+              {bespokeStep === 'tier' && (
+                <motion.div
+                  key="bespoke-tier"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.4 }}
+                  className="space-y-4"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <button
+                      onClick={() => setBespokeStep('gender')}
+                      className="text-xs font-extrabold text-[#C9A84C] hover:underline flex items-center gap-1 uppercase tracking-wider cursor-pointer font-sans"
+                    >
+                      ← BACK TO GENDER SELECTION
+                    </button>
+                    <span className="text-xs font-bold text-[#FFF5D6] uppercase tracking-widest font-serif">
+                      VAEROX PREMIUM • {selectedBespokeGender.toUpperCase()}'S WEAR
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Card 1: VAEROX Standard */}
+                    <motion.div
+                      whileHover={{ scale: 1.015 }}
+                      whileTap={{ scale: 0.985 }}
+                      onClick={() => navigate(`/products?category=${selectedBespokeGender}&tier=standard`)}
+                      className="group rounded-2xl overflow-hidden bg-[#12100C] border border-[#C9A84C]/40 hover:border-[#C9A84C] cursor-pointer transition-all flex flex-col justify-between"
+                    >
+                      <div className="h-44 relative overflow-hidden">
+                        <img
+                          src={(typeof siteAssets.standardTierCardImage === 'string' ? siteAssets.standardTierCardImage : siteAssets.standardTierCardImage?.url) || "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=800&q=80"}
+                          alt="VAEROX Standard"
+                          className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#12100C] via-transparent to-transparent" />
+                        <div className="absolute top-3 left-3">
+                          <span className="px-2.5 py-0.5 rounded text-[9px] font-bold text-[#C9A84C] bg-black border border-[#C9A84C]/30 uppercase font-mono">
+                            TIER 01 • BESPOKE STANDARD
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-5">
+                        <h4 className="text-xl font-extrabold text-[#FFF5D6] font-serif uppercase group-hover:text-[#C9A84C] mb-2">
+                          VAEROX STANDARD
+                        </h4>
+                        <p className="text-xs text-[#E8E0CC]/80 font-light leading-relaxed mb-4 font-sans">
+                          All premium clothes, full pair outfits, and custom stitch tailored with your exact body measurements.
+                        </p>
+                        <div className="pt-3 border-t border-[#26241E] text-xs font-extrabold text-[#C9A84C] flex items-center justify-between uppercase font-sans">
+                          <span>VIEW VAEROX STANDARD</span>
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+                    </motion.div>
+
+                    {/* Card 2: VAEROX Luxury */}
+                    <motion.div
+                      whileHover={{ scale: 1.015 }}
+                      whileTap={{ scale: 0.985 }}
+                      onClick={() => navigate(`/products?category=${selectedBespokeGender}&tier=luxury`)}
+                      className="group rounded-2xl overflow-hidden bg-gradient-to-b from-[#1C170D] to-[#0A0A0A] border border-[#C9A84C] hover:border-[#FFF5D6] cursor-pointer transition-all flex flex-col justify-between shadow-lg"
+                    >
+                      <div className="h-44 relative overflow-hidden">
+                        <img
+                          src={(typeof siteAssets.luxuryTierCardImage === 'string' ? siteAssets.luxuryTierCardImage : siteAssets.luxuryTierCardImage?.url) || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80"}
+                          alt="VAEROX Luxury"
+                          className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#1C170D] via-transparent to-transparent" />
+                        <div className="absolute top-3 left-3">
+                          <span className="px-2.5 py-0.5 rounded text-[9px] font-bold text-black bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] uppercase font-mono">
+                            TIER 02 • EXECUTIVE LUXURY
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-5">
+                        <h4 className="text-xl font-extrabold text-[#FFF5D6] font-serif uppercase group-hover:text-[#C9A84C] mb-2">
+                          VAEROX LUXURY
+                        </h4>
+                        <p className="text-xs text-[#E8E0CC]/80 font-light leading-relaxed mb-4 font-sans">
+                          Look-alike executive persona outfits (CEO outfit, Manager outfit, Teacher outfit, Lawyer outfit, Doctor outfit, etc.) with custom stitching.
+                        </p>
+                        <div className="pt-3 border-t border-[#26241E] text-xs font-extrabold text-[#C9A84C] flex items-center justify-between uppercase font-sans">
+                          <span>VIEW EXECUTIVE PERSONAS</span>
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
 
-      {/* ═══ 3. UGC VIDEOS SECTION (ADMIN CONTROLLED REELS) ═══ */}
-      <UGCVideoSection />
-
-      {/* ═══ 4. DELIVERY, SUPPORT, QUALITY & PAYMENT DETAILS SECTION ═══ */}
+      {/* ═══ DELIVERY, SUPPORT, QUALITY & PAYMENT DETAILS SECTION ═══ */}
       <section className="py-12 md:py-24 border-t border-[#26241E] bg-[#050505]">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           <motion.div
@@ -380,23 +499,22 @@ const NewHome = () => {
             variants={stagger}
             initial="hidden"
             whileInView="show"
-            viewport={{ once: true, margin: '-80px' }}
+            viewport={{ once: true, margin: '-40px' }}
           >
-            {serviceFeatures.map((feature, idx) => (
+            {serviceFeatures.map((feat, idx) => (
               <motion.div
                 key={idx}
                 variants={fadeUp}
-                whileHover={{ y: -6 }}
-                className="group bg-[#0A0A0A] rounded-2xl sm:rounded-3xl border border-[#26241E] p-6 sm:p-8 text-center hover:border-[#C9A84C]/60 hover:shadow-[0_0_30px_rgba(201,168,76,0.18)] transition-all duration-300"
+                className="p-5 sm:p-6 rounded-2xl bg-[#0F0E0C] border border-[#26241E] hover:border-[#C9A84C]/50 transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-black border border-[#C9A84C]/40 flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-xl group-hover:scale-110 group-hover:bg-[#C9A84C] group-hover:text-black transition-all duration-300">
-                  {feature.icon}
+                <div className="mb-3 p-3 rounded-xl bg-black w-fit border border-[#26241E]">
+                  {feat.icon}
                 </div>
-                <h3 className="text-xs sm:text-sm font-bold text-[#FFF5D6] mb-2 font-serif uppercase tracking-wider">
-                  {feature.title}
+                <h3 className="text-base font-bold text-[#FFF5D6] font-serif mb-1 uppercase">
+                  {feat.title}
                 </h3>
-                <p className="text-[11px] sm:text-xs text-[#E8E0CC]/70 leading-relaxed font-light">
-                  {feature.desc}
+                <p className="text-xs text-[#E8E0CC]/70 font-light leading-relaxed font-sans">
+                  {feat.desc}
                 </p>
               </motion.div>
             ))}
@@ -404,11 +522,10 @@ const NewHome = () => {
         </div>
       </section>
 
-      {/* ═══ 5. FAQ SECTION ═══ */}
+      {/* ═══ FAQ SECTION ═══ */}
       <FAQSection />
     </div>
   )
-
 }
 
 export default NewHome

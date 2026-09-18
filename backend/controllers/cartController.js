@@ -3,22 +3,50 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 
 // Helper to safely find a valid Product
-const findValidProduct = async (productId) => {
-  if (!productId) return null;
-
-  // If valid ObjectId, check directly
-  if (mongoose.Types.ObjectId.isValid(productId)) {
+const findValidProduct = async (productId, productData = null) => {
+  // 1. If valid ObjectId, check directly by _id
+  if (productId && mongoose.Types.ObjectId.isValid(productId)) {
     const prod = await Product.findById(productId);
     if (prod) return prod;
   }
 
-  // Check by string 'id' field if stored as custom ID
-  const prodCustom = await Product.findOne({ id: productId });
-  if (prodCustom) return prodCustom;
+  // 2. Check by custom 'id' field if stored as string ID
+  if (productId) {
+    const prodCustom = await Product.findOne({ id: productId });
+    if (prodCustom) return prodCustom;
+  }
 
-  // Fallback to first available product in DB if catalog exists
-  const fallbackProd = await Product.findOne();
-  return fallbackProd;
+  // 3. Match by exact or partial name if product object was supplied
+  if (productData && productData.name) {
+    const prodByName = await Product.findOne({ name: productData.name });
+    if (prodByName) return prodByName;
+
+    // Search case-insensitive name match
+    const cleanName = productData.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const prodByReg = await Product.findOne({ name: new RegExp(`^${cleanName}$`, 'i') });
+    if (prodByReg) return prodByReg;
+
+    // Create product dynamically in DB catalog if missing
+    try {
+      const adminUser = await User.findOne({ role: 'admin' });
+      const sellerId = adminUser ? adminUser._id : new mongoose.Types.ObjectId();
+      const newProd = await Product.create({
+        name: productData.name,
+        description: productData.description || `${productData.name} - Luxury VÆROX Collection Item`,
+        price: Number(productData.price) || 9999,
+        discount: Number(productData.discount) || 0,
+        category: productData.category || 'clothes',
+        image: productData.image || '/uploads/no-photo.jpg',
+        seller: sellerId
+      });
+      return newProd;
+    } catch (createErr) {
+      console.error('Dynamic product creation error:', createErr);
+    }
+  }
+
+  // 4. Return null if no match (never return random default product)
+  return null;
 };
 
 // @desc    Get user's cart
@@ -30,7 +58,7 @@ exports.getCart = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: user.cart || []
+      data: user ? (user.cart || []) : []
     });
   } catch (err) {
     next(err);
@@ -42,18 +70,28 @@ exports.getCart = async (req, res, next) => {
 // @access  Private
 exports.addToCart = async (req, res, next) => {
   try {
-    const { productId, quantity = 1 } = req.body;
+    const { productId, quantity = 1, product: productData } = req.body;
 
-    const product = await findValidProduct(productId);
+    const product = await findValidProduct(productId, productData);
     if (!product) {
-      return res.status(404).json({
+      return res.status(400).json({
         success: false,
-        error: 'No product available to add to cart'
+        error: 'Product not found in catalog'
       });
     }
 
     const validProductId = product._id;
     const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    if (!user.cart) {
+      user.cart = [];
+    }
     
     // Check if product already in cart
     const existingItemIndex = user.cart.findIndex(

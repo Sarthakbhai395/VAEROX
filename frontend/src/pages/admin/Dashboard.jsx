@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from './components/Sidebar'
 import { HeroBannerManager } from './components/HeroBannerManager'
-import { UGCVideoManager } from './components/UGCVideoManager'
 import SiteAssetsManager from './components/SiteAssetsManager'
+import FAQManager from './components/FAQManager'
 import { productAPI, userAPI, activityAPI, contactAPI } from '../../services/api'
 import {
   ShoppingBag,
@@ -23,7 +23,6 @@ import {
   RefreshCw,
   Menu,
   Image as ImageIcon,
-  Sparkles,
   Video,
   Layers,
   Upload,
@@ -61,6 +60,53 @@ const AdminDashboard = () => {
   const [showAddProductModal, setShowAddProductModal] = useState(false)
   const [replyModalQuery, setReplyModalQuery] = useState(null)
   const [replyText, setReplyText] = useState('')
+
+  // Cancel Order Modal States
+  const [cancelModalOrder, setCancelModalOrder] = useState(null)
+  const [cancellationReason, setCancellationReason] = useState('')
+
+  // Order status management
+  const handleUpdateOrderStatus = (orderId, newStatus) => {
+    const updated = orders.map(ord => ord.id === orderId ? { ...ord, orderStatus: newStatus } : ord)
+    setOrders(updated)
+    localStorage.setItem('vaerox_admin_orders', JSON.stringify(updated))
+    setSuccess(`Order ${orderId} status updated to ${newStatus}`)
+    setTimeout(() => setSuccess(''), 3000)
+  }
+
+  const handleConfirmOrderCancellation = (e) => {
+    e.preventDefault()
+    if (!cancelModalOrder || !cancellationReason.trim()) return
+
+    const orderId = cancelModalOrder.id
+    const reasonText = cancellationReason.trim()
+    const updated = orders.map(ord => ord.id === orderId ? { ...ord, orderStatus: 'Cancelled', cancelReason: reasonText } : ord)
+    setOrders(updated)
+    localStorage.setItem('vaerox_admin_orders', JSON.stringify(updated))
+
+    // Send inbox notification to user inbox
+    const inboxMessages = JSON.parse(localStorage.getItem('vaerox_user_inbox_messages') || '[]')
+    const newMessage = {
+      id: `MSG-${Date.now()}`,
+      orderId: cancelModalOrder.id,
+      userEmail: cancelModalOrder.user?.email || '',
+      userName: cancelModalOrder.user?.name || 'Valued Customer',
+      productName: cancelModalOrder.items?.map(i => i.name).join(', ') || 'Custom Order Item',
+      items: cancelModalOrder.items || [],
+      totalAmount: cancelModalOrder.totalAmount,
+      reason: reasonText,
+      date: new Date().toISOString(),
+      status: 'Cancelled',
+      read: false
+    }
+    inboxMessages.unshift(newMessage)
+    localStorage.setItem('vaerox_user_inbox_messages', JSON.stringify(inboxMessages))
+
+    setSuccess(`Order ${orderId} cancelled successfully and reason sent to customer's inbox.`)
+    setCancelModalOrder(null)
+    setCancellationReason('')
+    setTimeout(() => setSuccess(''), 4000)
+  }
 
   // Search query states
   const [searchProductQuery, setSearchProductQuery] = useState('')
@@ -159,13 +205,6 @@ const AdminDashboard = () => {
     }
   }
 
-  const handleUpdateOrderStatus = (orderId, newStatus) => {
-    const updated = orders.map(ord => ord.id === orderId ? { ...ord, orderStatus: newStatus } : ord)
-    setOrders(updated)
-    localStorage.setItem('vaerox_admin_orders', JSON.stringify(updated))
-    setSuccess(`Order ${orderId} status updated to ${newStatus}`)
-    setTimeout(() => setSuccess(''), 3000)
-  }
 
   // Product edit form state
   const [productData, setProductData] = useState({
@@ -353,10 +392,25 @@ const AdminDashboard = () => {
     try {
       setLoading(true)
       const token = localStorage.getItem('token')
-      const categoryTag =
-        newProductForm.tier === 'premium'
-          ? `premium-${newProductForm.gender}-${newProductForm.role}`
-          : `standard-${newProductForm.gender}`
+      const collectionMode = newProductForm.collectionMode || 'classic'
+      let finalTier = 'classic'
+      let finalRole = ''
+      let categoryTag = ''
+
+      if (collectionMode === 'classic') {
+        finalTier = 'classic'
+        finalRole = ''
+        categoryTag = `classic-${newProductForm.gender}`
+      } else {
+        finalTier = newProductForm.tier || 'standard'
+        if (finalTier === 'luxury') {
+          finalRole = newProductForm.role || 'CEO'
+          categoryTag = `premium-luxury-${newProductForm.gender}-${finalRole}`
+        } else {
+          finalRole = ''
+          categoryTag = `premium-standard-${newProductForm.gender}`
+        }
+      }
 
       const allSubImgs = [
         newProductForm.image,
@@ -376,9 +430,9 @@ const AdminDashboard = () => {
         price: parseFloat(newProductForm.price),
         discount: parseFloat(newProductForm.discount || 0),
         category: categoryTag,
-        tier: newProductForm.tier,
+        tier: finalTier,
         gender: newProductForm.gender,
-        role: newProductForm.tier === 'premium' ? newProductForm.role : '',
+        role: finalRole,
       }
 
       const res = await productAPI.createProduct(payload, token)
@@ -395,6 +449,7 @@ const AdminDashboard = () => {
           description: '',
           price: '',
           discount: '0',
+          collectionMode: 'classic',
           tier: 'standard',
           gender: 'men',
           role: 'CEO',
@@ -717,7 +772,7 @@ const AdminDashboard = () => {
       }
 
       case 'orders': {
-        const filteredOrders = orders.filter(ord => 
+        const filteredOrders = orders.filter(ord =>
           ord.id.toLowerCase().includes(searchOrderQuery.toLowerCase()) ||
           ord.user?.name?.toLowerCase().includes(searchOrderQuery.toLowerCase()) ||
           ord.user?.email?.toLowerCase().includes(searchOrderQuery.toLowerCase())
@@ -785,14 +840,14 @@ const AdminDashboard = () => {
 
                     {/* Middle Grid: User Details + Product Details */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                      
+
                       {/* 1. USER & SHIPPING DETAILS */}
                       <div className="lg:col-span-5 bg-[#121212] p-5 rounded-2xl border border-[#26241E]">
                         <h4 className="text-xs font-bold text-[#C9A84C] uppercase tracking-widest mb-3 font-serif flex items-center gap-2">
                           <Users className="w-4 h-4 text-[#C9A84C]" />
                           CLIENT & SHIPPING DETAILS
                         </h4>
-                        
+
                         <div className="space-y-2 text-xs text-[#E8E0CC]/90 font-sans">
                           <div>
                             <span className="text-[#A39E93] font-serif text-[10px] uppercase block">Client Name:</span>
@@ -824,62 +879,100 @@ const AdminDashboard = () => {
 
                         <div className="space-y-3">
                           {ord.items?.map((it, idx) => (
-                            <div key={idx} className="flex items-center justify-between bg-[#0A0A0A] p-3 rounded-xl border border-[#26241E]">
-                              <div className="flex items-center gap-3">
-                                <img 
-                                  src={it.image || 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=200&q=80'} 
-                                  alt={it.name} 
-                                  className="w-14 h-14 object-cover rounded-lg border border-[#26241E] flex-shrink-0"
-                                />
-                                <div>
-                                  <h5 className="font-serif font-bold text-xs text-[#FFF5D6] uppercase leading-tight line-clamp-1">{it.name}</h5>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-[#C9A84C]/20 border border-[#C9A84C] text-[#C9A84C] uppercase">
-                                      SIZE: {it.size || 'L'}
-                                    </span>
-                                    <span className="text-[10px] text-[#A39E93]">Qty: {it.quantity || 1}</span>
+                            <div key={idx} className="bg-[#0A0A0A] p-3 rounded-xl border border-[#26241E] space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <img
+                                    src={it.image || 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=200&q=80'}
+                                    alt={it.name}
+                                    className="w-14 h-14 object-cover rounded-lg border border-[#26241E] flex-shrink-0"
+                                  />
+                                  <div>
+                                    <h5 className="font-serif font-bold text-xs text-[#FFF5D6] uppercase leading-tight line-clamp-1">{it.name}</h5>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase ${it.size === 'Custom Fit' || it.customMeasurements
+                                        ? 'bg-amber-500/20 border border-amber-400 text-amber-300'
+                                        : 'bg-[#C9A84C]/20 border border-[#C9A84C] text-[#C9A84C]'
+                                        }`}>
+                                        SIZE: {it.size || 'L'}
+                                      </span>
+                                      <span className="text-[10px] text-[#A39E93]">Qty: {it.quantity || 1}</span>
+                                    </div>
                                   </div>
                                 </div>
+                                <span className="font-bold text-xs text-[#C9A84C] font-serif">
+                                  ₹{(it.price * (it.quantity || 1)).toLocaleString()}
+                                </span>
                               </div>
-                              <span className="font-bold text-xs text-[#C9A84C] font-serif">
-                                ₹{(it.price * (it.quantity || 1)).toLocaleString()}
-                              </span>
+
+                              {/* DISPLAY CUSTOM BODY MEASUREMENTS IF FILLED BY USER */}
+                              {it.customMeasurements && (
+                                <div className="mt-2 text-[10px] bg-[#121212] p-2.5 rounded-lg border border-[#C9A84C]/30 text-[#FFF5D6] font-mono grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                                  <div><span className="text-[#A39E93] block text-[8.5px]">CHEST:</span> {it.customMeasurements.chest}"</div>
+                                  <div><span className="text-[#A39E93] block text-[8.5px]">SHOULDER:</span> {it.customMeasurements.shoulder}"</div>
+                                  <div><span className="text-[#A39E93] block text-[8.5px]">WAIST:</span> {it.customMeasurements.waist}"</div>
+                                  <div><span className="text-[#A39E93] block text-[8.5px]">THIGH:</span> {it.customMeasurements.thigh}"</div>
+                                  <div><span className="text-[#A39E93] block text-[8.5px]">TORSO:</span> {it.customMeasurements.torso}"</div>
+                                  <div><span className="text-[#A39E93] block text-[8.5px]">HIPS:</span> {it.customMeasurements.hips}"</div>
+                                  <div className="col-span-2 text-[#C9A84C] font-bold"><span className="text-[#A39E93] block text-[8.5px]">FIT TYPE:</span> {it.customMeasurements.fitPreference || 'Tailored Fit'}</div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
                       </div>
                     </div>
 
-                    {/* Bottom Row: Status Controls */}
+                    {/* Cancellation Reason Notice if Cancelled */}
+                    {ord.cancelReason && (
+                      <div className="mt-4 p-3 bg-rose-950/20 border border-rose-900/40 rounded-xl text-xs text-rose-300">
+                        <span className="font-bold text-[10px] uppercase font-serif block text-rose-400 mb-0.5">Cancellation Reason Provided to User:</span>
+                        {ord.cancelReason}
+                      </div>
+                    )}
+
+                    {/* Bottom Row: Status Controls & Cancel Button */}
                     <div className="mt-6 pt-4 border-t border-[#26241E] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-serif text-[#A39E93] uppercase">Current Order Status:</span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
-                          ord.orderStatus === 'Delivered'
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${ord.orderStatus === 'Cancelled'
+                          ? 'bg-rose-950/60 text-rose-300 border-rose-500/40'
+                          : ord.orderStatus === 'Delivered'
                             ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40'
                             : ord.orderStatus === 'Shipped'
-                            ? 'bg-blue-950/60 text-blue-300 border-blue-500/40'
-                            : 'bg-amber-950/60 text-amber-300 border-amber-500/40'
-                        }`}>
+                              ? 'bg-blue-950/60 text-blue-300 border-blue-500/40'
+                              : 'bg-amber-950/60 text-amber-300 border-amber-500/40'
+                          }`}>
                           {ord.orderStatus || 'Processing'}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-[#C9A84C] uppercase font-serif">Update Status:</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-bold text-[#C9A84C] uppercase font-serif">Actions:</span>
                         {['Processing', 'Shipped', 'Delivered'].map((st) => (
                           <button
                             key={st}
                             onClick={() => handleUpdateOrderStatus(ord.id, st)}
-                            className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
-                              ord.orderStatus === st
-                                ? 'bg-[#C9A84C] text-black shadow-md'
-                                : 'bg-[#121212] text-[#A39E93] border border-[#26241E] hover:border-[#C9A84C]'
-                            }`}
+                            className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${ord.orderStatus === st
+                              ? 'bg-[#C9A84C] text-black shadow-md'
+                              : 'bg-[#121212] text-[#A39E93] border border-[#26241E] hover:border-[#C9A84C]'
+                              }`}
                           >
                             {st}
                           </button>
                         ))}
+
+                        {/* CANCEL ORDER BUTTON */}
+                        <button
+                          onClick={() => {
+                            setCancelModalOrder(ord)
+                            setCancellationReason('')
+                          }}
+                          className="px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all bg-rose-950/60 text-rose-300 border border-rose-700/50 hover:bg-rose-900 cursor-pointer shadow-md flex items-center gap-1"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          Cancel Product Order
+                        </button>
                       </div>
                     </div>
                   </motion.div>
@@ -961,11 +1054,10 @@ const AdminDashboard = () => {
                         <span className="text-[10px] text-[#A39E93] font-mono">
                           {new Date(q.createdAt).toLocaleString()}
                         </span>
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          q.isReplied 
-                            ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/40' 
-                            : 'bg-amber-950/60 text-amber-300 border border-amber-500/40'
-                        }`}>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${q.isReplied
+                          ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/40'
+                          : 'bg-amber-950/60 text-amber-300 border border-amber-500/40'
+                          }`}>
                           {q.isReplied ? 'Replied' : 'Pending Reply'}
                         </span>
                       </div>
@@ -1022,11 +1114,11 @@ const AdminDashboard = () => {
       case 'hero':
         return <HeroBannerManager />
 
-      case 'ugc':
-        return <UGCVideoManager />
-
       case 'assets':
         return <SiteAssetsManager />
+
+      case 'faqs':
+        return <FAQManager />
 
       default: {
         return (
@@ -1396,45 +1488,61 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                {/* Tier & Gender */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* Main Collection Category Selection */}
+                <div>
+                  <label className="block text-xs font-bold text-[#C9A84C] uppercase tracking-wider mb-1">
+                    Select Main Collection Category *
+                  </label>
+                  <select
+                    value={newProductForm.collectionMode || 'classic'}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, collectionMode: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-black border-2 border-[#C9A84C] rounded-xl text-xs text-[#FFF5D6] focus:outline-none font-bold"
+                  >
+                    <option value="classic">Classic Clothes (Everyday Regular Wear)</option>
+                    <option value="premium">VAEROX Premium (Bespoke & Executive Outfits)</option>
+                  </select>
+                </div>
+
+                {/* Sub-Tier (Only if VAEROX Premium is selected) */}
+                {newProductForm.collectionMode === 'premium' && (
                   <div>
                     <label className="block text-xs font-bold text-[#C9A84C] uppercase tracking-wider mb-1">
-                      Collection Tier *
+                      VAEROX Premium Sub-Tier *
                     </label>
                     <select
-                      value={newProductForm.tier}
+                      value={newProductForm.tier || 'standard'}
                       onChange={(e) => setNewProductForm({ ...newProductForm, tier: e.target.value })}
                       className="w-full px-4 py-2.5 bg-black border border-[#26241E] rounded-xl text-xs text-[#E8E0CC] focus:outline-none focus:border-[#C9A84C]"
                     >
-                      <option value="standard">Standard Clothes</option>
-                      <option value="premium">VÆROX Premium</option>
+                      <option value="standard">VAEROX Standard (Daily Wear Premium Clothes)</option>
+                      <option value="luxury">VAEROX Luxury (Ultra/Superb Premium Executive Persona Outfits)</option>
                     </select>
                   </div>
+                )}
 
-                  <div>
-                    <label className="block text-xs font-bold text-[#C9A84C] uppercase tracking-wider mb-1">
-                      Gender Category *
-                    </label>
-                    <select
-                      value={newProductForm.gender}
-                      onChange={(e) => setNewProductForm({ ...newProductForm, gender: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-black border border-[#26241E] rounded-xl text-xs text-[#E8E0CC] focus:outline-none focus:border-[#C9A84C]"
-                    >
-                      <option value="men">Men's Wear</option>
-                      <option value="women">Women's Wear</option>
-                    </select>
-                  </div>
+                {/* Gender Category */}
+                <div>
+                  <label className="block text-xs font-bold text-[#C9A84C] uppercase tracking-wider mb-1">
+                    Gender Category *
+                  </label>
+                  <select
+                    value={newProductForm.gender || 'men'}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, gender: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-black border border-[#26241E] rounded-xl text-xs text-[#E8E0CC] focus:outline-none focus:border-[#C9A84C]"
+                  >
+                    <option value="men">Men's Wear</option>
+                    <option value="women">Women's Wear</option>
+                  </select>
                 </div>
 
-                {/* Role Sub-Category (ONLY FOR VAEROX PREMIUM) */}
-                {newProductForm.tier === 'premium' && (
+                {/* Role Sub-Category (ONLY FOR VAEROX LUXURY) */}
+                {newProductForm.collectionMode === 'premium' && newProductForm.tier === 'luxury' && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                     <label className="block text-xs font-bold text-[#C9A84C] uppercase tracking-wider mb-1">
-                      Role / Profession Sub-Category (VÆROX Premium Only) *
+                      Executive Look-Alike Persona Outfit Role (VAEROX Luxury) *
                     </label>
                     <select
-                      value={newProductForm.role}
+                      value={newProductForm.role || 'CEO'}
                       onChange={(e) => setNewProductForm({ ...newProductForm, role: e.target.value })}
                       className="w-full px-4 py-2.5 bg-black border-2 border-[#C9A84C] rounded-xl text-xs text-[#FFF5D6] focus:outline-none font-bold"
                     >
@@ -1532,6 +1640,73 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* ADMIN ORDER CANCELLATION REASON MODAL */}
+        {cancelModalOrder && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0A0A0A] border-2 border-rose-600/60 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-[0_0_50px_rgba(225,29,72,0.25)] text-[#E8E0CC]"
+            >
+              <div className="flex justify-between items-center pb-4 mb-4 border-b border-[#26241E]">
+                <div>
+                  <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest font-serif block">
+                    ADMIN ORDER CANCELLATION
+                  </span>
+                  <h2 className="text-lg font-bold text-[#FFF5D6] font-serif">
+                    Order ID: {cancelModalOrder.id}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setCancelModalOrder(null)}
+                  className="p-2 text-[#A39E93] hover:text-[#FFF5D6]"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="mb-4 bg-[#121212] p-3 rounded-xl border border-[#26241E] text-xs space-y-1">
+                <p className="text-[10px] font-bold text-[#C9A84C] uppercase font-serif">Client Details:</p>
+                <p className="text-[#FFF5D6] font-bold">{cancelModalOrder.user?.name} ({cancelModalOrder.user?.email})</p>
+                <p className="text-[10px] text-[#A39E93]">Product(s): {cancelModalOrder.items?.map(i => i.name).join(', ')}</p>
+              </div>
+
+              <form onSubmit={handleConfirmOrderCancellation} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-rose-400 uppercase tracking-wider mb-1.5 font-serif">
+                    Reason for Order Cancellation *
+                  </label>
+                  <textarea
+                    required
+                    rows="4"
+                    placeholder="Specify exact reason for cancelling this order (e.g., Fabric stock unavailable, Bespoke size fitting mismatch, etc.). This reason will be sent directly to the customer's Inbox."
+                    value={cancellationReason}
+                    onChange={(e) => setCancellationReason(e.target.value)}
+                    className="w-full px-4 py-3 bg-black border border-[#26241E] rounded-xl text-xs text-[#FFF5D6] focus:outline-none focus:border-rose-500 leading-relaxed font-sans"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setCancelModalOrder(null)}
+                    className="px-4 py-2.5 border border-[#26241E] text-[#A39E93] hover:text-white rounded-xl text-xs uppercase font-bold cursor-pointer"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs rounded-xl uppercase tracking-wider transition-all shadow-lg cursor-pointer"
+                  >
+                    Confirm Cancellation & Send to User Inbox
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
         {/* Notifications Toast */}
         <div className="fixed bottom-5 right-5 z-[200]">
           <AnimatePresence>
@@ -1554,3 +1729,4 @@ const AdminDashboard = () => {
 }
 
 export default AdminDashboard
+

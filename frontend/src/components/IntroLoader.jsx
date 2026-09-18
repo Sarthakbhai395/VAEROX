@@ -2,174 +2,144 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogoEmblem } from './Logo';
 
+// Fashion & Haute Couture montage images for Marvel-style page flip sequence
+const MARVEL_PAGES = [
+  'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=600&q=80',
+];
+
 const IntroLoader = ({ onComplete }) => {
-  const [stage, setStage] = useState(1); // 1: Golden Emblem Pulsing, 2: Luxury Text Reveal, 3: Complete
+  const [isVisible, setIsVisible] = useState(true);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
   useEffect(() => {
-    const timer1 = setTimeout(() => {
-      setStage(2);
-    }, 1800);
+    // Fast flipping Marvel-style comic montage interval
+    const flipInterval = setInterval(() => {
+      setCurrentPageIndex((prev) => (prev + 1) % MARVEL_PAGES.length);
+    }, 120);
 
-    const timer2 = setTimeout(() => {
-      setStage(3);
+    // Complete overall single animation in 3.6 seconds
+    const timer = setTimeout(() => {
+      setIsVisible(false);
       if (onComplete) onComplete();
-    }, 4500);
+    }, 3600);
 
     return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
+      clearInterval(flipInterval);
+      clearTimeout(timer);
     };
   }, [onComplete]);
 
   const handleSkip = () => {
-    setStage(3);
+    setIsVisible(false);
     if (onComplete) onComplete();
   };
 
-  if (stage === 3) return null;
+  if (!isVisible) return null;
 
   return (
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 1 }}
-        exit={{ opacity: 0, scale: 1.04, filter: 'blur(8px)', transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }}
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black overflow-hidden select-none"
+        exit={{
+          opacity: 0,
+          scale: 1.15,
+          filter: 'blur(16px)',
+          transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
+        }}
+        className="fixed inset-0 z-[99999] flex items-center justify-center bg-black overflow-hidden select-none"
       >
-        {/* Skip Intro Button */}
+        {/* Skip Button */}
         <button
           onClick={handleSkip}
-          className="absolute top-6 right-6 z-[10000] px-4 py-1.5 rounded-full border border-[#C9A84C]/40 text-[#E8E0CC] hover:text-white hover:border-[#C9A84C] bg-black/60 backdrop-blur-md text-[10px] tracking-[0.25em] uppercase transition-all duration-300 hover:scale-105 cursor-pointer"
+          className="absolute top-6 right-6 z-[100000] px-4 py-1.5 rounded-full border border-[#C9A84C]/40 text-[#E8E0CC] hover:text-white hover:border-[#C9A84C] bg-black/70 backdrop-blur-md text-[10px] tracking-[0.25em] uppercase transition-all duration-300 hover:scale-105 cursor-pointer"
         >
           Skip Intro ✕
         </button>
 
-        {/* Ambient Radial Spotlight */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(201,168,76,0.18)_0%,_rgba(0,0,0,0.95)_70%,_#000000_100%)] pointer-events-none" />
+        {/* Ambient Radial Spotlight & Gold Energy Rays */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(201,168,76,0.25)_0%,_rgba(0,0,0,0.95)_70%,_#000000_100%)] pointer-events-none" />
 
-        {/* Floating Light Particles Background */}
-        <div className="absolute inset-0 opacity-40 pointer-events-none">
-          <div className="absolute top-1/4 left-1/3 w-72 h-72 bg-[#C9A84C]/20 rounded-full blur-[100px] animate-pulse" />
-          <div className="absolute bottom-1/3 right-1/3 w-80 h-80 bg-[#FFF5D6]/15 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+        {/* Background Marvel Fast-Flipping Image Montage Grid */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none overflow-hidden">
+          <motion.div
+            animate={{ scale: [1, 1.3, 1], rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 3.6, ease: 'easeInOut' }}
+            className="relative w-full h-full flex items-center justify-center"
+          >
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={currentPageIndex}
+                src={MARVEL_PAGES[currentPageIndex]}
+                alt="Marvel Studio Flip"
+                initial={{ opacity: 0.3, scale: 0.9, rotateY: 90 }}
+                animate={{ opacity: 0.8, scale: 1.05, rotateY: 0 }}
+                exit={{ opacity: 0.2, scale: 1.2, rotateY: -90 }}
+                transition={{ duration: 0.1 }}
+                className="w-[85vw] max-w-4xl h-[65vh] object-cover rounded-3xl border border-[#C9A84C]/40 shadow-[0_0_80px_rgba(201,168,76,0.4)] filter contrast-125 brightness-90 mix-blend-screen"
+              />
+            </AnimatePresence>
+          </motion.div>
         </div>
 
-        {/* Stage 1: Golden Emblem Activation & Spinning 3D Loader */}
-        {stage === 1 && (
+        {/* Cinematic Scanlines & Speed Line Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black/80 pointer-events-none" />
+        <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.3)_3px,rgba(0,0,0,0.3)_4px)] pointer-events-none" />
+
+        {/* Single Epic Marvel Studio Reveal Content */}
+        <div className="relative z-20 flex flex-col items-center text-center px-4 max-w-4xl">
+          {/* Logo Emblem Pulsing & Zooming */}
           <motion.div
-            key="stage1"
-            initial={{ opacity: 0, scale: 0.7, rotateY: -30 }}
-            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-            exit={{ opacity: 0, scale: 1.1, filter: 'blur(6px)' }}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="relative flex flex-col items-center justify-center gap-6 z-10"
+            initial={{ scale: 0, rotate: -180, opacity: 0 }}
+            animate={{ scale: [0, 1.2, 1], rotate: 0, opacity: 1 }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+            className="relative mb-4"
           >
-            <div className="relative">
-              {/* Outer Pulsing Gold Aura */}
-              <motion.div 
-                className="absolute -inset-8 rounded-full bg-gradient-to-tr from-[#C9A84C] via-[#FFF5D6] to-[#8A6C1B] opacity-50 blur-2xl"
-                animate={{ scale: [1, 1.25, 1], opacity: [0.3, 0.7, 0.3] }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              />
-              
-              {/* Rotating Outer Metallic Ring Loader */}
-              <motion.div
-                className="absolute -inset-4 rounded-full border-2 border-dashed border-[#C9A84C] opacity-75"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-              />
-
-              {/* Rotating Logo Emblem */}
-              <motion.div 
-                className="relative z-10 p-4"
-                animate={{ rotateY: [0, 180, 360], scale: [0.95, 1.05, 0.95] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                <LogoEmblem className="w-28 h-28 md:w-36 md:h-36 drop-shadow-[0_0_40px_rgba(201,168,76,0.95)]" />
-              </motion.div>
-            </div>
-
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-              className="flex flex-col items-center gap-1 text-center"
-            >
-              <div className="text-xl md:text-2xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] tracking-[0.5em] uppercase">
-                VÆROX
-              </div>
-              <div className="text-[11px] tracking-[0.4em] text-[#E8E0CC]/80 font-light uppercase">
-                HIGH LUXURY
-              </div>
-            </motion.div>
+              animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.8, 0.4] }}
+              transition={{ duration: 1.8, repeat: Infinity }}
+              className="absolute -inset-6 rounded-full bg-gradient-to-tr from-[#C9A84C] via-[#FFF5D6] to-[#8A6C1B] opacity-60 blur-2xl"
+            />
+            <LogoEmblem className="w-24 h-24 md:w-32 md:h-32 drop-shadow-[0_0_40px_rgba(201,168,76,0.9)] relative z-10" />
           </motion.div>
-        )}
 
-        {/* Stage 2: Silky Cinematic Text Animation with Motivated Line */}
-        {stage === 2 && (
+          {/* Marvel Style Letter by Letter / Block Zoom Title */}
           <motion.div
-            key="stage2"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-20 flex flex-col items-center text-center max-w-4xl px-6"
+            initial={{ opacity: 0, scale: 2.2, letterSpacing: '1em' }}
+            animate={{ opacity: 1, scale: 1, letterSpacing: '0.35em' }}
+            transition={{ duration: 1.2, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-extrabold font-serif text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#E8E0CC] tracking-[0.35em] uppercase drop-shadow-[0_0_60px_rgba(201,168,76,0.8)]"
           >
-            {/* Shimmer Light Line Accent */}
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: '16rem', opacity: 1 }}
-              transition={{ duration: 0.8, ease: 'easeInOut' }}
-              className="h-[1px] bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent mb-6"
-            />
-
-            {/* Welcome Subtitle */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-[#E8E0CC]/90 font-serif text-sm md:text-lg tracking-[0.45em] uppercase font-light mb-2"
-            >
-              WELCOME TO
-            </motion.p>
-
-            {/* Brand Title */}
-            <motion.h1
-              initial={{ opacity: 0, y: 25, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.9, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="text-5xl sm:text-7xl md:text-8xl font-serif font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#E8E0CC] tracking-[0.3em] uppercase mb-5 drop-shadow-[0_0_50px_rgba(201,168,76,0.7)]"
-            >
-              VÆROX
-            </motion.h1>
-
-            {/* Motivated & User Attractive Tagline */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex flex-col items-center gap-2 max-w-2xl"
-            >
-              <div className="text-xs sm:text-sm md:text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#C9A84C] via-[#FFF5D6] to-[#C9A84C] tracking-[0.25em] uppercase leading-relaxed text-center px-4">
-                WHERE UNTAMED ELEGANCE MEETS FEARLESS AMBITION
-              </div>
-              <motion.div 
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.5 }}
-                className="inline-block px-4 py-1 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/40 text-[10px] sm:text-xs text-[#FFF5D6] tracking-[0.35em] uppercase font-semibold mt-1"
-              >
-                ✦ ELEVATE YOUR DESTINY ✦
-              </motion.div>
-            </motion.div>
-
-            {/* Bottom Shimmer Line Accent */}
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: '16rem', opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.3, ease: 'easeInOut' }}
-              className="h-[1px] bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent mt-6"
-            />
+            VAEROX
           </motion.div>
-        )}
+
+          {/* Golden Shimmer Laser Line */}
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: '20rem', opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.9, ease: 'easeInOut' }}
+            className="h-[2px] bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent my-4"
+          />
+
+          {/* Cinematic Tagline Reveal */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.1 }}
+            className="flex flex-col items-center gap-2"
+          >
+            <span className="text-xs sm:text-sm md:text-base font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#C9A84C] via-[#FFF5D6] to-[#C9A84C] tracking-[0.3em] uppercase leading-relaxed text-center font-sans">
+              WHERE UNTAMED ELEGANCE MEETS FEARLESS AMBITION
+            </span>
+            <span className="text-[10px] sm:text-xs text-[#E8E0CC]/80 tracking-[0.4em] uppercase font-serif font-light mt-1">
+              HAUTE COUTURE • BESPOKE ATELIER
+            </span>
+          </motion.div>
+        </div>
       </motion.div>
     </AnimatePresence>
   );

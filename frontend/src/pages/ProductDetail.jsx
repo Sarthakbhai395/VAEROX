@@ -7,14 +7,13 @@ import { useWishlist } from '../contexts/WishlistContext'
 import { formatCurrency } from '../utils/format'
 import { getProductImageUrl } from '../utils/imageUrl'
 import ProductCard from '../components/product/ProductCard'
-import { 
-  Sparkles, 
-  ShoppingBag, 
-  Heart, 
-  Ruler, 
-  ShieldCheck, 
-  Truck, 
-  X, 
+import {
+  ShoppingBag,
+  Heart,
+  Ruler,
+  ShieldCheck,
+  Truck,
+  X,
   ArrowRight,
   Star,
   ChevronDown,
@@ -38,9 +37,44 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1)
 
   // Size states
-  const [sizeType, setSizeType] = useState('alpha')
+  const [sizeType, setSizeType] = useState('alpha') // 'alpha' | 'numeric' | 'custom'
   const [selectedSize, setSelectedSize] = useState('L')
   const [showSizeModal, setShowSizeModal] = useState(false)
+
+  // Custom Fit Measurement States
+  const [customMeasurements, setCustomMeasurements] = useState({
+    chest: '40',
+    shoulder: '18',
+    waist: '34',
+    thigh: '24',
+    torso: '29',
+    hips: '38',
+    fitPreference: 'Tailored'
+  })
+  const [showCustomFitForm, setShowCustomFitForm] = useState(false)
+
+  // Image Zoom & Lightbox States
+  const [showLightbox, setShowLightbox] = useState(false)
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50, isHovering: false })
+
+  const handleImageMouseMove = (e) => {
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect()
+    const x = ((e.clientX - left) / width) * 100
+    const y = ((e.clientY - top) / height) * 100
+    setZoomPos({ x, y, isHovering: true })
+  }
+
+  const handleImageMouseLeave = () => {
+    setZoomPos({ x: 50, y: 50, isHovering: false })
+  }
+
+  const handleCustomMeasurementChange = (e) => {
+    const { name, value } = e.target
+    setCustomMeasurements(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
 
   // Active info tab: 'materials' | 'benefits' | 'description' | 'care'
   const [activeInfoTab, setActiveInfoTab] = useState('materials')
@@ -52,7 +86,7 @@ const ProductDetail = () => {
   const [relatedProducts, setRelatedProducts] = useState([])
   const sliderRef = useRef(null)
 
-  const { addToCart, loading: cartLoading } = useCart()
+  const { addToCart, clearCart, loading: cartLoading } = useCart()
   const { addToWishlist, isInWishlist, loading: wishlistLoading } = useWishlist()
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
@@ -66,7 +100,7 @@ const ProductDetail = () => {
     try {
       setLoading(true)
       const response = await productAPI.getProductById(id)
-      
+
       if (response && response.success) {
         const prodData = response.data || response.product
         setProduct(prodData)
@@ -75,6 +109,7 @@ const ProductDetail = () => {
         setError('Product not found')
       }
     } catch (err) {
+      console.error('Failed to fetch product:', err)
       setError('An error occurred while fetching the product')
     } finally {
       setLoading(false)
@@ -100,14 +135,14 @@ const ProductDetail = () => {
   const getProductImages = (prod) => {
     if (!prod) return []
     const imagesList = []
-    
+
     if (Array.isArray(prod.images) && prod.images.length > 0) {
       prod.images.forEach(img => {
         const resolved = getProductImageUrl(img)
         if (resolved && !imagesList.includes(resolved)) imagesList.push(resolved)
       })
     }
-    
+
     const mainImg = getProductImageUrl(prod?.image)
     if (mainImg && !imagesList.includes(mainImg)) {
       imagesList.unshift(mainImg)
@@ -140,10 +175,12 @@ const ProductDetail = () => {
   const handleAddToCart = async () => {
     if (product) {
       try {
+        const isCustom = sizeType === 'custom' || selectedSize === 'Custom Fit'
         const productWithSize = {
           ...product,
-          selectedSize,
-          selectedSizeType: sizeType
+          selectedSize: isCustom ? 'Custom Fit' : selectedSize,
+          selectedSizeType: sizeType,
+          customMeasurements: isCustom ? customMeasurements : null
         }
         await addToCart(productWithSize, quantity)
       } catch (err) {
@@ -165,11 +202,14 @@ const ProductDetail = () => {
   const handleBuyNow = async () => {
     if (product) {
       try {
+        const isCustom = sizeType === 'custom' || selectedSize === 'Custom Fit'
         const productWithSize = {
           ...product,
-          selectedSize,
-          selectedSizeType: sizeType
+          selectedSize: isCustom ? 'Custom Fit' : selectedSize,
+          selectedSizeType: sizeType,
+          customMeasurements: isCustom ? customMeasurements : null
         }
+        await clearCart()
         await addToCart(productWithSize, quantity)
         navigate('/checkout')
       } catch (err) {
@@ -178,7 +218,7 @@ const ProductDetail = () => {
     }
   }
 
-  const discountedPrice = product?.discount 
+  const discountedPrice = product?.discount
     ? product.price * (1 - product.discount / 100)
     : product?.price
 
@@ -236,7 +276,7 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-[#E8E0CC] py-8 md:py-14">
-      <motion.div 
+      <motion.div
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -253,21 +293,34 @@ const ProductDetail = () => {
 
         {/* ═══ TOP SECTION: OPEN FRAMELESS PRODUCT VIEW ═══ */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-14 items-start pb-16">
-          
+
           {/* ─── LEFT COLUMN: COMPACT PRODUCT IMAGES ─── */}
           <div className="lg:col-span-5 flex flex-col items-center">
-            {/* Main Compact Product Image Container */}
-            <div className="relative rounded-xl overflow-hidden bg-[#0D0C0A] h-72 sm:h-80 md:h-88 w-full max-w-sm mx-auto flex items-center justify-center group mb-4 shadow-xl">
+            {/* Main Compact Product Image Container with Interactive Mouse Zoom & Lightbox trigger */}
+            <div 
+              onMouseMove={handleImageMouseMove}
+              onMouseLeave={handleImageMouseLeave}
+              onClick={() => setShowLightbox(true)}
+              className="relative rounded-xl overflow-hidden bg-[#0D0C0A] h-72 sm:h-80 md:h-88 w-full max-w-sm mx-auto flex items-center justify-center group mb-4 shadow-xl cursor-zoom-in border border-[#26241E] hover:border-[#C9A84C]/50 transition-colors"
+            >
               {product.discount > 0 && (
                 <span className="absolute top-3 left-3 z-20 bg-[#C9A84C] text-black font-extrabold text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-full shadow-lg">
                   -{product.discount}% OFF
                 </span>
               )}
-              
-              <img 
-                src={images[selectedImageIndex]} 
-                alt={product.name} 
-                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+
+              <span className="absolute bottom-3 right-3 z-20 bg-black/80 text-[#C9A84C] text-[9px] font-bold px-2 py-1 rounded-lg backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity border border-[#26241E] pointer-events-none flex items-center gap-1">
+                🔍 Click to Expand Lightbox
+              </span>
+
+              <img
+                src={images[selectedImageIndex]}
+                alt={product.name}
+                className="w-full h-full object-cover object-center transition-transform duration-200 ease-out"
+                style={{
+                  transform: zoomPos.isHovering ? 'scale(1.85)' : 'scale(1)',
+                  transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`
+                }}
               />
             </div>
 
@@ -277,15 +330,14 @@ const ProductDetail = () => {
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
-                  className={`relative rounded-lg overflow-hidden h-14 sm:h-16 w-full border transition-all duration-300 cursor-pointer bg-[#0D0C0A] ${
-                    selectedImageIndex === index 
-                      ? 'border-[#C9A84C] shadow-lg scale-105' 
+                  className={`relative rounded-lg overflow-hidden h-14 sm:h-16 w-full border transition-all duration-300 cursor-pointer bg-[#0D0C0A] ${selectedImageIndex === index
+                      ? 'border-[#C9A84C] shadow-lg scale-105'
                       : 'border-transparent opacity-60 hover:opacity-100'
-                  }`}
+                    }`}
                 >
-                  <img 
-                    src={imgUrl} 
-                    alt={`${product.name} Sub image ${index + 1}`} 
+                  <img
+                    src={imgUrl}
+                    alt={`${product.name} Sub image ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
                   {selectedImageIndex === index && (
@@ -295,7 +347,7 @@ const ProductDetail = () => {
               ))}
             </div>
 
-            {/* SIZE SELECTION & QUANTITY SECTION (PLACED DIRECTLY BELOW SUB IMAGES) */}
+            {/* SIZE SELECTION & QUANTITY SECTION */}
             <div className="w-full max-w-sm mt-6 space-y-4 pt-4 border-t border-[#26241E]/40">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-[#C9A84C] uppercase tracking-widest font-serif flex items-center gap-1.5">
@@ -307,25 +359,24 @@ const ProductDetail = () => {
                   onClick={() => setShowSizeModal(true)}
                   className="text-[10px] font-bold text-[#C9A84C] hover:text-[#FFF5D6] uppercase tracking-wider underline cursor-pointer"
                 >
-                  Size Guide Modal
+                  Size Guide & Custom Fit
                 </button>
               </div>
 
-              {/* Size Type Switcher (Alpha vs Numeric) */}
-              <div className="flex items-center gap-4 pb-2 border-b border-[#26241E]/40">
+              {/* Size Type Switcher (Alpha vs Numeric vs Custom Fit) */}
+              <div className="flex items-center justify-between pb-2 border-b border-[#26241E]/40 gap-1">
                 <button
                   type="button"
                   onClick={() => {
                     setSizeType('alpha')
                     setSelectedSize('L')
                   }}
-                  className={`pb-1 text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer ${
-                    sizeType === 'alpha'
+                  className={`pb-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer ${sizeType === 'alpha'
                       ? 'border-[#C9A84C] text-[#C9A84C]'
                       : 'border-transparent text-[#A39E93] hover:text-[#E8E0CC]'
-                  }`}
+                    }`}
                 >
-                  Alpha Sizes (S - XXXL)
+                  Alpha
                 </button>
 
                 <button
@@ -334,13 +385,27 @@ const ProductDetail = () => {
                     setSizeType('numeric')
                     setSelectedSize('34')
                   }}
-                  className={`pb-1 text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer ${
-                    sizeType === 'numeric'
+                  className={`pb-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer ${sizeType === 'numeric'
                       ? 'border-[#C9A84C] text-[#C9A84C]'
                       : 'border-transparent text-[#A39E93] hover:text-[#E8E0CC]'
-                  }`}
+                    }`}
                 >
-                  Waist Sizes (28 - 44)
+                  Waist
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSizeType('custom')
+                    setSelectedSize('Custom Fit')
+                  }}
+                  className={`pb-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer flex items-center gap-1 ${sizeType === 'custom'
+                      ? 'border-[#C9A84C] text-[#C9A84C]'
+                      : 'border-transparent text-[#A39E93] hover:text-[#E8E0CC]'
+                    }`}
+                >
+                  <Feather className="w-3 h-3 text-[#C9A84C]" />
+                  Custom Fit ✨
                 </button>
               </div>
 
@@ -352,11 +417,10 @@ const ProductDetail = () => {
                       key={sz}
                       type="button"
                       onClick={() => setSelectedSize(sz)}
-                      className={`py-2 text-xs font-extrabold uppercase rounded-lg transition-all border cursor-pointer ${
-                        selectedSize === sz
+                      className={`py-2 text-xs font-extrabold uppercase rounded-lg transition-all border cursor-pointer ${selectedSize === sz
                           ? 'bg-[#C9A84C] text-black border-[#C9A84C] shadow-md font-bold'
                           : 'bg-transparent text-[#E8E0CC] border-[#26241E] hover:border-[#C9A84C]/60'
-                      }`}
+                        }`}
                     >
                       {sz}
                     </button>
@@ -372,16 +436,123 @@ const ProductDetail = () => {
                       key={sz}
                       type="button"
                       onClick={() => setSelectedSize(sz)}
-                      className={`py-2 text-xs font-extrabold uppercase rounded-lg transition-all border cursor-pointer ${
-                        selectedSize === sz
+                      className={`py-2 text-xs font-extrabold uppercase rounded-lg transition-all border cursor-pointer ${selectedSize === sz
                           ? 'bg-[#C9A84C] text-black border-[#C9A84C] shadow-md font-bold'
                           : 'bg-transparent text-[#E8E0CC] border-[#26241E] hover:border-[#C9A84C]/60'
-                      }`}
+                        }`}
                     >
                       {sz}
                     </button>
                   ))}
                 </div>
+              )}
+
+              {/* DYNAMIC ANIMATED CUSTOM MEASUREMENT FORM */}
+              {sizeType === 'custom' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-[#0A0A0A] border border-[#C9A84C]/40 rounded-2xl p-4 shadow-xl space-y-3"
+                >
+                  <div className="flex items-center justify-between pb-2 border-b border-[#26241E]">
+                    <span className="text-xs font-bold text-[#FFF5D6] uppercase tracking-wider font-serif flex items-center gap-1.5">
+                      <Award className="w-4 h-4 text-[#C9A84C]" />
+                      YOUR PERSONAL BODY MEASUREMENTS (INCHES)
+                    </span>
+                    <span className="text-[9px] bg-[#C9A84C]/20 text-[#C9A84C] px-2 py-0.5 rounded-full font-bold uppercase">
+                      Bespoke Tailoring
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5 text-xs">
+                    <div>
+                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Chest / Bust (in)</label>
+                      <input
+                        type="number"
+                        name="chest"
+                        value={customMeasurements.chest}
+                        onChange={handleCustomMeasurementChange}
+                        placeholder="e.g. 40"
+                        className="w-full bg-[#121212] border border-[#26241E] rounded-lg px-2.5 py-1.5 text-[#FFF5D6] font-mono focus:outline-none focus:border-[#C9A84C]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Shoulder Width (in)</label>
+                      <input
+                        type="number"
+                        name="shoulder"
+                        value={customMeasurements.shoulder}
+                        onChange={handleCustomMeasurementChange}
+                        placeholder="e.g. 18"
+                        className="w-full bg-[#121212] border border-[#26241E] rounded-lg px-2.5 py-1.5 text-[#FFF5D6] font-mono focus:outline-none focus:border-[#C9A84C]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Waist Size (in)</label>
+                      <input
+                        type="number"
+                        name="waist"
+                        value={customMeasurements.waist}
+                        onChange={handleCustomMeasurementChange}
+                        placeholder="e.g. 34"
+                        className="w-full bg-[#121212] border border-[#26241E] rounded-lg px-2.5 py-1.5 text-[#FFF5D6] font-mono focus:outline-none focus:border-[#C9A84C]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Thigh Size (in)</label>
+                      <input
+                        type="number"
+                        name="thigh"
+                        value={customMeasurements.thigh}
+                        onChange={handleCustomMeasurementChange}
+                        placeholder="e.g. 24"
+                        className="w-full bg-[#121212] border border-[#26241E] rounded-lg px-2.5 py-1.5 text-[#FFF5D6] font-mono focus:outline-none focus:border-[#C9A84C]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Torso / Length (in)</label>
+                      <input
+                        type="number"
+                        name="torso"
+                        value={customMeasurements.torso}
+                        onChange={handleCustomMeasurementChange}
+                        placeholder="e.g. 29"
+                        className="w-full bg-[#121212] border border-[#26241E] rounded-lg px-2.5 py-1.5 text-[#FFF5D6] font-mono focus:outline-none focus:border-[#C9A84C]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Hips Size (in)</label>
+                      <input
+                        type="number"
+                        name="hips"
+                        value={customMeasurements.hips}
+                        onChange={handleCustomMeasurementChange}
+                        placeholder="e.g. 38"
+                        className="w-full bg-[#121212] border border-[#26241E] rounded-lg px-2.5 py-1.5 text-[#FFF5D6] font-mono focus:outline-none focus:border-[#C9A84C]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Fit Preference</label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {['Slim Fit', 'Tailored Fit', 'Relaxed Fit'].map((pref) => (
+                        <button
+                          key={pref}
+                          type="button"
+                          onClick={() => setCustomMeasurements(prev => ({ ...prev, fitPreference: pref }))}
+                          className={`py-1 text-[10px] font-bold rounded-lg transition-all border ${customMeasurements.fitPreference === pref
+                              ? 'bg-[#C9A84C] text-black border-[#C9A84C]'
+                              : 'bg-[#121212] text-[#A39E93] border-[#26241E]'
+                            }`}
+                        >
+                          {pref}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
               )}
 
               {/* Quantity */}
@@ -413,7 +584,6 @@ const ProductDetail = () => {
             <div>
               {/* Collection Tag */}
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-3.5 h-3.5 text-[#C9A84C]" />
                 <span className="text-[10px] font-bold text-[#C9A84C] uppercase tracking-[0.25em] font-serif">
                   VÆROX BESPOKE ATELIER
                 </span>
@@ -492,11 +662,10 @@ const ProductDetail = () => {
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 disabled={wishlistLoading}
-                className={`w-full py-3 px-5 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                  isInWishlist(product._id || product.id)
+                className={`w-full py-3 px-5 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 ${isInWishlist(product._id || product.id)
                     ? 'bg-rose-950/40 border-rose-500/40 text-rose-300'
                     : 'bg-transparent border-[#26241E] text-[#A39E93] hover:text-[#FFF5D6] hover:border-[#C9A84C]/40'
-                }`}
+                  }`}
               >
                 <Heart className={`w-4 h-4 ${isInWishlist(product._id || product.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
                 {isInWishlist(product._id || product.id) ? 'WISHLISTED ITEM' : 'ADD TO ATELIER WISHLIST'}
@@ -509,11 +678,10 @@ const ProductDetail = () => {
                   <button
                     type="button"
                     onClick={() => setActiveInfoTab('materials')}
-                    className={`py-2 px-2 text-[10px] sm:text-xs font-serif font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      activeInfoTab === 'materials'
+                    className={`py-2 px-2 text-[10px] sm:text-xs font-serif font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeInfoTab === 'materials'
                         ? 'bg-[#C9A84C] text-black shadow-md font-bold'
                         : 'text-[#A39E93] hover:text-[#FFF5D6] hover:bg-[#141414]'
-                    }`}
+                      }`}
                   >
                     <Feather className="w-3.5 h-3.5" />
                     <span className="truncate">Materials</span>
@@ -522,11 +690,10 @@ const ProductDetail = () => {
                   <button
                     type="button"
                     onClick={() => setActiveInfoTab('benefits')}
-                    className={`py-2 px-2 text-[10px] sm:text-xs font-serif font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      activeInfoTab === 'benefits'
+                    className={`py-2 px-2 text-[10px] sm:text-xs font-serif font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeInfoTab === 'benefits'
                         ? 'bg-[#C9A84C] text-black shadow-md font-bold'
                         : 'text-[#A39E93] hover:text-[#FFF5D6] hover:bg-[#141414]'
-                    }`}
+                      }`}
                   >
                     <Award className="w-3.5 h-3.5" />
                     <span className="truncate">Benefits</span>
@@ -535,24 +702,21 @@ const ProductDetail = () => {
                   <button
                     type="button"
                     onClick={() => setActiveInfoTab('description')}
-                    className={`py-2 px-2 text-[10px] sm:text-xs font-serif font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      activeInfoTab === 'description'
+                    className={`py-2 px-2 text-[10px] sm:text-xs font-serif font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeInfoTab === 'description'
                         ? 'bg-[#C9A84C] text-black shadow-md font-bold'
                         : 'text-[#A39E93] hover:text-[#FFF5D6] hover:bg-[#141414]'
-                    }`}
+                      }`}
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
                     <span className="truncate">Description</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setActiveInfoTab('care')}
-                    className={`py-2 px-2 text-[10px] sm:text-xs font-serif font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      activeInfoTab === 'care'
+                    className={`py-2 px-2 text-[10px] sm:text-xs font-serif font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeInfoTab === 'care'
                         ? 'bg-[#C9A84C] text-black shadow-md font-bold'
                         : 'text-[#A39E93] hover:text-[#FFF5D6] hover:bg-[#141414]'
-                    }`}
+                      }`}
                   >
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span className="truncate">Care</span>
@@ -582,7 +746,6 @@ const ProductDetail = () => {
                         </div>
                         <div className="pt-2 border-t border-[#26241E]/40">
                           <h4 className="font-serif font-bold text-[#FFF5D6] uppercase tracking-wider mb-1 flex items-center gap-2 text-xs">
-                            <Sparkles className="w-3.5 h-3.5 text-[#C9A84C]" />
                             Inner Lining & Lapel
                           </h4>
                           <p className="text-[#A39E93] text-xs leading-relaxed">
@@ -651,7 +814,7 @@ const ProductDetail = () => {
                           {product.description || "The VÆROX Executive Collection represents the pinnacle of modern tailoring. Each piece undergoes 48 precision hand operations, combining timeless heritage craftsmanship with contemporary silhouettes."}
                         </p>
                         <div className="grid grid-cols-2 gap-2 text-xs font-serif text-[#C9A84C] pt-3 border-t border-[#26241E]/40">
-                          <div>SKU: <span className="text-[#FFF5D6]">{product._id?.substring(0,8).toUpperCase() || 'VRX-849'}</span></div>
+                          <div>SKU: <span className="text-[#FFF5D6]">{product._id?.substring(0, 8).toUpperCase() || 'VRX-849'}</span></div>
                           <div>Tier: <span className="text-[#FFF5D6]">{product.tier?.toUpperCase() || 'STANDARD'}</span></div>
                           <div>Gender: <span className="text-[#FFF5D6]">{product.gender?.toUpperCase() || 'MEN'}</span></div>
                           <div>Origin: <span className="text-[#FFF5D6]">Handcrafted Atelier</span></div>
@@ -753,12 +916,12 @@ const ProductDetail = () => {
             </div>
 
             {/* Sliding Animation Container */}
-            <div 
+            <div
               ref={sliderRef}
               className="flex items-center gap-6 overflow-x-auto pb-6 scrollbar-thin scroll-smooth"
             >
               {relatedProducts.map((relProd, index) => (
-                <motion.div 
+                <motion.div
                   key={relProd._id || relProd.id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -862,16 +1025,117 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              <div className="mt-6 text-center">
+              <div className="mt-6 text-center flex items-center justify-center gap-4">
+                <button
+                  onClick={() => {
+                    setSizeType('custom')
+                    setSelectedSize('Custom Fit')
+                    setShowSizeModal(false)
+                  }}
+                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-xs uppercase tracking-wider shadow-xl cursor-pointer"
+                >
+                  Enter Custom Fit Measurements ✨
+                </button>
                 <button
                   onClick={() => setShowSizeModal(false)}
-                  className="px-8 py-3 rounded-full bg-[#C9A84C] text-black font-extrabold text-xs uppercase tracking-widest shadow-xl"
+                  className="px-6 py-2.5 rounded-full bg-[#121212] border border-[#26241E] text-[#E8E0CC] hover:text-white font-extrabold text-xs uppercase tracking-widest cursor-pointer"
                 >
                   Close Guide
                 </button>
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* FULLSCREEN LIGHTBOX IMAGE MODAL */}
+      <AnimatePresence>
+        {showLightbox && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-between p-4 sm:p-8"
+            onClick={() => setShowLightbox(false)}
+          >
+            {/* Header / Actions */}
+            <div className="w-full flex items-center justify-between text-[#FFF5D6] z-10">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-serif font-bold text-[#C9A84C] uppercase tracking-widest">
+                  VÆROX BESPOKE LIGHTBOX VIEW
+                </span>
+                <span className="text-xs text-[#A39E93]">
+                  {selectedImageIndex + 1} of {images.length}
+                </span>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowLightbox(false);
+                }}
+                className="p-2 rounded-full bg-[#121212] border border-[#26241E] text-[#C9A84C] hover:text-white hover:border-[#C9A84C] transition-all cursor-pointer shadow-xl"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Main Lightbox Image View */}
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="relative flex-1 max-w-5xl w-full flex items-center justify-center my-4 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={images[selectedImageIndex]}
+                alt={product.name}
+                className="max-h-[75vh] max-w-full object-contain rounded-2xl border border-[#26241E] shadow-[0_0_50px_rgba(201,168,76,0.15)]"
+              />
+
+              {/* Prev / Next buttons */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
+                    }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/80 hover:bg-[#C9A84C] text-[#C9A84C] hover:text-black transition-all border border-[#26241E] shadow-2xl cursor-pointer"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/80 hover:bg-[#C9A84C] text-[#C9A84C] hover:text-black transition-all border border-[#26241E] shadow-2xl cursor-pointer"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </>
+              )}
+            </motion.div>
+
+            {/* Thumbnail Navigation Row */}
+            <div className="flex items-center gap-3 z-10 overflow-x-auto p-2" onClick={(e) => e.stopPropagation()}>
+              {images.map((imgUrl, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImageIndex(index)}
+                  className={`relative rounded-xl overflow-hidden h-16 w-16 border-2 transition-all cursor-pointer ${selectedImageIndex === index
+                      ? 'border-[#C9A84C] scale-110 shadow-lg'
+                      : 'border-transparent opacity-50 hover:opacity-100'
+                    }`}
+                >
+                  <img src={imgUrl} alt={`Thumb ${index + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

@@ -1,5 +1,6 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
+const { sendInvoiceEmail } = require('../utils/sendEmail');
 
 let razorpayInstance = null;
 const getRazorpay = () => {
@@ -21,7 +22,7 @@ const getRazorpay = () => {
 // @access  Public
 exports.verifyPayment = async (req, res, next) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderData } = req.body;
     
     console.log('Verifying payment:', { razorpay_order_id, razorpay_payment_id });
     
@@ -42,10 +43,21 @@ exports.verifyPayment = async (req, res, next) => {
     console.log('Signature verification result:', isVerified);
     
     if (isVerified) {
+      let emailResult = null;
+      if (orderData && orderData.user && orderData.user.email) {
+        try {
+          emailResult = await sendInvoiceEmail(orderData);
+          console.log(`[PAYMENT VERIFY] Email invoice result for ${orderData.user.email}:`, emailResult);
+        } catch (emailErr) {
+          console.error(`[PAYMENT VERIFY] Email dispatch error:`, emailErr.message);
+        }
+      }
+
       res.status(200).json({
         success: true,
-        message: 'Payment verified successfully',
-        paymentId: razorpay_payment_id
+        message: 'Payment verified successfully and invoice email sent',
+        paymentId: razorpay_payment_id,
+        emailSent: emailResult ? emailResult.success : false
       });
     } else {
       res.status(400).json({

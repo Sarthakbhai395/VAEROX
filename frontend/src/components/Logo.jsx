@@ -48,6 +48,46 @@ export const LogoEmblem = ({ className = 'w-10 h-10' }) => (
   </svg>
 );
 
+export const LogoWordmarkSVG = ({ className = '', size = 'md' }) => {
+  const svgHeights = {
+    sm: 'h-4 sm:h-5',
+    md: 'h-6 sm:h-7',
+    lg: 'h-8 sm:h-9',
+    xl: 'h-10 sm:h-12',
+    hero: 'h-14 sm:h-16',
+  };
+
+  return (
+    <svg
+      viewBox="0 0 280 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`${svgHeights[size] || 'h-7'} ${className}`}
+      style={{ overflow: 'visible' }}
+    >
+      <defs>
+        <linearGradient id="goldGradWordmark" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#FFF5D6" />
+          <stop offset="50%" stopColor="#C9A84C" />
+          <stop offset="100%" stopColor="#9B782B" />
+        </linearGradient>
+      </defs>
+      <text
+        x="0"
+        y="30"
+        fontFamily="'Bodoni Moda', serif"
+        fontSize="30"
+        fontWeight="300"
+        letterSpacing="0.38em"
+        fill="url(#goldGradWordmark)"
+        style={{ fontOpticalSizing: 'auto' }}
+      >
+        VAEROX
+      </text>
+    </svg>
+  );
+};
+
 const Logo = ({ variant = 'full', size = 'md', layout = 'horizontal', className = '' }) => {
   // Size mappings
   const emblemSizes = {
@@ -56,14 +96,6 @@ const Logo = ({ variant = 'full', size = 'md', layout = 'horizontal', className 
     lg: 'w-14 h-14',
     xl: 'w-20 h-20',
     hero: 'w-28 h-28',
-  };
-
-  const textSizes = {
-    sm: 'text-base',
-    md: 'text-xl',
-    lg: 'text-2xl',
-    xl: 'text-4xl',
-    hero: 'text-5xl',
   };
 
   if (variant === 'icon') {
@@ -75,11 +107,9 @@ const Logo = ({ variant = 'full', size = 'md', layout = 'horizontal', className 
       <div className={`flex items-center gap-3 select-none ${className}`}>
         <LogoEmblem className={emblemSizes[size] || 'w-9 h-9'} />
         <div className="flex flex-col items-start leading-none">
-          <span className={`font-serif font-extrabold tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] uppercase ${textSizes[size] || 'text-base'}`}>
-            VÆROX
-          </span>
-          <span className="text-[8px] md:text-[9px] font-semibold tracking-[0.35em] text-[#E8E0CC]/80 uppercase mt-0.5">
-            HIGH LUXURY
+          <LogoWordmarkSVG size={size} />
+          <span className="text-[8px] md:text-[9px] font-light tracking-[0.35em] text-[#E8E0CC]/80 uppercase mt-0.5">
+            Elevate Everyday
           </span>
         </div>
       </div>
@@ -91,15 +121,15 @@ const Logo = ({ variant = 'full', size = 'md', layout = 'horizontal', className 
       {/* Gold Monogram Icon */}
       <LogoEmblem className={emblemSizes[size] || 'w-10 h-10'} />
 
-      {/* Main Title */}
-      <div className={`mt-1.5 font-serif tracking-[0.35em] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] uppercase ${textSizes[size] || 'text-xl'}`}>
-        VÆROX
+      {/* Main Title Wordmark SVG */}
+      <div className="mt-1.5 flex justify-center">
+        <LogoWordmarkSVG size={size} />
       </div>
 
       {/* Subtitle */}
-      <div className="flex items-center justify-center gap-2 w-full mt-0.5">
+      <div className="flex items-center justify-center gap-2 w-full mt-1">
         <span className="h-[1px] w-5 bg-gradient-to-r from-transparent to-[#C9A84C]/60" />
-        <span className="text-[9px] md:text-[10px] font-semibold tracking-[0.3em] text-[#E8E0CC] uppercase">
+        <span className="text-[9px] md:text-[10px] font-light tracking-[0.3em] text-[#E8E0CC] uppercase">
           AKARIOMART
         </span>
         <span className="h-[1px] w-5 bg-gradient-to-l from-transparent to-[#C9A84C]/60" />
@@ -107,7 +137,7 @@ const Logo = ({ variant = 'full', size = 'md', layout = 'horizontal', className 
 
       {/* Tagline */}
       {variant === 'full' && (
-        <div className="text-[8px] md:text-[9px] tracking-[0.4em] text-[#E8E0CC]/80 font-medium uppercase mt-0.5">
+        <div className="text-[8px] md:text-[9px] tracking-[0.4em] text-[#E8E0CC]/80 font-light uppercase mt-0.5">
           ELEVATE EVERYDAY
         </div>
       )}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, ArrowRight, ArrowLeft, Search, Filter, X, SlidersHorizontal, Check } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Search, Filter, X, Check } from 'lucide-react'
 import ProductCard from '../components/product/ProductCard'
 import { productAPI } from '../services/api'
 import { getSiteAssets } from '../utils/siteAssets'
@@ -25,12 +25,14 @@ const Products = () => {
   const navigate = useNavigate()
 
   // Selection states:
-  // Step 1: Category Selection (selectedGender: 'men' | 'women' | null)
-  // Step 2: Tier Selection (selectedTier: 'standard' | 'luxury' | null)
-  // Step 3: Product Catalogue view
+  // selectedMode: null | 'classic' (Classic Clothes) | 'premium' (VAEROX Premium)
+  // selectedGender: null | 'men' | 'women'
+  // selectedTier: null | 'standard' | 'luxury'
+  // selectedRole: 'ALL' | 'CEO' | 'TEACHER' | 'MANAGER' | etc.
+  const [selectedMode, setSelectedMode] = useState(null)
   const [selectedGender, setSelectedGender] = useState(null)
   const [selectedTier, setSelectedTier] = useState(null)
-  const [selectedRole, setSelectedRole] = useState('ALL') // Persona sub-category for VÆROX Luxury
+  const [selectedRole, setSelectedRole] = useState('ALL')
 
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -46,37 +48,47 @@ const Products = () => {
     return () => window.removeEventListener('vaerox_site_assets_updated', handleAssetsUpdate)
   }, [])
 
-  // Sync component states with URL search parameters for seamless back/forward browser navigation
+  // Sync component states with URL search parameters
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search)
+    const modeParam = urlParams.get('mode')
     const categoryParam = urlParams.get('category')
     const searchParam = urlParams.get('search')
     const tierParam = urlParams.get('tier')
+    const roleParam = urlParams.get('role')
 
-    // 1. Gender category state from URL
-    if (categoryParam) {
-      const catLower = categoryParam.toLowerCase()
-      if (catLower === 'men' || catLower === 'women') {
-        setSelectedGender(catLower)
+    if (modeParam === 'classic' || categoryParam === 'classic') {
+      setSelectedMode('classic')
+      if (categoryParam === 'men' || categoryParam === 'women') {
+        setSelectedGender(categoryParam.toLowerCase())
       } else {
         setSelectedGender(null)
       }
-    } else {
-      setSelectedGender(null)
-    }
-
-    // 2. Collection tier state from URL
-    if (tierParam) {
-      const tierLower = tierParam.toLowerCase()
-      if (tierLower === 'luxury' || tierLower === 'premium') {
+      setSelectedTier(null)
+    } else if (modeParam === 'premium' || categoryParam || tierParam) {
+      setSelectedMode('premium')
+      if (categoryParam === 'men' || categoryParam === 'women') {
+        setSelectedGender(categoryParam.toLowerCase())
+      } else {
+        setSelectedGender(null)
+      }
+      if (tierParam === 'luxury' || tierParam === 'premium') {
         setSelectedTier('luxury')
-      } else if (tierLower === 'standard') {
+      } else if (tierParam === 'standard') {
         setSelectedTier('standard')
       } else {
         setSelectedTier(null)
       }
+      if (roleParam) {
+        setSelectedRole(roleParam.toUpperCase())
+      } else {
+        setSelectedRole('ALL')
+      }
     } else {
+      setSelectedMode(null)
+      setSelectedGender(null)
       setSelectedTier(null)
+      setSelectedRole('ALL')
     }
 
     if (searchParam) setSearchQuery(searchParam)
@@ -124,61 +136,70 @@ const Products = () => {
     }
   }
 
-  // Filter products based on selected gender, tier, persona role & search query
+  // Strict Product Filtering Logic based on selected mode, gender, tier & role
   const filteredProducts = products.filter((product) => {
     const prodCat = (product.category || '').toLowerCase()
     const prodName = (product.name || '').toLowerCase()
     const prodDesc = (product.description || '').toLowerCase()
     const prodRole = (product.role || '').toUpperCase()
     const prodTier = (product.tier || '').toLowerCase()
+    const prodGender = (product.gender || '').toLowerCase()
 
-    // Gender matching
-    let genderMatch = true
-    if (selectedGender === 'men') {
-      genderMatch =
-        prodCat.includes('men') ||
-        prodName.includes('men') ||
-        prodName.includes('tuxedo') ||
-        prodName.includes('suit') ||
-        product.gender === 'men'
-    } else if (selectedGender === 'women') {
-      genderMatch =
-        prodCat.includes('women') ||
-        prodName.includes('women') ||
-        prodName.includes('gown') ||
-        prodName.includes('dress') ||
-        product.gender === 'women'
-    }
+    // 1. CLASSIC CLOTHES MODE
+    if (selectedMode === 'classic') {
+      // Exclude premium / luxury items from Classic Clothes view
+      const isNotLuxuryOrPremium = prodTier !== 'luxury' && prodTier !== 'premium' && !prodCat.includes('premium')
 
-    // Tier matching (if products specify a tier tag)
-    let tierMatch = true
-    if (prodTier && prodTier !== 'all') {
-      if (selectedTier === 'standard') {
-        tierMatch = prodTier === 'standard' || prodTier === 'classic' || prodTier === 'regular'
-      } else if (selectedTier === 'luxury' || selectedTier === 'premium') {
-        tierMatch = prodTier === 'luxury' || prodTier === 'premium' || prodTier === 'high'
+      let genderMatch = true
+      if (selectedGender === 'men') {
+        genderMatch = prodGender === 'men' || prodCat.includes('men') || prodName.includes('men')
+      } else if (selectedGender === 'women') {
+        genderMatch = prodGender === 'women' || prodCat.includes('women') || prodName.includes('women')
       }
+
+      const searchMatch = searchQuery
+        ? prodName.includes(searchQuery.toLowerCase()) ||
+          prodDesc.includes(searchQuery.toLowerCase())
+        : true
+
+      return isNotLuxuryOrPremium && genderMatch && searchMatch
     }
 
-    // Persona role sub-category matching (specifically for VÆROX Luxury)
-    let roleMatch = true
-    if (selectedTier === 'luxury' && selectedRole !== 'ALL') {
-      const searchRole = selectedRole.toLowerCase()
-      roleMatch =
-        prodRole === selectedRole ||
-        prodCat.includes(searchRole) ||
-        prodName.includes(searchRole) ||
-        prodDesc.includes(searchRole)
+    // 2. VAEROX PREMIUM MODE
+    if (selectedMode === 'premium') {
+      let genderMatch = true
+      if (selectedGender === 'men') {
+        genderMatch = prodGender === 'men' || prodCat.includes('men') || prodName.includes('men')
+      } else if (selectedGender === 'women') {
+        genderMatch = prodGender === 'women' || prodCat.includes('women') || prodName.includes('women')
+      }
+
+      let tierMatch = true
+      if (selectedTier === 'standard') {
+        tierMatch = prodTier === 'standard' || prodCat.includes('standard')
+      } else if (selectedTier === 'luxury') {
+        tierMatch = prodTier === 'luxury' || prodTier === 'premium' || prodCat.includes('luxury') || prodCat.includes('premium')
+      }
+
+      let roleMatch = true
+      if (selectedTier === 'luxury' && selectedRole && selectedRole !== 'ALL') {
+        const searchRole = selectedRole.toUpperCase()
+        roleMatch =
+          prodRole === searchRole ||
+          prodCat.toUpperCase().includes(searchRole) ||
+          prodName.toUpperCase().includes(searchRole) ||
+          prodDesc.toUpperCase().includes(searchRole)
+      }
+
+      const searchMatch = searchQuery
+        ? prodName.includes(searchQuery.toLowerCase()) ||
+          prodDesc.includes(searchQuery.toLowerCase())
+        : true
+
+      return genderMatch && tierMatch && roleMatch && searchMatch
     }
 
-    // Search query matching
-    const searchMatch = searchQuery
-      ? prodName.includes(searchQuery.toLowerCase()) ||
-        prodDesc.includes(searchQuery.toLowerCase()) ||
-        prodCat.includes(searchQuery.toLowerCase())
-      : true
-
-    return genderMatch && tierMatch && roleMatch && searchMatch
+    return true
   })
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -189,33 +210,47 @@ const Products = () => {
     return 0
   })
 
-  // Step Navigation Handlers
-  const handleSelectGender = (gender) => {
-    setSelectedGender(gender)
+  // Handlers
+  const handleSelectClassicMode = () => {
+    setSelectedMode('classic')
+    setSelectedGender(null)
     setSelectedTier(null)
-    setSelectedRole('ALL')
-    navigate(`/products?category=${gender}`)
+    navigate('/products?mode=classic')
   }
 
-  const handleSelectTier = (tier) => {
+  const handleSelectPremiumMode = () => {
+    setSelectedMode('premium')
+    setSelectedGender(null)
+    setSelectedTier(null)
+    navigate('/products?mode=premium')
+  }
+
+  const handleSelectGenderForClassic = (gender) => {
+    setSelectedMode('classic')
+    setSelectedGender(gender)
+    navigate(`/products?mode=classic&category=${gender}`)
+  }
+
+  const handleSelectTierForPremium = (tier) => {
+    setSelectedMode('premium')
     setSelectedTier(tier)
-    setSelectedRole('ALL')
-    const currentGender = selectedGender || 'men'
-    navigate(`/products?category=${currentGender}&tier=${tier}`)
+    setSelectedGender(null)
+    navigate(`/products?mode=premium&tier=${tier}`)
   }
 
-  const handleBackToCategories = () => {
+  const handleSelectGenderForPremium = (gender) => {
+    setSelectedMode('premium')
+    setSelectedGender(gender)
+    const tier = selectedTier || 'standard'
+    navigate(`/products?mode=premium&tier=${tier}&category=${gender}`)
+  }
+
+  const handleBackToMainMode = () => {
+    setSelectedMode(null)
     setSelectedGender(null)
     setSelectedTier(null)
     setSelectedRole('ALL')
     navigate('/products')
-  }
-
-  const handleBackToTiers = () => {
-    setSelectedTier(null)
-    setSelectedRole('ALL')
-    const currentGender = selectedGender || 'men'
-    navigate(`/products?category=${currentGender}`)
   }
 
   if (loading) {
@@ -256,43 +291,32 @@ const Products = () => {
     )
   }
 
+  // Catalogue View is active when:
+  // - Classic Mode with Gender selected (Men's or Women's)
+  // - VAEROX Premium Mode with Tier and Gender selected
+  const isClassicCatalogueView = selectedMode === 'classic' && selectedGender !== null
+  const isPremiumCatalogueView = selectedMode === 'premium' && selectedTier !== null && selectedGender !== null
+  const isLuxuryView = isPremiumCatalogueView && selectedTier === 'luxury'
+  const showCatalogueView = isClassicCatalogueView || isPremiumCatalogueView
+
   return (
     <div className="min-h-screen bg-black text-[#E8E0CC] select-none overflow-x-hidden">
       <div className="w-full">
         <AnimatePresence mode="wait">
-          {/* ════════════ STEP 1: CATEGORY SELECTION (MEN'S WEAR vs WOMEN'S WEAR) ════════════ */}
-          {!selectedGender && (
+
+          {/* ════════════ STEP 0: INITIAL MAIN ENTRY CARDS (CLASSIC CLOTHES vs VAEROX PREMIUM) ════════════ */}
+          {!selectedMode && (
             <motion.div
-              key="step-category"
+              key="step-initial"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -30 }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="relative min-h-screen py-10 md:py-16 px-4 md:px-8 overflow-hidden"
             >
-              {/* Animated Cinematic Background */}
-              <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.25, 0.5, 0.25] }}
-                  transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[550px] bg-gradient-to-b from-[#C9A84C]/15 via-[#8B6914]/8 to-transparent rounded-full blur-[150px]"
-                />
-                <motion.div
-                  animate={{ y: [-20, 20, -20], opacity: [0.15, 0.35, 0.15] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute top-1/3 -left-20 w-[450px] h-[450px] bg-[#C9A84C]/10 rounded-full blur-[120px]"
-                />
-                <motion.div
-                  animate={{ y: [20, -20, 20], opacity: [0.15, 0.35, 0.15] }}
-                  transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute bottom-10 -right-20 w-[450px] h-[450px] bg-[#C9A84C]/10 rounded-full blur-[120px]"
-                />
-              </div>
-
               <div className="relative z-10 max-w-7xl mx-auto">
-                {/* Header Section */}
                 <div className="text-center mb-12 md:mb-16">
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1, duration: 0.6 }}
@@ -300,59 +324,57 @@ const Products = () => {
                   >
                     <div className="h-[1px] w-12 md:w-20 bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent" />
                     <span className="inline-flex items-center gap-2 px-4 py-1 rounded-full text-[10px] md:text-xs font-extrabold tracking-[0.3em] text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40 uppercase font-serif shadow-sm">
-                      <Sparkles className="w-3.5 h-3.5 text-[#C9A84C] animate-pulse" />
-                      <span>CURATED BESPOKE ATELIER</span>
+                      EXPLORE VÆROX COLLECTIONS
                     </span>
                     <div className="h-[1px] w-12 md:w-20 bg-gradient-to-l from-transparent via-[#C9A84C] to-transparent" />
                   </motion.div>
 
-                  <motion.h1 
+                  <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2, duration: 0.7 }}
                     className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-[#FFF5D6] font-serif tracking-tight mb-4 uppercase leading-[1.05]"
                   >
-                    SELECT <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B]">GENDER CATEGORY</span>
+                    SELECT <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B]">COLLECTION</span>
                   </motion.h1>
 
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.35, duration: 0.6 }}
                     className="text-[#E8E0CC]/75 text-sm md:text-base max-w-lg mx-auto font-light leading-relaxed tracking-wide font-sans"
                   >
-                    Begin your tailor-made experience by choosing between Men's Suiting Atelier or Women's Evening Couture.
+                    Choose Classic Clothes for everyday regular wear or VAEROX Premium for bespoke haute couture & executive persona suiting.
                   </motion.p>
                 </div>
 
-                {/* 2 Category Cards */}
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.45, duration: 0.7 }}
                   className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto mb-16"
                 >
-                  {/* Card 1: Men's Wear */}
+                  {/* CARD 1: CLASSIC CLOTHES */}
                   <motion.div
                     whileHover={{ y: -8, scale: 1.015 }}
                     whileTap={{ scale: 0.985 }}
-                    onClick={() => handleSelectGender('men')}
-                    className="group relative rounded-3xl overflow-hidden cursor-pointer bg-gradient-to-b from-[#12110E] via-[#0E0D0B] to-[#0A0A0A] border border-[#26241E] hover:border-[#C9A84C] shadow-2xl hover:shadow-[0_0_40px_rgba(201,168,76,0.25)] transition-all duration-500 flex flex-col md:flex-row min-h-[360px]"
+                    onClick={handleSelectClassicMode}
+                    className="group relative rounded-3xl overflow-hidden cursor-pointer bg-gradient-to-b from-[#12110E] via-[#0E0D0B] to-[#0A0A0A] border border-[#26241E] hover:border-[#C9A84C] shadow-2xl hover:shadow-[0_0_40px_rgba(201,168,76,0.25)] transition-all duration-500 flex flex-col md:flex-row min-h-[380px]"
                   >
                     <div className="md:w-5/12 relative h-64 md:h-auto overflow-hidden shrink-0">
-                      <img 
-                        src={(typeof siteAssets.homeMensCard === 'string' ? siteAssets.homeMensCard : siteAssets.homeMensCard?.url || siteAssets.home_mens_card?.url) || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1000&q=80"}
-                        alt="Men's Wear Collection"
-                        className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-[1200ms] ease-out"
+                      <img
+                        src={(typeof siteAssets.classicCardImage === 'string' ? siteAssets.classicCardImage : siteAssets.classicCardImage?.url) || "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=1000&q=80"}
+                        alt="Classic Clothes Collection"
+                        className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-[1200ms] ease-out"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-transparent via-[#0E0D0B]/40 to-[#0E0D0B]" />
                       <div className="absolute top-4 left-4 z-10">
                         <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-widest text-[#C9A84C] bg-black/85 border border-[#C9A84C]/40 uppercase shadow-md font-sans">
-                          HIGH FORMAL TAILORING
+                          EVERYDAY REGULAR WEAR
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="md:w-7/12 p-6 sm:p-8 flex flex-col justify-between relative z-10 bg-[#0E0D0B]">
                       <div>
                         <div className="flex items-center justify-between mb-4">
@@ -360,22 +382,22 @@ const Products = () => {
                             Collection 01
                           </span>
                           <span className="w-8 h-8 rounded-full bg-black/60 border border-[#26241E] flex items-center justify-center text-xs font-serif font-bold text-[#C9A84C]">
-                            M
+                            C
                           </span>
                         </div>
 
                         <h2 className="text-2xl sm:text-3xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-3 group-hover:text-[#C9A84C] transition-colors">
-                          MEN'S WEAR
+                          CLASSIC CLOTHES
                         </h2>
 
                         <p className="text-xs sm:text-sm text-[#E8E0CC]/75 font-light leading-relaxed mb-6 font-sans">
-                          Bespoke double-breasted tuxedos, sharp superfine wool blazers, oxford formal suits & hand-crafted accessories.
+                          It is used for regular use and it includes all regular clothes. Click to view all clothes directly with instant sorting & filtering options.
                         </p>
                       </div>
 
                       <div className="pt-4 border-t border-[#26241E] flex items-center justify-between">
                         <span className="text-xs font-extrabold text-[#C9A84C] tracking-[0.18em] uppercase font-sans">
-                          EXPLORE MEN'S WEAR
+                          EXPLORE ALL CLASSIC CLOTHES
                         </span>
                         <div className="w-10 h-10 rounded-full bg-black border border-[#C9A84C]/50 flex items-center justify-center text-[#C9A84C] group-hover:bg-gradient-to-r group-hover:from-[#C9A84C] group-hover:to-[#9B782B] group-hover:text-black transition-all duration-300 shadow-md">
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -384,53 +406,53 @@ const Products = () => {
                     </div>
                   </motion.div>
 
-                  {/* Card 2: Women's Wear */}
+                  {/* CARD 2: VAEROX PREMIUM */}
                   <motion.div
                     whileHover={{ y: -8, scale: 1.015 }}
                     whileTap={{ scale: 0.985 }}
-                    onClick={() => handleSelectGender('women')}
-                    className="group relative rounded-3xl overflow-hidden cursor-pointer bg-gradient-to-b from-[#12110E] via-[#0E0D0B] to-[#0A0A0A] border border-[#26241E] hover:border-[#C9A84C] shadow-2xl hover:shadow-[0_0_40px_rgba(201,168,76,0.25)] transition-all duration-500 flex flex-col md:flex-row min-h-[360px]"
+                    onClick={handleSelectPremiumMode}
+                    className="group relative rounded-3xl overflow-hidden cursor-pointer bg-gradient-to-b from-[#1A160E] via-[#120F09] to-[#0A0A0A] border border-[#C9A84C]/60 hover:border-[#C9A84C] shadow-2xl hover:shadow-[0_0_45px_rgba(201,168,76,0.35)] transition-all duration-500 flex flex-col md:flex-row min-h-[380px]"
                   >
                     <div className="md:w-5/12 relative h-64 md:h-auto overflow-hidden shrink-0">
-                      <img 
-                        src={(typeof siteAssets.homeWomensCard === 'string' ? siteAssets.homeWomensCard : siteAssets.homeWomensCard?.url || siteAssets.home_womens_card?.url) || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1000&q=80"}
-                        alt="Women's Wear Collection"
-                        className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-[1200ms] ease-out"
+                      <img
+                        src={(typeof siteAssets.premiumCardImage === 'string' ? siteAssets.premiumCardImage : siteAssets.premiumCardImage?.url) || "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=1000&q=80"}
+                        alt="VAEROX Premium Collection"
+                        className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-[1200ms] ease-out"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-transparent via-[#0E0D0B]/40 to-[#0E0D0B]" />
+                      <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-transparent via-[#120F09]/40 to-[#120F09]" />
                       <div className="absolute top-4 left-4 z-10">
-                        <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-widest text-[#C9A84C] bg-black/85 border border-[#C9A84C]/40 uppercase shadow-md font-sans">
-                          ATELIER EVENING COUTURE
+                        <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-widest text-black bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] uppercase shadow-lg font-sans">
+                          BESPOKE HAUTE COUTURE
                         </span>
                       </div>
                     </div>
 
-                    <div className="md:w-7/12 p-6 sm:p-8 flex flex-col justify-between relative z-10 bg-[#0E0D0B]">
+                    <div className="md:w-7/12 p-6 sm:p-8 flex flex-col justify-between relative z-10 bg-[#120F09]">
                       <div>
                         <div className="flex items-center justify-between mb-4">
                           <span className="text-[10px] font-extrabold tracking-[0.25em] text-[#C9A84C] uppercase font-serif">
                             Collection 02
                           </span>
-                          <span className="w-8 h-8 rounded-full bg-black/60 border border-[#26241E] flex items-center justify-center text-xs font-serif font-bold text-[#C9A84C]">
-                            W
+                          <span className="w-8 h-8 rounded-full bg-[#C9A84C]/20 border border-[#C9A84C] flex items-center justify-center text-xs font-serif font-bold text-[#C9A84C]">
+                            VP
                           </span>
                         </div>
 
                         <h2 className="text-2xl sm:text-3xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-3 group-hover:text-[#C9A84C] transition-colors">
-                          WOMEN'S WEAR
+                          VAEROX PREMIUM
                         </h2>
 
-                        <p className="text-xs sm:text-sm text-[#E8E0CC]/75 font-light leading-relaxed mb-6 font-sans">
-                          Sculpted satin evening gowns, tailored executive power pant-suits & luxury statement accessories.
+                        <p className="text-xs sm:text-sm text-[#E8E0CC]/80 font-light leading-relaxed mb-6 font-sans">
+                          Explore VAEROX Standard (daily wear premium clothes) & VAEROX Luxury (look-alike executive outfits like CEO, Manager, Teacher, Lawyer, Doctor, etc.).
                         </p>
                       </div>
 
                       <div className="pt-4 border-t border-[#26241E] flex items-center justify-between">
                         <span className="text-xs font-extrabold text-[#C9A84C] tracking-[0.18em] uppercase font-sans">
-                          EXPLORE WOMEN'S WEAR
+                          CHOOSE MEN'S OR WOMEN'S
                         </span>
-                        <div className="w-10 h-10 rounded-full bg-black border border-[#C9A84C]/50 flex items-center justify-center text-[#C9A84C] group-hover:bg-gradient-to-r group-hover:from-[#C9A84C] group-hover:to-[#9B782B] group-hover:text-black transition-all duration-300 shadow-md">
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black flex items-center justify-center group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(201,168,76,0.6)]">
+                          <ArrowRight className="w-4 h-4 font-bold" />
                         </div>
                       </div>
                     </div>
@@ -440,242 +462,87 @@ const Products = () => {
             </motion.div>
           )}
 
-          {/* ════════════ STEP 2: TIER SELECTION (VÆROX STANDARD vs VÆROX LUXURY) ════════════ */}
-          {selectedGender && !selectedTier && (
+          {/* ════════════ STEP 1: CLASSIC CLOTHES GENDER SELECTION (MEN'S vs WOMEN'S) ════════════ */}
+          {selectedMode === 'classic' && selectedGender === null && (
             <motion.div
-              key="step-tier"
+              key="step-classic-gender"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.6 }}
               className="relative min-h-screen py-10 md:py-16 px-4 md:px-8 overflow-hidden"
             >
-              {/* Cinematic Background Lighting & Particle Orbs */}
-              <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.25, 0.5, 0.25] }}
-                  transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[550px] bg-gradient-to-b from-[#C9A84C]/15 via-[#8B6914]/8 to-transparent rounded-full blur-[150px]"
-                />
-                <motion.div
-                  animate={{ y: [-20, 20, -20], opacity: [0.15, 0.35, 0.15] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute top-1/3 -left-20 w-[450px] h-[450px] bg-[#C9A84C]/10 rounded-full blur-[120px]"
-                />
-                <motion.div
-                  animate={{ y: [20, -20, 20], opacity: [0.15, 0.35, 0.15] }}
-                  transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute bottom-10 -right-20 w-[450px] h-[450px] bg-[#C9A84C]/10 rounded-full blur-[120px]"
-                />
-              </div>
-
               <div className="relative z-10 max-w-7xl mx-auto">
-                {/* Back Button to Step 1 */}
                 <motion.button
-                  initial={{ opacity: 0, x: -15 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  whileHover={{ scale: 1.03, x: -3 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleBackToCategories}
-                  className="group inline-flex items-center gap-3 mb-10 px-6 py-3 rounded-full bg-[#0D0C0A]/90 border border-[#C9A84C]/40 hover:border-[#C9A84C] text-xs font-extrabold text-[#C9A84C] hover:bg-[#C9A84C]/15 transition-all duration-300 shadow-[0_0_25px_rgba(201,168,76,0.18)] font-sans cursor-pointer"
+                  onClick={handleBackToMainMode}
+                  className="group inline-flex items-center gap-3 mb-10 px-6 py-3 rounded-full bg-[#0D0C0A]/90 border border-[#C9A84C]/40 text-xs font-extrabold text-[#C9A84C] hover:bg-[#C9A84C]/15 transition-all font-sans cursor-pointer"
                 >
-                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-300" />
-                  <span>BACK TO CATEGORIES ({selectedGender.toUpperCase()}'S WEAR)</span>
+                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                  <span>BACK TO MAIN SELECTION</span>
                 </motion.button>
 
-                {/* Header Title Block */}
-                <div className="text-center mb-12 md:mb-16">
-                  <motion.div 
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1, duration: 0.6 }}
-                    className="flex items-center justify-center gap-3 mb-4"
-                  >
-                    <div className="h-[1px] w-12 md:w-20 bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent" />
-                    <span className="inline-flex items-center gap-2 px-4 py-1 rounded-full text-[10px] md:text-xs font-extrabold tracking-[0.3em] text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40 uppercase font-serif shadow-sm">
-                      <Sparkles className="w-3.5 h-3.5 text-[#C9A84C] animate-pulse" />
-                      <span>{selectedGender.toUpperCase()}'S BESPOKE ATELIER</span>
-                    </span>
-                    <div className="h-[1px] w-12 md:w-20 bg-gradient-to-l from-transparent via-[#C9A84C] to-transparent" />
-                  </motion.div>
-
-                  <motion.h1 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2, duration: 0.7 }}
-                    className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-[#FFF5D6] font-serif tracking-tight mb-4 uppercase leading-tight"
-                  >
-                    CHOOSE YOUR <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B]">COLLECTION TIER</span>
-                  </motion.h1>
-
-                  <motion.p 
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3, duration: 0.6 }}
-                    className="text-[#E8E0CC]/75 text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed font-sans"
-                  >
-                    Select VÆROX Standard for essential classic garments, or VÆROX Luxury for executive persona styling tailored to your distinction.
-                  </motion.p>
+                <div className="text-center mb-12">
+                  <h1 className="text-4xl sm:text-5xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-4">
+                    CLASSIC CLOTHES • <span className="text-[#C9A84C]">SELECT GENDER</span>
+                  </h1>
+                  <p className="text-[#E8E0CC]/75 text-sm max-w-lg mx-auto font-light font-sans">
+                    Choose between Men's Classic Clothes or Women's Classic Clothes for everyday regular wear.
+                  </p>
                 </div>
 
-                {/* ═══ TWO HIGH-FASHION TIER CARDS ═══ */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-                  
-                  {/* CARD 1: VÆROX STANDARD */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                  {/* Men's Classic Clothes */}
                   <motion.div
-                    initial={{ opacity: 0, y: 35 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.35, duration: 0.7 }}
-                    whileHover={{ y: -8, scale: 1.015 }}
+                    whileHover={{ y: -6, scale: 1.015 }}
                     whileTap={{ scale: 0.985 }}
-                    onClick={() => handleSelectTier('standard')}
-                    className="group relative rounded-3xl overflow-hidden cursor-pointer bg-gradient-to-b from-[#12110E] via-[#0E0D0B] to-[#0A0A0A] border border-[#26241E] hover:border-[#C9A84C] shadow-2xl hover:shadow-[0_0_40px_rgba(201,168,76,0.25)] transition-all duration-500 flex flex-col md:flex-row min-h-[380px]"
+                    onClick={() => handleSelectGenderForClassic('men')}
+                    className="group rounded-3xl overflow-hidden cursor-pointer bg-[#0E0D0B] border border-[#26241E] hover:border-[#C9A84C] shadow-2xl p-6 flex flex-col justify-between min-h-[320px]"
                   >
-                    {/* Glowing Accent Border Lines */}
-                    <div className="absolute inset-0 rounded-3xl border border-transparent group-hover:border-[#C9A84C]/60 transition-colors pointer-events-none z-20" />
-
-                    {/* Image Side (Left/Top) */}
-                    <div className="md:w-5/12 relative h-64 md:h-auto overflow-hidden shrink-0">
-                      <img 
-                        src={selectedGender === 'men' 
-                          ? "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=1000&q=80" 
-                          : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=1000&q=80"}
-                        alt="VÆROX Standard Collection"
-                        className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-[1200ms] ease-out"
+                    <div className="h-48 relative overflow-hidden rounded-2xl mb-4">
+                      <img
+                        src={(typeof siteAssets.homeMensCard === 'string' ? siteAssets.homeMensCard : siteAssets.homeMensCard?.url) || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80"}
+                        alt="Men's Classic Clothes"
+                        className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-transparent via-[#0E0D0B]/40 to-[#0E0D0B]" />
-                      <div className="absolute top-4 left-4 z-10">
-                        <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-widest text-[#C9A84C] bg-black/85 border border-[#C9A84C]/40 uppercase shadow-md font-sans">
-                          EVERYDAY CLASSIC
-                        </span>
-                      </div>
                     </div>
-
-                    {/* Content Side (Right/Bottom) */}
-                    <div className="md:w-7/12 p-6 sm:p-8 flex flex-col justify-between relative z-10 bg-[#0E0D0B]">
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="text-[10px] font-extrabold tracking-[0.25em] text-[#C9A84C] uppercase font-serif">
-                            Tier 01 • Standard
-                          </span>
-                          <span className="w-8 h-8 rounded-full bg-black/60 border border-[#26241E] flex items-center justify-center text-xs font-serif font-bold text-[#C9A84C]">
-                            01
-                          </span>
-                        </div>
-
-                        <h2 className="text-2xl sm:text-3xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-3 group-hover:text-[#C9A84C] transition-colors">
-                          VÆROX STANDARD
-                        </h2>
-
-                        <p className="text-xs sm:text-sm text-[#E8E0CC]/75 font-light leading-relaxed mb-6 font-sans">
-                          Essential everyday formalwear tailored with signature VÆROX craftsmanship. Includes standard double-breasted blazers, trousers, oxford shirts & classic coordinates.
-                        </p>
-
-                        <div className="flex flex-wrap items-center gap-2 mb-6">
-                          <span className="px-2.5 py-1 rounded-lg bg-black border border-[#26241E] text-[10px] font-semibold text-[#E8E0CC]/80 uppercase font-sans">
-                            ✓ All Clothes
-                          </span>
-                          <span className="px-2.5 py-1 rounded-lg bg-black border border-[#26241E] text-[10px] font-semibold text-[#E8E0CC]/80 uppercase font-sans">
-                            ✓ Classic Fit
-                          </span>
-                          <span className="px-2.5 py-1 rounded-lg bg-black border border-[#26241E] text-[10px] font-semibold text-[#E8E0CC]/80 uppercase font-sans">
-                            ✓ Premium Textiles
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="pt-4 border-t border-[#26241E] flex items-center justify-between">
-                        <span className="text-xs font-extrabold text-[#C9A84C] tracking-[0.18em] uppercase font-sans">
-                          EXPLORE ALL CLOTHES
-                        </span>
-                        <div className="w-10 h-10 rounded-full bg-black border border-[#C9A84C]/50 flex items-center justify-center text-[#C9A84C] group-hover:bg-gradient-to-r group-hover:from-[#C9A84C] group-hover:to-[#9B782B] group-hover:text-black transition-all duration-300 shadow-md">
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                        </div>
+                    <div>
+                      <h2 className="text-2xl font-bold font-serif text-[#FFF5D6] group-hover:text-[#C9A84C] uppercase mb-2">
+                        MEN'S CLASSIC CLOTHES
+                      </h2>
+                      <p className="text-xs text-[#E8E0CC]/75 font-sans mb-4">
+                        Everyday regular clothes for men. View all men's regular wear directly with instant sorting & filters.
+                      </p>
+                      <div className="pt-3 border-t border-[#26241E] flex justify-between items-center text-xs font-bold text-[#C9A84C]">
+                        <span>EXPLORE MEN'S CLASSIC</span>
+                        <ArrowRight className="w-4 h-4" />
                       </div>
                     </div>
                   </motion.div>
 
-                  {/* CARD 2: VÆROX LUXURY */}
+                  {/* Women's Classic Clothes */}
                   <motion.div
-                    initial={{ opacity: 0, y: 35 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.45, duration: 0.7 }}
-                    whileHover={{ y: -8, scale: 1.015 }}
+                    whileHover={{ y: -6, scale: 1.015 }}
                     whileTap={{ scale: 0.985 }}
-                    onClick={() => handleSelectTier('luxury')}
-                    className="group relative rounded-3xl overflow-hidden cursor-pointer bg-gradient-to-b from-[#1A160E] via-[#120F09] to-[#0A0A0A] border border-[#C9A84C]/60 hover:border-[#C9A84C] shadow-2xl hover:shadow-[0_0_45px_rgba(201,168,76,0.35)] transition-all duration-500 flex flex-col md:flex-row min-h-[380px]"
+                    onClick={() => handleSelectGenderForClassic('women')}
+                    className="group rounded-3xl overflow-hidden cursor-pointer bg-[#0E0D0B] border border-[#26241E] hover:border-[#C9A84C] shadow-2xl p-6 flex flex-col justify-between min-h-[320px]"
                   >
-                    {/* Ambient Glow */}
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-[#C9A84C]/15 rounded-bl-full blur-3xl group-hover:bg-[#C9A84C]/30 transition-all pointer-events-none" />
-
-                    {/* Image Side (Left/Top) */}
-                    <div className="md:w-5/12 relative h-64 md:h-auto overflow-hidden shrink-0">
-                      <img 
-                        src={selectedGender === 'men' 
-                          ? "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1000&q=80" 
-                          : "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1000&q=80"}
-                        alt="VÆROX Luxury Collection"
-                        className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-[1200ms] ease-out"
+                    <div className="h-48 relative overflow-hidden rounded-2xl mb-4">
+                      <img
+                        src={(typeof siteAssets.homeWomensCard === 'string' ? siteAssets.homeWomensCard : siteAssets.homeWomensCard?.url) || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80"}
+                        alt="Women's Classic Clothes"
+                        className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-transparent via-[#120F09]/40 to-[#120F09]" />
-                      <div className="absolute top-4 left-4 z-10">
-                        <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-widest text-black bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] uppercase shadow-lg font-sans flex items-center gap-1.5">
-                          <Sparkles className="w-3 h-3 text-black" />
-                          <span>EXECUTIVE COUTURE</span>
-                        </span>
-                      </div>
                     </div>
-
-                    {/* Content Side (Right/Bottom) */}
-                    <div className="md:w-7/12 p-6 sm:p-8 flex flex-col justify-between relative z-10 bg-[#120F09]">
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="text-[10px] font-extrabold tracking-[0.25em] text-[#C9A84C] uppercase font-serif">
-                            Tier 02 • High Luxury
-                          </span>
-                          <span className="w-8 h-8 rounded-full bg-[#C9A84C]/20 border border-[#C9A84C] flex items-center justify-center text-xs font-serif font-bold text-[#C9A84C]">
-                            02
-                          </span>
-                        </div>
-
-                        <h2 className="text-2xl sm:text-3xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-3 group-hover:text-[#C9A84C] transition-colors">
-                          VÆROX LUXURY
-                        </h2>
-
-                        <p className="text-xs sm:text-sm text-[#E8E0CC]/80 font-light leading-relaxed mb-4 font-sans">
-                          High-couture persona styling crafted for CEOs, Lawyers, Doctors, Teachers, Artists & Bespoke Atelier commissions.
-                        </p>
-
-                        {/* Persona Pill Badges Preview */}
-                        <div className="mb-6">
-                          <span className="text-[9px] font-bold text-[#C9A84C] uppercase tracking-wider block mb-2 font-serif">
-                            SELECT BY PERSONA:
-                          </span>
-                          <div className="flex flex-wrap gap-1.5">
-                            {['CEO', 'LAWYER', 'DOCTOR', 'TEACHER', 'ARTIST'].map((p) => (
-                              <span key={p} className="px-2 py-0.5 rounded-full bg-black/80 border border-[#C9A84C]/40 text-[9px] font-extrabold text-[#FFF5D6] uppercase tracking-wider font-sans">
-                                {p === 'CEO' && '👑 '}
-                                {p === 'LAWYER' && '⚖️ '}
-                                {p === 'DOCTOR' && '🩺 '}
-                                {p === 'TEACHER' && '🎓 '}
-                                {p === 'ARTIST' && '🎨 '}
-                                {p}
-                              </span>
-                            ))}
-                            <span className="px-2 py-0.5 rounded-full bg-[#C9A84C]/20 border border-[#C9A84C]/50 text-[9px] font-extrabold text-[#C9A84C] uppercase tracking-wider font-sans">
-                              + MORE
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="pt-4 border-t border-[#26241E] flex items-center justify-between">
-                        <span className="text-xs font-extrabold text-[#C9A84C] tracking-[0.18em] uppercase font-sans">
-                          EXPLORE LUXURY PERSONAS
-                        </span>
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black flex items-center justify-center group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(201,168,76,0.6)]">
-                          <ArrowRight className="w-4 h-4 font-bold" />
-                        </div>
+                    <div>
+                      <h2 className="text-2xl font-bold font-serif text-[#FFF5D6] group-hover:text-[#C9A84C] uppercase mb-2">
+                        WOMEN'S CLASSIC CLOTHES
+                      </h2>
+                      <p className="text-xs text-[#E8E0CC]/75 font-sans mb-4">
+                        Everyday regular clothes for women. View all women's regular wear directly with instant sorting & filters.
+                      </p>
+                      <div className="pt-3 border-t border-[#26241E] flex justify-between items-center text-xs font-bold text-[#C9A84C]">
+                        <span>EXPLORE WOMEN'S CLASSIC</span>
+                        <ArrowRight className="w-4 h-4" />
                       </div>
                     </div>
                   </motion.div>
@@ -684,8 +551,192 @@ const Products = () => {
             </motion.div>
           )}
 
-          {/* ════════════ STEP 3: PRODUCT CATALOGUE DISPLAY ════════════ */}
-          {selectedGender && selectedTier && (
+          {/* ════════════ STEP 2: VAEROX PREMIUM TIER SELECTION (STANDARD vs LUXURY) ════════════ */}
+          {selectedMode === 'premium' && selectedTier === null && (
+            <motion.div
+              key="step-premium-tier"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ duration: 0.6 }}
+              className="relative min-h-screen py-10 md:py-16 px-4 md:px-8 overflow-hidden"
+            >
+              <div className="relative z-10 max-w-7xl mx-auto">
+                <motion.button
+                  onClick={handleBackToMainMode}
+                  className="group inline-flex items-center gap-3 mb-10 px-6 py-3 rounded-full bg-[#0D0C0A]/90 border border-[#C9A84C]/40 text-xs font-extrabold text-[#C9A84C] hover:bg-[#C9A84C]/15 transition-all font-sans cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                  <span>BACK TO MAIN SELECTION</span>
+                </motion.button>
+
+                <div className="text-center mb-12">
+                  <h1 className="text-4xl sm:text-5xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-4">
+                    VAEROX PREMIUM • <span className="text-[#C9A84C]">SELECT TIER</span>
+                  </h1>
+                  <p className="text-[#E8E0CC]/75 text-sm max-w-xl mx-auto font-light font-sans">
+                    Choose VAEROX Standard for daily wear premium clothes or VAEROX Luxury for ultra/superb executive look-alike outfits.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+                  {/* CARD 1: VAEROX STANDARD */}
+                  <motion.div
+                    whileHover={{ y: -8, scale: 1.015 }}
+                    whileTap={{ scale: 0.985 }}
+                    onClick={() => handleSelectTierForPremium('standard')}
+                    className="group relative rounded-3xl overflow-hidden cursor-pointer bg-[#0E0D0B] border border-[#26241E] hover:border-[#C9A84C] shadow-2xl p-6 sm:p-8 flex flex-col justify-between min-h-[380px]"
+                  >
+                    <div className="h-48 relative overflow-hidden rounded-2xl mb-4">
+                      <img
+                        src={(typeof siteAssets.standardTierCardImage === 'string' ? siteAssets.standardTierCardImage : siteAssets.standardTierCardImage?.url) || "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=1000&q=80"}
+                        alt="VAEROX Standard"
+                        className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-700"
+                      />
+                      <div className="absolute top-3 left-3 bg-black/80 px-3 py-1 rounded-full text-[9px] font-bold text-[#C9A84C] border border-[#C9A84C]/40">
+                        REGULAR USE PREMIUM CLOTHES
+                      </div>
+                    </div>
+                    <div>
+                      <h2 className="text-2xl sm:text-3xl font-extrabold text-[#FFF5D6] font-serif uppercase mb-2 group-hover:text-[#C9A84C]">
+                        VAEROX STANDARD
+                      </h2>
+                      <p className="text-xs sm:text-sm text-[#E8E0CC]/80 font-sans mb-6">
+                        Daily wear regular use premium clothes. Custom stitch tailored to your measurements with full pair distinction.
+                      </p>
+                      <div className="pt-4 border-t border-[#26241E] flex justify-between items-center text-xs font-bold text-[#C9A84C]">
+                        <span>SELECT VAEROX STANDARD</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* CARD 2: VAEROX LUXURY */}
+                  <motion.div
+                    whileHover={{ y: -8, scale: 1.015 }}
+                    whileTap={{ scale: 0.985 }}
+                    onClick={() => handleSelectTierForPremium('luxury')}
+                    className="group relative rounded-3xl overflow-hidden cursor-pointer bg-gradient-to-b from-[#1A160E] to-[#0A0A0A] border border-[#C9A84C]/60 hover:border-[#C9A84C] shadow-2xl p-6 sm:p-8 flex flex-col justify-between min-h-[380px]"
+                  >
+                    <div className="h-48 relative overflow-hidden rounded-2xl mb-4">
+                      <img
+                        src={(typeof siteAssets.luxuryTierCardImage === 'string' ? siteAssets.luxuryTierCardImage : siteAssets.luxuryTierCardImage?.url) || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1000&q=80"}
+                        alt="VAEROX Luxury"
+                        className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-700"
+                      />
+                      <div className="absolute top-3 left-3 bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black px-3 py-1 rounded-full text-[9px] font-extrabold uppercase">
+                        ULTRA & SUPERB PREMIUM OUTFITS
+                      </div>
+                    </div>
+                    <div>
+                      <h2 className="text-2xl sm:text-3xl font-extrabold text-[#FFF5D6] font-serif uppercase mb-2 group-hover:text-[#C9A84C]">
+                        VAEROX LUXURY
+                      </h2>
+                      <p className="text-xs sm:text-sm text-[#E8E0CC]/80 font-sans mb-6">
+                        Ultra & superb premium look-alike executive persona outfits (CEO Outfit, Teacher Outfit, Manager Outfit, Lawyer Outfit, Doctor Outfit, etc.) with custom sidebar role filters!
+                      </p>
+                      <div className="pt-4 border-t border-[#26241E] flex justify-between items-center text-xs font-bold text-[#C9A84C]">
+                        <span>SELECT VAEROX LUXURY (WITH EXECUTIVE SIDEBAR)</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ════════════ STEP 3: VAEROX PREMIUM GENDER SELECTION (MEN'S vs WOMEN'S) ════════════ */}
+          {selectedMode === 'premium' && selectedTier !== null && selectedGender === null && (
+            <motion.div
+              key="step-premium-gender"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ duration: 0.6 }}
+              className="relative min-h-screen py-10 md:py-16 px-4 md:px-8 overflow-hidden"
+            >
+              <div className="relative z-10 max-w-7xl mx-auto">
+                <motion.button
+                  onClick={() => setSelectedTier(null)}
+                  className="group inline-flex items-center gap-3 mb-10 px-6 py-3 rounded-full bg-[#0D0C0A]/90 border border-[#C9A84C]/40 text-xs font-extrabold text-[#C9A84C] hover:bg-[#C9A84C]/15 transition-all font-sans cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                  <span>BACK TO TIER SELECTION ({selectedTier.toUpperCase()})</span>
+                </motion.button>
+
+                <div className="text-center mb-12">
+                  <h1 className="text-4xl sm:text-5xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-4">
+                    VAEROX {selectedTier.toUpperCase()} • <span className="text-[#C9A84C]">SELECT GENDER</span>
+                  </h1>
+                  <p className="text-[#E8E0CC]/75 text-sm max-w-lg mx-auto font-light font-sans">
+                    Choose between Men's Wear or Women's Wear for VAEROX {selectedTier.toUpperCase()} collection.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                  {/* Men's Wear */}
+                  <motion.div
+                    whileHover={{ y: -6, scale: 1.015 }}
+                    whileTap={{ scale: 0.985 }}
+                    onClick={() => handleSelectGenderForPremium('men')}
+                    className="group rounded-3xl overflow-hidden cursor-pointer bg-[#0E0D0B] border border-[#26241E] hover:border-[#C9A84C] shadow-2xl p-6 flex flex-col justify-between min-h-[320px]"
+                  >
+                    <div className="h-48 relative overflow-hidden rounded-2xl mb-4">
+                      <img
+                        src={(typeof siteAssets.homeMensCard === 'string' ? siteAssets.homeMensCard : siteAssets.homeMensCard?.url) || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80"}
+                        alt="Men's Wear"
+                        className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold font-serif text-[#FFF5D6] group-hover:text-[#C9A84C] uppercase mb-2">
+                        MEN'S WEAR
+                      </h2>
+                      <p className="text-xs text-[#E8E0CC]/75 font-sans mb-4">
+                        Tailored suiting, tuxedos & executive persona outfits for men.
+                      </p>
+                      <div className="pt-3 border-t border-[#26241E] flex justify-between items-center text-xs font-bold text-[#C9A84C]">
+                        <span>SELECT MEN'S WEAR</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Women's Wear */}
+                  <motion.div
+                    whileHover={{ y: -6, scale: 1.015 }}
+                    whileTap={{ scale: 0.985 }}
+                    onClick={() => handleSelectGenderForPremium('women')}
+                    className="group rounded-3xl overflow-hidden cursor-pointer bg-[#0E0D0B] border border-[#26241E] hover:border-[#C9A84C] shadow-2xl p-6 flex flex-col justify-between min-h-[320px]"
+                  >
+                    <div className="h-48 relative overflow-hidden rounded-2xl mb-4">
+                      <img
+                        src={(typeof siteAssets.homeWomensCard === 'string' ? siteAssets.homeWomensCard : siteAssets.homeWomensCard?.url) || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80"}
+                        alt="Women's Wear"
+                        className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold font-serif text-[#FFF5D6] group-hover:text-[#C9A84C] uppercase mb-2">
+                        WOMEN'S WEAR
+                      </h2>
+                      <p className="text-xs text-[#E8E0CC]/75 font-sans mb-4">
+                        Atelier evening gowns, power pant-suits & executive persona couture for women.
+                      </p>
+                      <div className="pt-3 border-t border-[#26241E] flex justify-between items-center text-xs font-bold text-[#C9A84C]">
+                        <span>SELECT WOMEN'S WEAR</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ════════════ STEP 4: CATALOGUE VIEW (CLASSIC CLOTHES vs VAEROX PREMIUM) ════════════ */}
+          {showCatalogueView && (
             <motion.div
               key="step-catalogue"
               initial={{ opacity: 0 }}
@@ -695,46 +746,79 @@ const Products = () => {
               className="py-6 px-3 sm:px-6"
             >
               <div className="max-w-7xl mx-auto">
-                {/* Back Button Header Bar */}
+                {/* Top Control Bar */}
                 <div className="mb-6 flex flex-wrap justify-between items-center gap-4 bg-gradient-to-r from-[#0D0C0A] via-[#14120D] to-[#0A0A0A] p-4 sm:p-5 rounded-2xl border border-[#C9A84C]/40 shadow-xl">
                   <div className="flex items-center gap-3">
                     <motion.button
                       whileHover={{ scale: 1.03, x: -2 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={handleBackToTiers}
+                      onClick={handleBackToMainMode}
                       className="px-4 py-2 rounded-xl bg-[#141414] border border-[#C9A84C]/60 text-[#C9A84C] hover:bg-[#C9A84C]/15 transition-all text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 cursor-pointer font-sans shadow-md"
                     >
                       <ArrowLeft className="w-4 h-4 text-[#C9A84C]" />
-                      <span>BACK TO TIER SELECTION</span>
+                      <span>BACK TO MAIN SELECTION</span>
                     </motion.button>
+
                     <span className="text-xs font-extrabold text-[#FFF5D6] uppercase tracking-widest hidden sm:inline-block font-serif">
-                      {selectedGender.toUpperCase()}'S WEAR &gt; <span className="text-[#C9A84C]">{selectedTier === 'luxury' ? 'VÆROX LUXURY' : 'VÆROX STANDARD'}</span>
+                      {selectedMode === 'classic' ? (
+                        <span className="text-[#C9A84C]">CLASSIC CLOTHES &gt; {selectedGender?.toUpperCase()}'S REGULAR WEAR</span>
+                      ) : (
+                        <>{selectedGender?.toUpperCase()}'S WEAR &gt; <span className="text-[#C9A84C]">VAEROX {selectedTier?.toUpperCase()}</span></>
+                      )}
                     </span>
                   </div>
 
-                  <button
-                    onClick={() => setIsFilterSidebarOpen(!isFilterSidebarOpen)}
-                    className="lg:hidden px-4 py-2 rounded-xl bg-[#141414] border border-[#C9A84C]/60 text-[#C9A84C] text-xs font-bold uppercase tracking-wider flex items-center gap-2 font-sans"
-                  >
-                    <Filter className="w-4 h-4" />
-                    <span>SIDEBAR FILTERS</span>
-                  </button>
+                  {/* Top Bar Sort Dropdown & Search (Always available) */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-[#C9A84C] absolute left-3 top-2.5 pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder="Search products..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-8 pr-3 py-1.5 bg-[#121212] border border-[#26241E] focus:border-[#C9A84C] rounded-xl text-xs text-[#FFF5D6] placeholder-[#A39E93] focus:outline-none"
+                      />
+                    </div>
+
+                    <select
+                      value={sort}
+                      onChange={(e) => setSort(e.target.value)}
+                      className="px-3 py-1.5 bg-[#121212] border border-[#C9A84C]/40 rounded-xl text-xs text-[#FFF5D6] font-bold focus:outline-none cursor-pointer font-sans"
+                    >
+                      <option value="name">Name (A - Z)</option>
+                      <option value="price-low">Price: Low to High</option>
+                      <option value="price-high">Price: High to Low</option>
+                      <option value="newest">Newest First</option>
+                    </select>
+
+                    {/* Mobile Sidebar Filter Button (ONLY VISIBLE ON VAEROX LUXURY) */}
+                    {isLuxuryView && (
+                      <button
+                        onClick={() => setIsFilterSidebarOpen(!isFilterSidebarOpen)}
+                        className="lg:hidden px-4 py-1.5 rounded-xl bg-[#141414] border border-[#C9A84C] text-[#C9A84C] text-xs font-bold uppercase tracking-wider flex items-center gap-2 font-sans"
+                      >
+                        <Filter className="w-4 h-4" />
+                        <span>EXECUTIVE PERSONAS</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                {/* MAIN CATALOGUE LAYOUT WITH COMPACT RIGHT SIDEBAR FILTER */}
-                <div className="flex flex-col lg:flex-row gap-6 md:gap-8 items-start relative">
-                  
-                  {/* ═══ LEFT SIDE: PRODUCTS GRID ═══ */}
+                {/* ═══ MAIN LAYOUT: FULL WIDTH FOR CLASSIC & STANDARD, WITH SIDEBAR ONLY FOR LUXURY ═══ */}
+                <div className={`flex flex-col ${isLuxuryView ? 'lg:flex-row' : ''} gap-6 md:gap-8 items-start relative`}>
+
+                  {/* PRODUCTS GRID */}
                   <div className="flex-1 w-full order-2 lg:order-1">
                     {sortedProducts.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
+                      <div className={`grid grid-cols-1 sm:grid-cols-2 ${isLuxuryView ? 'xl:grid-cols-3' : 'lg:grid-cols-3 xl:grid-cols-4'} gap-4 md:gap-5`}>
                         {sortedProducts.map((product) => (
                           <ProductCard key={product._id || product.id} product={product} />
                         ))}
                       </div>
                     ) : (
                       <div className="bg-[#0A0A0A] border border-[#26241E] rounded-3xl p-12 text-center">
-                        <p className="text-[#A39E93] text-sm mb-4 font-serif">No luxury products found matching your active selection.</p>
+                        <p className="text-[#A39E93] text-sm mb-4 font-serif">No products found matching your active selection.</p>
                         <button
                           onClick={() => {
                             setSelectedRole('ALL')
@@ -748,185 +832,78 @@ const Products = () => {
                     )}
                   </div>
 
-                  {/* ═══ RIGHT SIDE: COMPACT SIDEBAR ═══ */}
-                  <motion.aside
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className={`w-full lg:w-72 bg-gradient-to-b from-[#12100C] via-[#0E0D0A] to-[#080808] border border-[#C9A84C]/35 hover:border-[#C9A84C]/60 rounded-2xl p-4 shadow-[0_15px_45px_rgba(0,0,0,0.9),0_0_25px_rgba(201,168,76,0.1)] lg:sticky lg:top-24 z-30 transition-all duration-300 shrink-0 relative overflow-hidden backdrop-blur-xl order-1 lg:order-2 ${
-                      isFilterSidebarOpen ? 'block' : 'hidden lg:block'
-                    }`}
-                  >
-                    {/* Ambient Gold Particle Light */}
-                    <div className="absolute top-0 right-0 w-28 h-28 bg-[#C9A84C]/10 rounded-bl-full blur-2xl pointer-events-none" />
-
-                    {/* Header */}
-                    <div className="pb-3 border-b border-[#26241E] mb-3.5 relative z-10">
-                      <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[8px] font-extrabold tracking-[0.18em] text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/30 uppercase font-serif">
-                          <Sparkles className="w-2.5 h-2.5 text-[#C9A84C] animate-pulse" />
-                          <span>{selectedGender.toUpperCase()}'S • {selectedTier === 'luxury' ? 'LUXURY' : 'STANDARD'}</span>
-                        </span>
+                  {/* ═══ SIDEBAR: ONLY PRESENT IN VAEROX LUXURY PRODUCT PAGE! ═══ */}
+                  {isLuxuryView && (
+                    <motion.aside
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5 }}
+                      className={`w-full lg:w-72 bg-gradient-to-b from-[#12100C] via-[#0E0D0A] to-[#080808] border border-[#C9A84C]/50 hover:border-[#C9A84C] rounded-2xl p-5 shadow-[0_15px_45px_rgba(0,0,0,0.9),0_0_25px_rgba(201,168,76,0.15)] lg:sticky lg:top-24 z-30 transition-all duration-300 shrink-0 relative overflow-hidden backdrop-blur-xl order-1 lg:order-2 ${isFilterSidebarOpen ? 'block' : 'hidden lg:block'
+                        }`}
+                    >
+                      <div className="pb-3 border-b border-[#26241E] mb-4 relative z-10 flex items-center justify-between">
+                        <div>
+                          <span className="text-[9px] font-extrabold text-[#C9A84C] uppercase tracking-widest block font-serif">
+                            LOOK-ALIKE EXECUTIVE OUTFITS
+                          </span>
+                          <h2 className="text-sm font-extrabold text-[#FFF5D6] font-serif uppercase">
+                            EXECUTIVE PERSONAS
+                          </h2>
+                        </div>
                         {isFilterSidebarOpen && (
-                          <button 
+                          <button
                             onClick={() => setIsFilterSidebarOpen(false)}
                             className="lg:hidden p-1 rounded-lg bg-[#141414] text-[#A39E93] hover:text-[#FFF5D6]"
                           >
-                            <X className="w-3.5 h-3.5" />
+                            <X className="w-4 h-4" />
                           </button>
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between gap-2">
-                        <h2 className="text-sm font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight leading-snug">
-                          {selectedTier === 'luxury' ? `EXECUTIVE ATELIER` : `ESSENTIALS`}
-                        </h2>
-                        <span className="text-[9px] font-extrabold text-[#C9A84C] bg-[#C9A84C]/15 border border-[#C9A84C]/40 px-2 py-0.5 rounded-full uppercase font-mono">
-                          {sortedProducts.length} ITEMS
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* PERSONA ROLE FILTER (EXECUTIVE PERSONAS IN COMPACT SIDEBAR) */}
-                    {selectedTier === 'luxury' && (
-                      <div className="mb-4 relative z-10">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-1 h-3 bg-gradient-to-b from-[#FFF5D6] to-[#C9A84C] rounded-full" />
-                            <label className="block text-[9px] font-extrabold text-[#C9A84C] uppercase tracking-widest font-serif">
-                              EXECUTIVE PERSONAS
-                            </label>
-                          </div>
-                          <span className="text-[8px] font-bold text-[#FFF5D6] bg-black/80 border border-[#26241E] px-1.5 py-0.5 rounded uppercase font-mono">
-                            {selectedRole === 'ALL' ? 'ALL' : selectedRole}
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-1 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
-                          {ROLES_LIST.map((role) => {
-                            const isSelected = selectedRole === role
-                            return (
-                              <motion.button
-                                key={role}
-                                whileHover={{ x: 2 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => setSelectedRole(role)}
-                                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer font-sans border ${
-                                  isSelected
-                                    ? 'bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black border-[#C9A84C] shadow-sm font-extrabold'
-                                    : 'bg-[#131210]/90 text-[#E8E0CC]/80 border-[#26241E] hover:border-[#C9A84C]/50 hover:bg-[#1A1814] hover:text-[#FFF5D6]'
+                      {/* LOOK-ALIKE OUTFIT ROLE SELECTION LIST (MANAGED BY ADMIN) */}
+                      <div className="space-y-1.5 relative z-10 max-h-[70vh] overflow-y-auto custom-scrollbar pr-1">
+                        {ROLES_LIST.map((role) => {
+                          const isSelected = selectedRole === role
+                          return (
+                            <motion.button
+                              key={role}
+                              whileHover={{ x: 2 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => {
+                                setSelectedRole(role)
+                                const currentGender = selectedGender || 'men'
+                                navigate(`/products?mode=premium&tier=luxury&category=${currentGender}&role=${role}`)
+                              }}
+                              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer font-sans border ${isSelected
+                                  ? 'bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black border-[#C9A84C] shadow-md font-extrabold'
+                                  : 'bg-[#131210]/90 text-[#E8E0CC]/80 border-[#26241E] hover:border-[#C9A84C]/50 hover:bg-[#1A1814] hover:text-[#FFF5D6]'
                                 }`}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs">
-                                    {role === 'CEO' && '👑'}
-                                    {role === 'LAWYER' && '⚖️'}
-                                    {role === 'DOCTOR' && '🩺'}
-                                    {role === 'C.A' && '📊'}
-                                    {role === 'MANAGER' && '💼'}
-                                    {role === 'TEACHER' && '🎓'}
-                                    {role === 'ARTIST' && '🎨'}
-                                    {role === 'OWNER' && '🏛️'}
-                                    {role === 'ENTREPRENEUR' && '🚀'}
-                                    {role === 'CUSTOM ATELIER' && '✨'}
-                                    {role === 'ALL' && '✨'}
-                                  </span>
-                                  <span>{role === 'ALL' ? 'ALL PERSONAS' : role}</span>
-                                </div>
-                                {isSelected && (
-                                  <Check className="w-3 h-3 text-black font-extrabold" />
-                                )}
-                              </motion.button>
-                            )
-                          })}
-                        </div>
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">
+                                  {role === 'CEO' && '👑'}
+                                  {role === 'LAWYER' && '⚖️'}
+                                  {role === 'DOCTOR' && '🩺'}
+                                  {role === 'C.A' && '📊'}
+                                  {role === 'MANAGER' && '💼'}
+                                  {role === 'TEACHER' && '🎓'}
+                                  {role === 'ARTIST' && '🎨'}
+                                  {role === 'OWNER' && '🏛️'}
+                                  {role === 'ENTREPRENEUR' && '🚀'}
+                                  {role === 'CUSTOM ATELIER' && '👔'}
+                                  {role === 'ALL' && '👔'}
+                                </span>
+                                <span>{role === 'ALL' ? 'ALL LOOK-ALIKE OUTFITS' : `${role} OUTFIT`}</span>
+                              </div>
+                              {isSelected && (
+                                <Check className="w-3.5 h-3.5 text-black font-extrabold" />
+                              )}
+                            </motion.button>
+                          )
+                        })}
                       </div>
-                    )}
-
-                    {/* SEARCH INPUT */}
-                    <div className="mb-4 relative z-10">
-                      <label className="block text-[9px] font-extrabold text-[#C9A84C] uppercase tracking-widest mb-1 font-serif flex items-center gap-1">
-                        <Search className="w-2.5 h-2.5 text-[#C9A84C]" />
-                        <span>SEARCH</span>
-                      </label>
-                      <div className="relative">
-                        <Search className="w-3.5 h-3.5 text-[#C9A84C]/70 absolute left-2.5 top-2.5 pointer-events-none" />
-                        <input
-                          type="text"
-                          placeholder="Search collection..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full pl-8 pr-7 py-1.5 bg-[#131210] border border-[#26241E] focus:border-[#C9A84C] rounded-lg text-[11px] text-[#FFF5D6] placeholder-[#A39E93]/70 focus:outline-none font-sans transition-all"
-                        />
-                        {searchQuery && (
-                          <button
-                            onClick={() => setSearchQuery('')}
-                            className="absolute right-2.5 top-2 text-[#A39E93] hover:text-[#FFF5D6]"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* COLLECTION TIER SWITCHER */}
-                    <div className="mb-3.5 border-t border-[#26241E] pt-3 relative z-10">
-                      <label className="block text-[9px] font-extrabold text-[#C9A84C] uppercase tracking-widest mb-1 font-serif">
-                        TIER
-                      </label>
-                      <div className="grid grid-cols-2 gap-1.5 bg-[#100F0C] p-1 rounded-xl border border-[#26241E]">
-                        <button
-                          onClick={() => handleSelectTier('standard')}
-                          className={`py-1 px-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wider transition-all border cursor-pointer font-sans ${
-                            selectedTier === 'standard'
-                              ? 'bg-gradient-to-r from-[#C9A84C] to-[#9B782B] text-black border-[#C9A84C]'
-                              : 'bg-transparent border-transparent text-[#A39E93] hover:text-[#FFF5D6]'
-                          }`}
-                        >
-                          STANDARD
-                        </button>
-                        <button
-                          onClick={() => handleSelectTier('luxury')}
-                          className={`py-1 px-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wider transition-all border cursor-pointer font-sans ${
-                            selectedTier === 'luxury'
-                              ? 'bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black border-[#C9A84C]'
-                              : 'bg-transparent border-transparent text-[#A39E93] hover:text-[#FFF5D6]'
-                          }`}
-                        >
-                          LUXURY
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* SORT BY */}
-                    <div className="border-t border-[#26241E] pt-3 relative z-10">
-                      <label className="block text-[9px] font-extrabold text-[#C9A84C] uppercase tracking-widest mb-1 font-serif">
-                        SORT BY
-                      </label>
-                      <select
-                        value={sort}
-                        onChange={(e) => setSort(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-[#131210] border border-[#26241E] focus:border-[#C9A84C] rounded-lg text-[11px] text-[#FFF5D6] focus:outline-none font-bold cursor-pointer font-sans"
-                      >
-                        <option value="name">Name (A - Z)</option>
-                        <option value="price-low">Price: Low to High</option>
-                        <option value="price-high">Price: High to Low</option>
-                        <option value="newest">Newest</option>
-                      </select>
-
-                      {(selectedRole !== 'ALL' || searchQuery !== '') && (
-                        <button
-                          onClick={() => {
-                            setSelectedRole('ALL')
-                            setSearchQuery('')
-                          }}
-                          className="w-full mt-3 py-1.5 px-2 rounded-lg bg-red-950/30 border border-red-800/40 hover:border-red-500 text-red-300 text-[9px] font-extrabold uppercase tracking-widest transition-all cursor-pointer font-sans"
-                        >
-                          CLEAR FILTERS
-                        </button>
-                      )}
-                    </div>
-                  </motion.aside>
+                    </motion.aside>
+                  )}
                 </div>
               </div>
             </motion.div>

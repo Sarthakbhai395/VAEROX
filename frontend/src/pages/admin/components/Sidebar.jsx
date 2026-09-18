@@ -55,20 +55,20 @@ const Sidebar = ({ activeSection, setActiveSection, handleLogout, isOpen, setIsO
       )
     },
     {
-      id: 'ugc',
-      name: 'UGC Video Reels',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-        </svg>
-      )
-    },
-    {
       id: 'assets',
       name: 'Site Card Images',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+        </svg>
+      )
+    },
+    {
+      id: 'faqs',
+      name: 'Manage FAQs',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       )
     },
@@ -94,7 +94,7 @@ const Sidebar = ({ activeSection, setActiveSection, handleLogout, isOpen, setIsO
         </div>
         {/* Close button for mobile drawer */}
         {isMobileView && (
-          <button 
+          <button
             onClick={() => setIsOpen(false)}
             className="p-1.5 rounded-lg text-[#E8E0CC]/70 hover:text-white hover:bg-[#141414] transition-colors"
           >
@@ -104,14 +104,14 @@ const Sidebar = ({ activeSection, setActiveSection, handleLogout, isOpen, setIsO
           </button>
         )}
       </div>
-      
+
       {/* Navigation Menu */}
       <nav className="flex-1 py-6 px-3 overflow-y-auto bg-black">
         <ul className="space-y-1.5">
           {menuItems.map((item) => (
             <li key={item.id}>
-              <Link 
-                to="#" 
+              <Link
+                to="#"
                 onClick={(e) => {
                   e.preventDefault()
                   setActiveSection(item.id)
@@ -119,22 +119,20 @@ const Sidebar = ({ activeSection, setActiveSection, handleLogout, isOpen, setIsO
                     setIsOpen(false) // Close drawer on selection on mobile
                   }
                 }}
-                className={`flex items-center px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 ${
-                  activeSection === item.id 
-                    ? 'bg-[#C9A84C]/10 text-[#C9A84C] border-l-4 border-[#C9A84C] shadow-[inset_0_0_12px_rgba(201,168,76,0.1)]' 
+                className={`flex items-center px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 ${activeSection === item.id
+                    ? 'bg-[#C9A84C]/10 text-[#C9A84C] border-l-4 border-[#C9A84C] shadow-[inset_0_0_12px_rgba(201,168,76,0.1)]'
                     : 'text-[#E8E0CC]/70 hover:bg-[#141414] hover:text-white border-l-4 border-transparent'
-                }`}
+                  }`}
               >
                 <span className={`mr-3 transition-colors ${activeSection === item.id ? 'text-[#C9A84C]' : 'text-[#A39E93] group-hover:text-[#E8E0CC]'}`}>
                   {item.icon}
                 </span>
                 <span className="flex-1 text-left">{item.name}</span>
                 {item.count !== undefined && item.count > 0 && (
-                  <span className={`ml-auto px-2 py-0.5 text-xs font-bold rounded-full transition-all duration-200 ${
-                    activeSection === item.id 
-                      ? 'bg-[#C9A84C] text-black' 
+                  <span className={`ml-auto px-2 py-0.5 text-xs font-bold rounded-full transition-all duration-200 ${activeSection === item.id
+                      ? 'bg-[#C9A84C] text-black'
                       : 'bg-[#141414] text-[#C9A84C]'
-                  }`}>
+                    }`}>
                     {item.count}
                   </span>
                 )}
@@ -143,10 +141,10 @@ const Sidebar = ({ activeSection, setActiveSection, handleLogout, isOpen, setIsO
           ))}
         </ul>
       </nav>
-      
+
       {/* Logout Section */}
       <div className="p-4 border-t border-[#26241E] bg-black">
-        <button 
+        <button
           onClick={handleLogout}
           className="w-full flex items-center px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#E8E0CC]/70 hover:bg-rose-950/20 hover:text-rose-400 border border-[#26241E] hover:border-rose-900/40 rounded-xl transition-all duration-300"
         >
@@ -171,7 +169,7 @@ const Sidebar = ({ activeSection, setActiveSection, handleLogout, isOpen, setIsO
         {isOpen && (
           <>
             {/* Backdrop */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -181,7 +179,7 @@ const Sidebar = ({ activeSection, setActiveSection, handleLogout, isOpen, setIsO
             />
 
             {/* Drawer */}
-            <motion.div 
+            <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}

@@ -1,0 +1,16 @@
+=== TESTING DYNAMIC EMAIL API AT 2026-09-17T15:34:43.931Z ===
+RESPONSE: {
+  "success": true,
+  "message": "Invoice email dispatched to sb1258954@gmail.com",
+  "orderDetails": {
+    "orderId": "VRX-505599",
+    "recipient": "sb1258954@gmail.com",
+    "customerName": "Sarthak Bhatnagar",
+    "product": "VÆROX Atelier Sculpted Velvet Blazer",
+    "total": 16198.92
+  },
+  "smtpResult": {
+    "success": true,
+    "messageId": "<a21c9b10-6621-cd33-611d-682ea1dcc106@gmail.com>"
+  }
+}

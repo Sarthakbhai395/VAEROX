@@ -92,12 +92,12 @@ export const ProductCard = ({
   /* ── Render ── */
   return (
     <motion.div
-      className="bg-[#0A0A0A] rounded-2xl border border-[#26241E] shadow-2xl hover:border-[#C9A84C]/60 overflow-hidden h-full flex flex-col transition-all duration-300 group relative w-full text-[#E8E0CC]"
-      whileHover={{ y: -4 }}
+      className="bg-[#0A0A0A] rounded-2xl border border-[#26241E] shadow-2xl hover:border-[#C9A84C]/60 overflow-hidden h-44 sm:h-48 flex flex-row transition-all duration-300 group relative w-full text-[#E8E0CC]"
+      whileHover={{ y: -3 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
-      {/* Image Area */}
-      <div className="relative bg-[#050505] aspect-square flex items-center justify-center overflow-hidden border-b border-[#26241E] cursor-pointer" onClick={handleNavigate}>
+      {/* 50% Left Image Area with smooth vertical edge gradient blend */}
+      <div className="relative w-1/2 h-full bg-[#050505] flex items-center justify-center overflow-hidden shrink-0 cursor-pointer" onClick={handleNavigate}>
         {!imageUrl || imageError ? (
           <div className="w-full h-full flex flex-col items-center justify-center bg-[#050505] p-4">
             <svg className="w-8 h-8 text-[#26241E] mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,15 +114,18 @@ export const ProductCard = ({
           <img
             src={imageUrl}
             alt={title}
-            className="max-w-full max-h-full w-auto h-auto object-contain p-3 group-hover:scale-105 transition-transform duration-700 ease-out"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
             onError={() => setImageError(true)}
             loading="lazy"
           />
         )}
 
+        {/* Soft edge gradient overlay for butter-smooth transition to details side */}
+        <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-r from-transparent to-[#0A0A0A] pointer-events-none z-10" />
+
         {/* Discount Badge */}
         {actualDiscount > 0 && (
-          <span className="absolute top-2.5 left-2.5 bg-[#C9A84C] text-black text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-md z-10 uppercase tracking-wider">
+          <span className="absolute top-2.5 left-2.5 bg-[#C9A84C] text-black text-[8.5px] font-extrabold px-2 py-0.5 rounded-full shadow-md z-20 uppercase tracking-wider">
             -{actualDiscount}%
           </span>
         )}
@@ -130,16 +133,16 @@ export const ProductCard = ({
         {/* Wishlist Heart */}
         <motion.button
           onClick={handleAddToWishlist}
-          className={`absolute top-2.5 right-2.5 w-8 h-8 flex items-center justify-center rounded-full shadow-md transition-all duration-300 z-10 ${isInWishlist(id)
+          className={`absolute top-2.5 right-3 w-7 h-7 flex items-center justify-center rounded-full shadow-md transition-all duration-300 z-20 ${isInWishlist(id)
               ? 'text-[#C9A84C] bg-black border border-[#C9A84C]'
               : 'text-[#A39E93] bg-black/80 hover:bg-black hover:text-[#C9A84C] border border-[#26241E]'
             }`}
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
           aria-label={isInWishlist(id) ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <svg
-            className="w-4 h-4"
+            className="w-3.5 h-3.5"
             fill={isInWishlist(id) ? 'currentColor' : 'none'}
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -154,47 +157,48 @@ export const ProductCard = ({
         </motion.button>
       </div>
 
-      {/* Details */}
-      <div className="p-3.5 flex-grow flex flex-col bg-[#0A0A0A]">
-        {/* Category */}
-        <span className="text-[9px] font-bold text-[#C9A84C] uppercase tracking-widest mb-1 block">
-          {category || 'Category'}
-        </span>
+      {/* 50% Right Details Area */}
+      <div className="w-1/2 h-full p-3.5 flex flex-col justify-between bg-[#0A0A0A] overflow-hidden">
+        <div>
+          {/* Category */}
+          <span className="text-[8.5px] sm:text-[9.5px] font-bold text-[#C9A84C] uppercase tracking-widest mb-1 block truncate">
+            {category || 'Category'}
+          </span>
 
-        {/* Title */}
-        <div className="mb-1.5">
-          <h3
-            onClick={handleNavigate}
-            className="cursor-pointer font-sans text-xs md:text-sm font-semibold text-[#E8E0CC] line-clamp-2 h-9 leading-tight hover:text-[#FFF5D6] transition-colors duration-200"
-          >
-            {title}
-          </h3>
-        </div>
-
-        {/* Rating Row */}
-        <div className="flex items-center gap-1 mb-2.5">
-          <div className="flex items-center gap-0.5">
-            {[...Array(5)].map((_, i) => (
-              <svg
-                key={i}
-                className={`w-3 h-3 ${i < Math.floor(rating) ? 'text-[#C9A84C]' : 'text-[#26241E]'}`}
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            ))}
+          {/* Title */}
+          <div className="mb-1">
+            <h3
+              onClick={handleNavigate}
+              className="cursor-pointer font-serif text-xs sm:text-sm font-semibold text-[#E8E0CC] line-clamp-2 leading-snug hover:text-[#FFF5D6] transition-colors duration-200"
+            >
+              {title}
+            </h3>
           </div>
-          <span className="font-bold text-[#E8E0CC] text-[10px] ml-0.5">{rating}</span>
-          <span className="text-[#A39E93] text-[10px]">({reviews})</span>
+
+          {/* Rating Row */}
+          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5 text-[#C9A84C]">
+              {[...Array(5)].map((_, i) => (
+                <svg
+                  key={i}
+                  className={`w-2.5 h-2.5 ${i < Math.floor(rating) ? 'fill-[#C9A84C]' : 'fill-[#26241E]'}`}
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              ))}
+            </div>
+            <span className="font-bold text-[#E8E0CC] text-[9.5px] ml-0.5">{rating}</span>
+            <span className="text-[#A39E93] text-[9.5px]">({reviews})</span>
+          </div>
         </div>
 
         {/* Price & Action Row */}
-        <div className="mt-auto pt-2.5 border-t border-[#26241E] flex items-center justify-between gap-2">
+        <div className="pt-2 border-t border-[#26241E]/40 flex items-center justify-between gap-2">
           <div className="flex flex-col">
-            <span className="font-bold text-sm md:text-base text-[#C9A84C] leading-none">{formatCurrency(price)}</span>
+            <span className="font-bold text-xs sm:text-sm text-[#C9A84C] leading-none">{formatCurrency(price)}</span>
             {originalPrice && originalPrice > price && (
-              <span className="text-[10px] text-[#A39E93] line-through mt-0.5 leading-none">{formatCurrency(originalPrice)}</span>
+              <span className="text-[9px] text-[#A39E93] line-through mt-0.5 leading-none">{formatCurrency(originalPrice)}</span>
             )}
           </div>
 
@@ -203,7 +207,7 @@ export const ProductCard = ({
             {!isSellerOrAdmin && (
               <motion.button
                 onClick={handleAddToCart}
-                className={`w-8 h-8 rounded-full transition-all duration-300 relative overflow-hidden flex items-center justify-center flex-shrink-0 ${productInCart
+                className={`w-7 sm:w-8 h-7 sm:h-8 rounded-full transition-all duration-300 relative overflow-hidden flex items-center justify-center flex-shrink-0 cursor-pointer ${productInCart
                     ? 'bg-emerald-600 text-white shadow-md'
                     : 'bg-gradient-to-r from-[#C9A84C] to-[#9B782B] text-black font-bold shadow-[0_0_10px_rgba(201,168,76,0.3)] hover:scale-105'
                   }`}
@@ -218,11 +222,11 @@ export const ProductCard = ({
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 ) : productInCart ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
                 ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                   </svg>
                 )}

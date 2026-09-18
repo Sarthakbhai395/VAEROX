@@ -1,0 +1,13 @@
+=== TESTING MAILERCLOUD REST API BODY FORMATS ===
+
+Testing cloudapi.mailercloud.com with body: {"from":{"name":"VÆROX Smart Living","email":"sarthakbhatnagar2005@gmail.com"},"...
+HTTP STATUS: 404
+RESPONSE BODY: {"errors":[{"field":"","message":"Invalid request"}]}
+
+Testing cloudapi.mailercloud.com with body: {"from":"sarthakbhatnagar2005@gmail.com","to":["sb1258954@gmail.com"],"subject":...
+HTTP STATUS: 404
+RESPONSE BODY: {"errors":[{"field":"","message":"Invalid request"}]}
+
+Testing cloudapi.mailercloud.com with body: {"sender":{"name":"VÆROX Smart Living","email":"sarthakbhatnagar2005@gmail.com"}...
+HTTP STATUS: 404
+RESPONSE BODY: {"errors":[{"field":"","message":"Invalid request"}]}

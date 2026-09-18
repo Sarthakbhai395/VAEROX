@@ -1,7 +1,7 @@
 // This file will contain all API calls to the backend
 
-// Configure Production API Base URL targeting live Render backend
-const rawBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'https://backend-1-tf17.onrender.com';
+// Configure API Base URL (defaults to local backend)
+const rawBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 const API_BASE_URL = rawBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
 // Simple in-memory cache
@@ -404,7 +404,7 @@ export const userAPI = {
     })
   },
 
-  addToCart: async (productId, quantity, token) => {
+  addToCart: async (productId, quantity, token, productObj = null) => {
     // Clear cart cache when adding to cart
     clearCache('/api/users/cart', 'GET')
     return apiRequest('/api/users/cart', {
@@ -413,7 +413,7 @@ export const userAPI = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ productId, quantity })
+      body: JSON.stringify({ productId, quantity, product: productObj })
     })
   },
 

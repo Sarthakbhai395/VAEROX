@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import Logo from './Logo'
-import { Sparkles, ShieldCheck, Heart, Mail } from 'lucide-react'
+import { ShieldCheck, Heart, Mail } from 'lucide-react'
 
 const footerLinks = {
   shop: [
@@ -50,7 +50,6 @@ const Footer = () => {
       <div className="bg-[#050505] border-b border-[#26241E] py-4 px-4 text-center">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs tracking-[0.2em] text-[#C9A84C] uppercase font-serif">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#C9A84C]" />
             <span>VÆROX HANDMADE ATELIER • BESPOKE CUSTOM TAILORING AVAILABLE</span>
           </div>
           <Link
