@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../contexts/CartContext'
 import { useWishlist } from '../contexts/WishlistContext'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, ShieldCheck, UserCheck } from 'lucide-react'
+import { Menu, ShieldCheck, UserCheck, Search, X } from 'lucide-react'
 import Logo from './Logo'
 import { getSiteAssets } from '../utils/siteAssets'
 
@@ -184,6 +184,15 @@ const Navbar = () => {
           {/* 3. RIGHT SECTION: LINEAR ACTION BUTTONS (WISHLIST, CART, ACCOUNT) */}
           <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
 
+            {/* Search Icon Button */}
+            <button
+              onClick={toggleSearch}
+              className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#121212] border border-[#26241E] hover:border-[#C9A84C]/60 flex items-center justify-center text-[#FFF5D6] hover:text-[#C9A84C] transition-all duration-300 shrink-0 cursor-pointer"
+              title="Search Products"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+
             {/* Wishlist Icon Button */}
             {(!isAuthenticated || (isAuthenticated && user && user.role === 'user')) && (
               <Link
@@ -263,6 +272,35 @@ const Navbar = () => {
           </div>
 
         </div>
+
+        {/* Floating Search Bar Dropdown */}
+        <AnimatePresence>
+          {isSearchOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mt-2 px-2 z-50 max-w-xl mx-auto"
+            >
+              <form onSubmit={handleSearch} className="bg-[#0A0A0A] border-2 border-[#C9A84C] rounded-full p-2 shadow-2xl flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Search products in VÆROX Collection..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 bg-transparent px-4 py-1 text-xs sm:text-sm text-[#FFF5D6] placeholder-[#888] focus:outline-none font-sans"
+                  autoFocus
+                />
+                <button type="submit" className="bg-[#C9A84C] text-black px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider cursor-pointer hover:bg-[#FFF5D6]">
+                  Search
+                </button>
+                <button type="button" onClick={() => setIsSearchOpen(false)} className="p-1.5 text-[#888] hover:text-white cursor-pointer">
+                  <X size={16} />
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.nav>
 
       {/* Mobile Drawer Menu (slides in from left) */}

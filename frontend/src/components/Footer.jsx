@@ -62,10 +62,10 @@ const Footer = () => {
       </div>
 
       {/* ── Main Footer Grid ── */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-14 pb-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-8 lg:gap-12">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-10 sm:pt-14 pb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 sm:gap-8 lg:gap-12">
           {/* Brand Column */}
-          <div className="col-span-1 md:col-span-4 lg:col-span-2 flex flex-col items-start">
+          <div className="col-span-2 sm:col-span-2 md:col-span-4 lg:col-span-2 flex flex-col items-start">
             <Link to="/" className="inline-block mb-4">
               <Logo layout="horizontal" size="md" />
             </Link>
@@ -74,12 +74,12 @@ const Footer = () => {
             </p>
 
             {/* Social Links */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {socialLinks.map((social) => (
                 <a
                   key={social.label}
                   href={social.href}
-                  className="px-3 py-1.5 rounded-xl bg-[#0A0A0A] border border-[#26241E] text-[11px] font-semibold text-[#E8E0CC]/80 hover:bg-[#C9A84C] hover:text-black hover:border-[#C9A84C] transition-all duration-300 shadow-md uppercase tracking-wider"
+                  className="px-3 py-1.5 rounded-xl bg-[#0A0A0A] border border-[#26241E] text-[10px] sm:text-[11px] font-semibold text-[#E8E0CC]/80 hover:bg-[#C9A84C] hover:text-black hover:border-[#C9A84C] transition-all duration-300 shadow-md uppercase tracking-wider"
                 >
                   {social.label}
                 </a>
