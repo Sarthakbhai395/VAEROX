@@ -1,18 +1,17 @@
-// This file will contain all API calls to the backend
-
-// Configure API Base URL (smartly detects local dev vs production deployment)
 const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+  const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || import.meta.env.REACT_APP_API_URL;
+  if (envUrl && envUrl.trim() !== '') {
+    return envUrl.trim();
+  }
 
-  // In browser runtime, check if running on localhost or a deployed domain (Vercel/Netlify/etc.)
+  // In browser runtime, check if running on localhost vs production deployment
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return 'http://localhost:5000';
     }
-    // On Vercel or any live deployed domain, default to relative path
-    return '';
+    // Production default: Real deployed Render backend API
+    return 'https://backend-1-tf17.onrender.com';
   }
 
   return 'http://localhost:5000';
@@ -36,13 +35,13 @@ const apiRequest = async (url, options = {}) => {
     // Check if we have a cached response
     const cacheKey = `${options.method || 'GET'}:${url}`
     const cached = apiCache.get(cacheKey)
-    
+
     // If we have a valid cached response, return it
     if (!bypassCache && cached && Date.now() - cached.timestamp < CACHE_DURATION && options.method !== 'POST' && options.method !== 'PUT' && options.method !== 'DELETE') {
       console.log(`Returning cached response for ${url}`)
       return cached.data
     }
-    
+
     // Auto-attach JWT authorization token and Cybersecurity Headers
     const token = localStorage.getItem('token');
     const headers = {
@@ -53,12 +52,12 @@ const apiRequest = async (url, options = {}) => {
     if (token && !headers['Authorization']) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     const response = await fetch(`${API_BASE_URL}${url}`, {
       ...options,
       headers
     });
-    
+
     // Graceful handling of non-JSON response types (e.g. HTML 404 pages from Vercel/CDN)
     let data = {};
     const contentType = response.headers.get('content-type');
@@ -72,7 +71,7 @@ const apiRequest = async (url, options = {}) => {
         : `Server error: ${response.status} ${response.statusText}`;
       data = { error: shortError };
     }
-    
+
     // CRITICAL: Normalize 'error' field to always be a string (prevents React Error #31)
     // The backend sometimes returns error as an array (e.g., validation errors)
     if (data.error && typeof data.error !== 'string') {
@@ -82,7 +81,7 @@ const apiRequest = async (url, options = {}) => {
         data.error = data.error.message || JSON.stringify(data.error);
       }
     }
-    
+
     // Also normalize 'message' field
     if (data.message && typeof data.message !== 'string') {
       if (Array.isArray(data.message)) {
@@ -91,9 +90,9 @@ const apiRequest = async (url, options = {}) => {
         data.message = data.message.message || JSON.stringify(data.message);
       }
     }
-    
+
     const result = { success: response.ok, ...data };
-    
+
     // Cache successful GET requests
     if (!bypassCache && response.ok && (!options.method || options.method === 'GET')) {
       apiCache.set(cacheKey, {
@@ -101,7 +100,7 @@ const apiRequest = async (url, options = {}) => {
         timestamp: Date.now()
       })
     }
-    
+
     return result;
   } catch (error) {
     console.error(`API request failed for ${url}:`, error);
@@ -192,12 +191,12 @@ export const productAPI = {
     let res = { success: false }
     try {
       res = await apiRequest('/api/products')
-    } catch (e) {}
+    } catch (e) { }
 
     let custom = []
     try {
       custom = JSON.parse(localStorage.getItem('vaerox_custom_products') || '[]')
-    } catch (e) {}
+    } catch (e) { }
 
     if (res && res.success) {
       const serverProds = res.data || res.products || []
@@ -213,14 +212,14 @@ export const productAPI = {
     let custom = []
     try {
       custom = JSON.parse(localStorage.getItem('vaerox_custom_products') || '[]')
-    } catch (e) {}
+    } catch (e) { }
     const foundCustom = custom.find(p => p._id === id || p.id === id)
     if (foundCustom) return { success: true, data: foundCustom, product: foundCustom }
-    
+
     let res = { success: false }
     try {
       res = await apiRequest(`/api/products/${id}`)
-    } catch (e) {}
+    } catch (e) { }
     if (!res || !res.success) {
       return { success: false, error: 'Product not found' }
     }
@@ -239,8 +238,8 @@ export const productAPI = {
       const custom = JSON.parse(localStorage.getItem('vaerox_custom_products') || '[]')
       const updated = [newProd, ...custom]
       localStorage.setItem('vaerox_custom_products', JSON.stringify(updated))
-    } catch (e) {}
-    
+    } catch (e) { }
+
     // Also attempt server creation silently
     try {
       if (token) {
@@ -263,7 +262,7 @@ export const productAPI = {
   updateProduct: async (id, productData, token) => {
     clearCache('/api/products', 'GET')
     clearCache(`/api/products/${id}`, 'GET')
-    
+
     try {
       const custom = JSON.parse(localStorage.getItem('vaerox_custom_products') || '[]')
       const idx = custom.findIndex(p => p._id === id || p.id === id)
@@ -271,7 +270,7 @@ export const productAPI = {
         custom[idx] = { ...custom[idx], ...productData }
         localStorage.setItem('vaerox_custom_products', JSON.stringify(custom))
       }
-    } catch (e) {}
+    } catch (e) { }
 
     let res = { success: false }
     try {
@@ -283,7 +282,7 @@ export const productAPI = {
         },
         body: JSON.stringify(productData)
       })
-    } catch (e) {}
+    } catch (e) { }
 
     if (!res || !res.success) {
       const updatedItem = { ...productData, _id: id, id }
@@ -295,12 +294,12 @@ export const productAPI = {
   deleteProduct: async (id, token) => {
     clearCache('/api/products', 'GET')
     clearCache(`/api/products/${id}`, 'GET')
-    
+
     try {
       const custom = JSON.parse(localStorage.getItem('vaerox_custom_products') || '[]')
       const filtered = custom.filter(p => p._id !== id && p.id !== id)
       localStorage.setItem('vaerox_custom_products', JSON.stringify(filtered))
-    } catch (e) {}
+    } catch (e) { }
 
     let res = { success: false }
     try {
@@ -310,7 +309,7 @@ export const productAPI = {
           'Authorization': `Bearer ${token}`
         }
       })
-    } catch (e) {}
+    } catch (e) { }
 
     if (!res || !res.success) {
       return { success: true, message: 'Product deleted successfully' }
@@ -324,7 +323,7 @@ export const productAPI = {
       // Clear cache when uploading a photo
       clearCache('/api/products', 'GET')
       clearCache(`/api/products/${id}`, 'GET')
-      
+
       const response = await fetch(`${API_BASE_URL}/api/products/${id}/photo`, {
         method: 'PUT',
         headers: {
@@ -333,7 +332,7 @@ export const productAPI = {
         },
         body: formData
       });
-      
+
       const data = await response.json();
       return { success: response.ok, ...data };
     } catch (error) {
@@ -553,11 +552,11 @@ export const contactAPI = {
     const headers = {
       'Content-Type': 'application/json'
     };
-    
+
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     return apiRequest('/api/contact', {
       method: 'POST',
       headers,
@@ -633,7 +632,7 @@ export const sellerContactAPI = {
       }
     })
   },
-  
+
   // Added delete contact message functionality
   deleteContactMessage: async (contactId, token) => {
     return apiRequest(`/api/seller/contact/${contactId}`, {

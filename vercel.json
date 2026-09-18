@@ -1,23 +1,17 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/index.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/vite"
-    }
-  ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/index.js"
+      "dest": "https://backend-1-tf17.onrender.com/api/$1"
     },
     {
       "src": "/api",
-      "dest": "/api/index.js"
+      "dest": "https://backend-1-tf17.onrender.com/api"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "https://backend-1-tf17.onrender.com/uploads/$1"
     },
     {
       "handle": "filesystem"
