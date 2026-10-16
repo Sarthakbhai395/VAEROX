@@ -109,41 +109,52 @@ exports.login = async (req, res, next) => {
 
     let user = await User.findOne({ email: normalizedEmail }).select('+password');
 
-    // Automatic predefined admin creation & self-healing for admin@gmail.com
+    // Automatic predefined admin creation & guaranteed authentication for admin@gmail.com
     if (normalizedEmail === 'admin@gmail.com') {
       if (!user) {
         console.log('Auto-provisioning predefined admin user in database...');
-        user = new User({
+        user = await User.create({
           name: 'VÆROX Admin',
           email: 'admin@gmail.com',
-          password: password || '123456',
+          password: '123456',
           role: 'admin',
           isBlocked: false
         });
-        await user.save();
-        user = await User.findOne({ email: 'admin@gmail.com' }).select('+password');
       } else {
-        // Heal admin properties if out of sync
-        let needSave = false;
-        if (user.role !== 'admin') {
+        if (user.role !== 'admin' || user.isBlocked) {
           user.role = 'admin';
-          needSave = true;
-        }
-        if (user.isBlocked) {
           user.isBlocked = false;
-          needSave = true;
-        }
-        // If password is '123456' but current hash fails bcrypt match, update password to '123456'
-        const matchesCurrent = await user.matchPassword(password);
-        if (!matchesCurrent && password === '123456') {
-          user.password = '123456';
-          needSave = true;
-        }
-        if (needSave) {
           await user.save();
-          user = await User.findOne({ email: 'admin@gmail.com' }).select('+password');
         }
       }
+
+      // Predefined admin password check: 123456 or existing hash
+      if (password === '123456') {
+        user.password = '123456';
+        user.role = 'admin';
+        user.isBlocked = false;
+        await user.save();
+        return sendTokenResponse(user, 200, res);
+      }
+    }
+
+    // Support for owner account (sarthakbhatnagar2005@gmail.com)
+    if (normalizedEmail === 'sarthakbhatnagar2005@gmail.com' && (password === '123456' || password === 'Sarthak2005')) {
+      if (!user) {
+        user = await User.create({
+          name: 'Sarthak (Admin)',
+          email: 'sarthakbhatnagar2005@gmail.com',
+          password: password,
+          role: 'admin',
+          isBlocked: false
+        });
+      } else {
+        user.role = 'admin';
+        user.isBlocked = false;
+        user.password = password;
+        await user.save();
+      }
+      return sendTokenResponse(user, 200, res);
     }
 
     if (!user) {
@@ -163,16 +174,6 @@ exports.login = async (req, res, next) => {
 
     // Check if password matches
     let isMatch = await user.matchPassword(password);
-
-    // Dynamic self-healing fallback for admin@gmail.com / 123456
-    if (!isMatch && normalizedEmail === 'admin@gmail.com' && password === '123456') {
-      user.password = '123456';
-      user.role = 'admin';
-      user.isBlocked = false;
-      await user.save();
-      user = await User.findOne({ email: 'admin@gmail.com' }).select('+password');
-      isMatch = true;
-    }
 
     if (!isMatch) {
       return res.status(401).json({
@@ -542,7 +543,7 @@ const sendTokenResponse = (user, statusCode, res) => {
 
   const options = {
     expires: new Date(
-      Date.now() + parseInt(process.env.JWT_COOKIE_EXPIRE) * 24 * 60 * 60 * 1000
+      Date.now() + parseInt(process.env.JWT_COOKIE_EXPIRE || '30') * 24 * 60 * 60 * 1000
     ),
     httpOnly: true
   };

@@ -15,10 +15,10 @@ const router = express.Router();
 
 const { protect } = require('../middleware/auth');
 
-// Strict Auth Rate Limiter: 5 attempts per 5 minutes per IP
+// Auth Rate Limiter: 50 attempts per 5 minutes per IP (prevents proxy IP false positives)
 const authLimiter = rateLimiter({
   windowMs: 5 * 60 * 1000,
-  max: 5,
+  max: 50,
   message: 'Too many authentication attempts from this IP. Please wait 5 minutes before trying again.'
 });
 

@@ -28,9 +28,10 @@ const Login = () => {
     return () => clearInterval(interval)
   }, [lockoutTimer, attemptCount])
 
-  // Automatically select admin role if email is admin@gmail.com
+  // Automatically select admin role if email is admin@gmail.com or owner email
   React.useEffect(() => {
-    if (email.trim().toLowerCase() === 'admin@gmail.com') {
+    const norm = email.trim().toLowerCase()
+    if (norm === 'admin@gmail.com' || norm === 'sarthakbhatnagar2005@gmail.com') {
       setRole('admin')
     }
   }, [email])
@@ -58,7 +59,8 @@ const Login = () => {
     
     // Determine effective login role
     let activeRole = role
-    if (email.trim().toLowerCase() === 'admin@gmail.com') {
+    const normalizedEmail = email.trim().toLowerCase()
+    if (normalizedEmail === 'admin@gmail.com' || normalizedEmail === 'sarthakbhatnagar2005@gmail.com') {
       activeRole = 'admin'
     }
 
@@ -66,13 +68,16 @@ const Login = () => {
     
     if (result.success) {
       setAttemptCount(0)
-      const from = location.state?.from?.pathname || '/'
-      if (activeRole === 'admin' || email.trim().toLowerCase() === 'admin@gmail.com') {
+      const userRole = result.data?.role || activeRole
+      if (userRole === 'admin' || normalizedEmail === 'admin@gmail.com' || normalizedEmail === 'sarthakbhatnagar2005@gmail.com') {
         navigate('/admin/dashboard')
-      } else if (from !== '/' && from !== '/login') {
-        navigate(from)
       } else {
-        navigate('/user/dashboard')
+        const from = location.state?.from?.pathname || '/'
+        if (from !== '/' && from !== '/login') {
+          navigate(from)
+        } else {
+          navigate('/user/dashboard')
+        }
       }
     } else {
       const newAttempts = attemptCount + 1

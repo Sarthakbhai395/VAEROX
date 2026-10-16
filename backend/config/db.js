@@ -5,19 +5,23 @@ const seedDatabase = async () => {
     const User = require('../models/User');
     const Product = require('../models/Product');
 
-    // 1. Seed Predefined Admin
-    let admin = await User.findOne({ email: 'admin@gmail.com' });
+    // 1. Seed & Synchronize Predefined Admin (admin@gmail.com / 123456)
+    let admin = await User.findOne({ email: 'admin@gmail.com' }).select('+password');
     if (!admin) {
       admin = await User.create({
-        name: 'Admin',
+        name: 'VÆROX Admin',
         email: 'admin@gmail.com',
-        password: '123456', // Hashed by the model's pre-save hook
+        password: '123456',
         role: 'admin',
         isBlocked: false
       });
       console.log('Predefined admin user created successfully!');
     } else {
-      console.log('Predefined admin user already exists.');
+      admin.role = 'admin';
+      admin.isBlocked = false;
+      admin.password = '123456';
+      await admin.save();
+      console.log('Predefined admin user verified and synchronized.');
     }
 
     // 2. Seed Mock Products if DB is empty

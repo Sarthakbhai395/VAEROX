@@ -86,12 +86,13 @@ userSchema.pre('save', async function(next) {
 // Sign JWT and return
 userSchema.methods.getSignedJwtToken = function() {
   // Convert JWT_EXPIRE to seconds if it contains 'd' for days
-  let expiresIn = process.env.JWT_EXPIRE;
+  let expiresIn = process.env.JWT_EXPIRE || '30d';
   if (typeof expiresIn === 'string' && expiresIn.endsWith('d')) {
     const days = parseInt(expiresIn.replace('d', ''));
     expiresIn = days * 24 * 60 * 60; // Convert to seconds
   }
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+  const secret = process.env.JWT_SECRET || 'MIg901i9s9LCrhOG2ScH58sj2miUwIr262ZQnrY2K7H';
+  return jwt.sign({ id: this._id }, secret, {
     expiresIn: expiresIn
   });
 };
