@@ -32,7 +32,7 @@ const productSchema = new mongoose.Schema({
   tier: {
     type: String,
     enum: ['classic', 'standard', 'luxury', 'premium'],
-    default: 'classic'
+    default: 'standard'
   },
   gender: {
     type: String,

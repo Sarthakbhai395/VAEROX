@@ -392,24 +392,17 @@ const AdminDashboard = () => {
     try {
       setLoading(true)
       const token = localStorage.getItem('token')
-      const collectionMode = newProductForm.collectionMode || 'classic'
-      let finalTier = 'classic'
+      const collectionMode = 'premium'
+      let finalTier = newProductForm.tier || 'standard'
       let finalRole = ''
       let categoryTag = ''
 
-      if (collectionMode === 'classic') {
-        finalTier = 'classic'
-        finalRole = ''
-        categoryTag = `classic-${newProductForm.gender}`
+      if (finalTier === 'luxury') {
+        finalRole = newProductForm.role || 'CEO'
+        categoryTag = `premium-luxury-${newProductForm.gender}-${finalRole}`
       } else {
-        finalTier = newProductForm.tier || 'standard'
-        if (finalTier === 'luxury') {
-          finalRole = newProductForm.role || 'CEO'
-          categoryTag = `premium-luxury-${newProductForm.gender}-${finalRole}`
-        } else {
-          finalRole = ''
-          categoryTag = `premium-standard-${newProductForm.gender}`
-        }
+        finalRole = ''
+        categoryTag = `premium-standard-${newProductForm.gender}`
       }
 
       const allSubImgs = [
@@ -449,7 +442,7 @@ const AdminDashboard = () => {
           description: '',
           price: '',
           discount: '0',
-          collectionMode: 'classic',
+          collectionMode: 'premium',
           tier: 'standard',
           gender: 'men',
           role: 'CEO',
@@ -1494,31 +1487,28 @@ const AdminDashboard = () => {
                     Select Main Collection Category *
                   </label>
                   <select
-                    value={newProductForm.collectionMode || 'classic'}
+                    value={newProductForm.collectionMode || 'premium'}
                     onChange={(e) => setNewProductForm({ ...newProductForm, collectionMode: e.target.value })}
                     className="w-full px-4 py-2.5 bg-black border-2 border-[#C9A84C] rounded-xl text-xs text-[#FFF5D6] focus:outline-none font-bold"
                   >
-                    <option value="classic">Classic Clothes (Everyday Regular Wear)</option>
                     <option value="premium">VAEROX Premium (Bespoke & Executive Outfits)</option>
                   </select>
                 </div>
 
-                {/* Sub-Tier (Only if VAEROX Premium is selected) */}
-                {newProductForm.collectionMode === 'premium' && (
-                  <div>
-                    <label className="block text-xs font-bold text-[#C9A84C] uppercase tracking-wider mb-1">
-                      VAEROX Premium Sub-Tier *
-                    </label>
-                    <select
-                      value={newProductForm.tier || 'standard'}
-                      onChange={(e) => setNewProductForm({ ...newProductForm, tier: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-black border border-[#26241E] rounded-xl text-xs text-[#E8E0CC] focus:outline-none focus:border-[#C9A84C]"
-                    >
-                      <option value="standard">VAEROX Standard (Daily Wear Premium Clothes)</option>
-                      <option value="luxury">VAEROX Luxury (Ultra/Superb Premium Executive Persona Outfits)</option>
-                    </select>
-                  </div>
-                )}
+                {/* Sub-Tier (VAEROX Premium) */}
+                <div>
+                  <label className="block text-xs font-bold text-[#C9A84C] uppercase tracking-wider mb-1">
+                    VAEROX Premium Sub-Tier *
+                  </label>
+                  <select
+                    value={newProductForm.tier || 'standard'}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, tier: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-black border border-[#26241E] rounded-xl text-xs text-[#E8E0CC] focus:outline-none focus:border-[#C9A84C]"
+                  >
+                    <option value="standard">VAEROX Standard (Daily Wear Premium Clothes)</option>
+                    <option value="luxury">VAEROX Luxury (Ultra/Superb Premium Executive Persona Outfits)</option>
+                  </select>
+                </div>
 
                 {/* Gender Category */}
                 <div>

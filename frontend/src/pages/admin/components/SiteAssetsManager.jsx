@@ -11,12 +11,6 @@ export const SiteAssetsManager = () => {
 
   const assetConfigs = [
     {
-      key: 'classicCardImage',
-      title: 'Classic Clothes Card Image',
-      section: 'Regular Wear Collection Card',
-      page: 'Home Page & Products Page'
-    },
-    {
       key: 'premiumCardImage',
       title: 'VAEROX Premium Card Image',
       section: 'Haute Couture Bespoke Card',

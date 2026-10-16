@@ -96,7 +96,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+app.options(/(.*)/, cors());
 
 // Serve static files from uploads folder
 app.use('/uploads', cors(corsOptions), (req, res, next) => {

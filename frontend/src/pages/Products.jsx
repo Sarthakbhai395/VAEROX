@@ -25,7 +25,7 @@ const Products = () => {
   const navigate = useNavigate()
 
   // Selection states:
-  // selectedMode: null | 'classic' (Classic Clothes) | 'premium' (VAEROX Premium)
+  // selectedMode: null | 'premium' (VAEROX Premium)
   // selectedGender: null | 'men' | 'women'
   // selectedTier: null | 'standard' | 'luxury'
   // selectedRole: 'ALL' | 'CEO' | 'TEACHER' | 'MANAGER' | etc.
@@ -58,13 +58,14 @@ const Products = () => {
     const roleParam = urlParams.get('role')
 
     if (modeParam === 'classic' || categoryParam === 'classic') {
-      setSelectedMode('classic')
+      setSelectedMode('premium')
       if (categoryParam === 'men' || categoryParam === 'women') {
         setSelectedGender(categoryParam.toLowerCase())
       } else {
         setSelectedGender(null)
       }
-      setSelectedTier(null)
+      setSelectedTier('standard')
+      setSelectedRole('ALL')
     } else if (modeParam === 'premium' || categoryParam || tierParam) {
       setSelectedMode('premium')
       if (categoryParam === 'men' || categoryParam === 'women') {
@@ -145,27 +146,7 @@ const Products = () => {
     const prodTier = (product.tier || '').toLowerCase()
     const prodGender = (product.gender || '').toLowerCase()
 
-    // 1. CLASSIC CLOTHES MODE
-    if (selectedMode === 'classic') {
-      // Exclude premium / luxury items from Classic Clothes view
-      const isNotLuxuryOrPremium = prodTier !== 'luxury' && prodTier !== 'premium' && !prodCat.includes('premium')
-
-      let genderMatch = true
-      if (selectedGender === 'men') {
-        genderMatch = prodGender === 'men' || prodCat.includes('men') || prodName.includes('men')
-      } else if (selectedGender === 'women') {
-        genderMatch = prodGender === 'women' || prodCat.includes('women') || prodName.includes('women')
-      }
-
-      const searchMatch = searchQuery
-        ? prodName.includes(searchQuery.toLowerCase()) ||
-          prodDesc.includes(searchQuery.toLowerCase())
-        : true
-
-      return isNotLuxuryOrPremium && genderMatch && searchMatch
-    }
-
-    // 2. VAEROX PREMIUM MODE
+    // VAEROX PREMIUM MODE
     if (selectedMode === 'premium') {
       let genderMatch = true
       if (selectedGender === 'men') {
@@ -176,7 +157,7 @@ const Products = () => {
 
       let tierMatch = true
       if (selectedTier === 'standard') {
-        tierMatch = prodTier === 'standard' || prodCat.includes('standard')
+        tierMatch = prodTier === 'standard' || prodTier === 'classic' || prodCat.includes('standard') || (!prodTier && !prodCat.includes('luxury'))
       } else if (selectedTier === 'luxury') {
         tierMatch = prodTier === 'luxury' || prodTier === 'premium' || prodCat.includes('luxury') || prodCat.includes('premium')
       }
@@ -211,24 +192,11 @@ const Products = () => {
   })
 
   // Handlers
-  const handleSelectClassicMode = () => {
-    setSelectedMode('classic')
-    setSelectedGender(null)
-    setSelectedTier(null)
-    navigate('/products?mode=classic')
-  }
-
   const handleSelectPremiumMode = () => {
     setSelectedMode('premium')
     setSelectedGender(null)
     setSelectedTier(null)
     navigate('/products?mode=premium')
-  }
-
-  const handleSelectGenderForClassic = (gender) => {
-    setSelectedMode('classic')
-    setSelectedGender(gender)
-    navigate(`/products?mode=classic&category=${gender}`)
   }
 
   const handleSelectTierForPremium = (tier) => {
@@ -292,19 +260,17 @@ const Products = () => {
   }
 
   // Catalogue View is active when:
-  // - Classic Mode with Gender selected (Men's or Women's)
   // - VAEROX Premium Mode with Tier and Gender selected
-  const isClassicCatalogueView = selectedMode === 'classic' && selectedGender !== null
   const isPremiumCatalogueView = selectedMode === 'premium' && selectedTier !== null && selectedGender !== null
   const isLuxuryView = isPremiumCatalogueView && selectedTier === 'luxury'
-  const showCatalogueView = isClassicCatalogueView || isPremiumCatalogueView
+  const showCatalogueView = isPremiumCatalogueView
 
   return (
     <div className="min-h-screen bg-black text-[#E8E0CC] select-none overflow-x-hidden">
       <div className="w-full">
         <AnimatePresence mode="wait">
 
-          {/* ════════════ STEP 0: INITIAL MAIN ENTRY CARDS (CLASSIC CLOTHES vs VAEROX PREMIUM) ════════════ */}
+          {/* ════════════ STEP 0: INITIAL MAIN ENTRY CARD (VAEROX PREMIUM) ════════════ */}
           {!selectedMode && (
             <motion.div
               key="step-initial"
@@ -324,7 +290,7 @@ const Products = () => {
                   >
                     <div className="h-[1px] w-12 md:w-20 bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent" />
                     <span className="inline-flex items-center gap-2 px-4 py-1 rounded-full text-[10px] md:text-xs font-extrabold tracking-[0.3em] text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40 uppercase font-serif shadow-sm">
-                      EXPLORE VÆROX COLLECTIONS
+                      EXPLORE VÆROX COLLECTION
                     </span>
                     <div className="h-[1px] w-12 md:w-20 bg-gradient-to-l from-transparent via-[#C9A84C] to-transparent" />
                   </motion.div>
@@ -335,7 +301,7 @@ const Products = () => {
                     transition={{ delay: 0.2, duration: 0.7 }}
                     className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-[#FFF5D6] font-serif tracking-tight mb-4 uppercase leading-[1.05]"
                   >
-                    SELECT <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B]">COLLECTION</span>
+                    VAEROX <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B]">PREMIUM</span>
                   </motion.h1>
 
                   <motion.p
@@ -344,7 +310,7 @@ const Products = () => {
                     transition={{ delay: 0.35, duration: 0.6 }}
                     className="text-[#E8E0CC]/75 text-sm md:text-base max-w-lg mx-auto font-light leading-relaxed tracking-wide font-sans"
                   >
-                    Choose Classic Clothes for everyday regular wear or VAEROX Premium for bespoke haute couture & executive persona suiting.
+                    Bespoke haute couture tailoring, luxury suiting, and executive persona outfits engineered for those who demand distinction.
                   </motion.p>
                 </div>
 
@@ -352,61 +318,9 @@ const Products = () => {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.45, duration: 0.7 }}
-                  className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto mb-16"
+                  className="max-w-3xl mx-auto mb-16"
                 >
-                  {/* CARD 1: CLASSIC CLOTHES */}
-                  <motion.div
-                    whileHover={{ y: -8, scale: 1.015 }}
-                    whileTap={{ scale: 0.985 }}
-                    onClick={handleSelectClassicMode}
-                    className="group relative rounded-3xl overflow-hidden cursor-pointer bg-gradient-to-b from-[#12110E] via-[#0E0D0B] to-[#0A0A0A] border border-[#26241E] hover:border-[#C9A84C] shadow-2xl hover:shadow-[0_0_40px_rgba(201,168,76,0.25)] transition-all duration-500 flex flex-col md:flex-row min-h-[380px]"
-                  >
-                    <div className="md:w-5/12 relative h-64 md:h-auto overflow-hidden shrink-0">
-                      <img
-                        src={(typeof siteAssets.classicCardImage === 'string' ? siteAssets.classicCardImage : siteAssets.classicCardImage?.url) || "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=1000&q=80"}
-                        alt="Classic Clothes Collection"
-                        className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-[1200ms] ease-out"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-transparent via-[#0E0D0B]/40 to-[#0E0D0B]" />
-                      <div className="absolute top-4 left-4 z-10">
-                        <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-widest text-[#C9A84C] bg-black/85 border border-[#C9A84C]/40 uppercase shadow-md font-sans">
-                          EVERYDAY REGULAR WEAR
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="md:w-7/12 p-6 sm:p-8 flex flex-col justify-between relative z-10 bg-[#0E0D0B]">
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="text-[10px] font-extrabold tracking-[0.25em] text-[#C9A84C] uppercase font-serif">
-                            Collection 01
-                          </span>
-                          <span className="w-8 h-8 rounded-full bg-black/60 border border-[#26241E] flex items-center justify-center text-xs font-serif font-bold text-[#C9A84C]">
-                            C
-                          </span>
-                        </div>
-
-                        <h2 className="text-2xl sm:text-3xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-3 group-hover:text-[#C9A84C] transition-colors">
-                          CLASSIC CLOTHES
-                        </h2>
-
-                        <p className="text-xs sm:text-sm text-[#E8E0CC]/75 font-light leading-relaxed mb-6 font-sans">
-                          It is used for regular use and it includes all regular clothes. Click to view all clothes directly with instant sorting & filtering options.
-                        </p>
-                      </div>
-
-                      <div className="pt-4 border-t border-[#26241E] flex items-center justify-between">
-                        <span className="text-xs font-extrabold text-[#C9A84C] tracking-[0.18em] uppercase font-sans">
-                          EXPLORE ALL CLASSIC CLOTHES
-                        </span>
-                        <div className="w-10 h-10 rounded-full bg-black border border-[#C9A84C]/50 flex items-center justify-center text-[#C9A84C] group-hover:bg-gradient-to-r group-hover:from-[#C9A84C] group-hover:to-[#9B782B] group-hover:text-black transition-all duration-300 shadow-md">
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* CARD 2: VAEROX PREMIUM */}
+                  {/* CARD: VAEROX PREMIUM */}
                   <motion.div
                     whileHover={{ y: -8, scale: 1.015 }}
                     whileTap={{ scale: 0.985 }}
@@ -431,7 +345,7 @@ const Products = () => {
                       <div>
                         <div className="flex items-center justify-between mb-4">
                           <span className="text-[10px] font-extrabold tracking-[0.25em] text-[#C9A84C] uppercase font-serif">
-                            Collection 02
+                            Exclusive Collection
                           </span>
                           <span className="w-8 h-8 rounded-full bg-[#C9A84C]/20 border border-[#C9A84C] flex items-center justify-center text-xs font-serif font-bold text-[#C9A84C]">
                             VP
@@ -449,7 +363,7 @@ const Products = () => {
 
                       <div className="pt-4 border-t border-[#26241E] flex items-center justify-between">
                         <span className="text-xs font-extrabold text-[#C9A84C] tracking-[0.18em] uppercase font-sans">
-                          CHOOSE MEN'S OR WOMEN'S
+                          EXPLORE VAEROX PREMIUM
                         </span>
                         <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black flex items-center justify-center group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(201,168,76,0.6)]">
                           <ArrowRight className="w-4 h-4 font-bold" />
@@ -458,95 +372,6 @@ const Products = () => {
                     </div>
                   </motion.div>
                 </motion.div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ════════════ STEP 1: CLASSIC CLOTHES GENDER SELECTION (MEN'S vs WOMEN'S) ════════════ */}
-          {selectedMode === 'classic' && selectedGender === null && (
-            <motion.div
-              key="step-classic-gender"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.6 }}
-              className="relative min-h-screen py-10 md:py-16 px-4 md:px-8 overflow-hidden"
-            >
-              <div className="relative z-10 max-w-7xl mx-auto">
-                <motion.button
-                  onClick={handleBackToMainMode}
-                  className="group inline-flex items-center gap-3 mb-10 px-6 py-3 rounded-full bg-[#0D0C0A]/90 border border-[#C9A84C]/40 text-xs font-extrabold text-[#C9A84C] hover:bg-[#C9A84C]/15 transition-all font-sans cursor-pointer"
-                >
-                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                  <span>BACK TO MAIN SELECTION</span>
-                </motion.button>
-
-                <div className="text-center mb-12">
-                  <h1 className="text-4xl sm:text-5xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-tight mb-4">
-                    CLASSIC CLOTHES • <span className="text-[#C9A84C]">SELECT GENDER</span>
-                  </h1>
-                  <p className="text-[#E8E0CC]/75 text-sm max-w-lg mx-auto font-light font-sans">
-                    Choose between Men's Classic Clothes or Women's Classic Clothes for everyday regular wear.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                  {/* Men's Classic Clothes */}
-                  <motion.div
-                    whileHover={{ y: -6, scale: 1.015 }}
-                    whileTap={{ scale: 0.985 }}
-                    onClick={() => handleSelectGenderForClassic('men')}
-                    className="group rounded-3xl overflow-hidden cursor-pointer bg-[#0E0D0B] border border-[#26241E] hover:border-[#C9A84C] shadow-2xl p-6 flex flex-col justify-between min-h-[320px]"
-                  >
-                    <div className="h-48 relative overflow-hidden rounded-2xl mb-4">
-                      <img
-                        src={(typeof siteAssets.homeMensCard === 'string' ? siteAssets.homeMensCard : siteAssets.homeMensCard?.url) || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80"}
-                        alt="Men's Classic Clothes"
-                        className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold font-serif text-[#FFF5D6] group-hover:text-[#C9A84C] uppercase mb-2">
-                        MEN'S CLASSIC CLOTHES
-                      </h2>
-                      <p className="text-xs text-[#E8E0CC]/75 font-sans mb-4">
-                        Everyday regular clothes for men. View all men's regular wear directly with instant sorting & filters.
-                      </p>
-                      <div className="pt-3 border-t border-[#26241E] flex justify-between items-center text-xs font-bold text-[#C9A84C]">
-                        <span>EXPLORE MEN'S CLASSIC</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Women's Classic Clothes */}
-                  <motion.div
-                    whileHover={{ y: -6, scale: 1.015 }}
-                    whileTap={{ scale: 0.985 }}
-                    onClick={() => handleSelectGenderForClassic('women')}
-                    className="group rounded-3xl overflow-hidden cursor-pointer bg-[#0E0D0B] border border-[#26241E] hover:border-[#C9A84C] shadow-2xl p-6 flex flex-col justify-between min-h-[320px]"
-                  >
-                    <div className="h-48 relative overflow-hidden rounded-2xl mb-4">
-                      <img
-                        src={(typeof siteAssets.homeWomensCard === 'string' ? siteAssets.homeWomensCard : siteAssets.homeWomensCard?.url) || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80"}
-                        alt="Women's Classic Clothes"
-                        className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold font-serif text-[#FFF5D6] group-hover:text-[#C9A84C] uppercase mb-2">
-                        WOMEN'S CLASSIC CLOTHES
-                      </h2>
-                      <p className="text-xs text-[#E8E0CC]/75 font-sans mb-4">
-                        Everyday regular clothes for women. View all women's regular wear directly with instant sorting & filters.
-                      </p>
-                      <div className="pt-3 border-t border-[#26241E] flex justify-between items-center text-xs font-bold text-[#C9A84C]">
-                        <span>EXPLORE WOMEN'S CLASSIC</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
               </div>
             </motion.div>
           )}
@@ -735,7 +560,7 @@ const Products = () => {
             </motion.div>
           )}
 
-          {/* ════════════ STEP 4: CATALOGUE VIEW (CLASSIC CLOTHES vs VAEROX PREMIUM) ════════════ */}
+          {/* ════════════ STEP 4: CATALOGUE VIEW (VAEROX PREMIUM) ════════════ */}
           {showCatalogueView && (
             <motion.div
               key="step-catalogue"
@@ -760,11 +585,7 @@ const Products = () => {
                     </motion.button>
 
                     <span className="text-xs font-extrabold text-[#FFF5D6] uppercase tracking-widest hidden sm:inline-block font-serif">
-                      {selectedMode === 'classic' ? (
-                        <span className="text-[#C9A84C]">CLASSIC CLOTHES &gt; {selectedGender?.toUpperCase()}'S REGULAR WEAR</span>
-                      ) : (
-                        <>{selectedGender?.toUpperCase()}'S WEAR &gt; <span className="text-[#C9A84C]">VAEROX {selectedTier?.toUpperCase()}</span></>
-                      )}
+                      {selectedGender?.toUpperCase()}'S WEAR &gt; <span className="text-[#C9A84C]">VAEROX {selectedTier?.toUpperCase()}</span>
                     </span>
                   </div>
 
@@ -805,7 +626,7 @@ const Products = () => {
                   </div>
                 </div>
 
-                {/* ═══ MAIN LAYOUT: FULL WIDTH FOR CLASSIC & STANDARD, WITH SIDEBAR ONLY FOR LUXURY ═══ */}
+                {/* ═══ MAIN LAYOUT: FULL WIDTH FOR STANDARD, WITH SIDEBAR ONLY FOR LUXURY ═══ */}
                 <div className={`flex flex-col ${isLuxuryView ? 'lg:flex-row' : ''} gap-6 md:gap-8 items-start relative`}>
 
                   {/* PRODUCTS GRID */}

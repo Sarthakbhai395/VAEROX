@@ -202,7 +202,7 @@ const NewHome = () => {
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               className="mt-6 pt-4 border-t border-[#C9A84C]/30 overflow-hidden"
             >
-              {/* STEP 1: TWO MAIN CARDS (Classic Clothes & VAEROX Premium) */}
+              {/* STEP 1: MAIN CARD (VAEROX Premium) */}
               {bespokeStep === 'main' && (
                 <motion.div
                   key="bespoke-main"
@@ -210,46 +210,9 @@ const NewHome = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={{ duration: 0.4 }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  className="max-w-2xl mx-auto"
                 >
-                  {/* Card 1: Classic Clothes */}
-                  <motion.div
-                    whileHover={{ y: -6, scale: 1.01 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate('/products?mode=classic')}
-                    className="group relative rounded-2xl overflow-hidden cursor-pointer bg-gradient-to-b from-[#14120E] via-[#0F0E0B] to-[#0A0A0A] border border-[#26241E] hover:border-[#C9A84C] shadow-xl transition-all duration-300 flex flex-col justify-between min-h-[320px]"
-                  >
-                    <div className="relative h-48 w-full overflow-hidden shrink-0">
-                      <img
-                        src={(typeof siteAssets.classicCardImage === 'string' ? siteAssets.classicCardImage : siteAssets.classicCardImage?.url) || "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=1000&q=80"}
-                        alt="Classic Clothes"
-                        className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-black/40 to-transparent" />
-                      <div className="absolute top-3 left-3">
-                        <span className="px-3 py-1 rounded-full text-[9px] font-extrabold tracking-widest text-[#C9A84C] bg-black/85 border border-[#C9A84C]/40 uppercase font-sans">
-                          EVERYDAY REGULAR WEAR
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="p-6 flex-1 flex flex-col justify-between">
-                      <div>
-                        <h3 className="text-xl sm:text-2xl font-extrabold text-[#FFF5D6] font-serif uppercase tracking-wide mb-2 group-hover:text-[#C9A84C] transition-colors">
-                          CLASSIC CLOTHES
-                        </h3>
-                        <p className="text-xs sm:text-sm text-[#E8E0CC]/75 font-light leading-relaxed mb-4 font-sans">
-                          It is used for regular use and it includes all regular clothes. Click to view all clothes directly with instant sorting & filtering options.
-                        </p>
-                      </div>
-                      <div className="pt-4 border-t border-[#26241E] flex items-center justify-between text-xs font-extrabold text-[#C9A84C] font-sans uppercase tracking-wider">
-                        <span>EXPLORE ALL CLASSIC CLOTHES</span>
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Card 2: VAEROX Premium */}
+                  {/* Card: VAEROX Premium */}
                   <motion.div
                     whileHover={{ y: -6, scale: 1.01 }}
                     whileTap={{ scale: 0.98 }}
