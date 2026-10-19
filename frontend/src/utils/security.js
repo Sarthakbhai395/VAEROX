@@ -145,9 +145,6 @@ export const safeStorage = {
  */
 export const getSecurityHeaders = () => {
   return {
-    'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY',
-    'X-XSS-Protection': '1; mode=block',
     'Accept': 'application/json',
   };
 };

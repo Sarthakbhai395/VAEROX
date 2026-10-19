@@ -126,14 +126,14 @@ export const BannerCarousel = () => {
             >
               {/* Tag with Anime.js ref */}
               <div ref={heroBadgeRef} className="inline-block mb-2 sm:mb-4">
-                <span className="px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-[9px] sm:text-[11px] font-extrabold tracking-[0.25em] sm:tracking-[0.3em] text-[#C9A84C] bg-black/85 backdrop-blur-md border border-[#C9A84C]/60 uppercase shadow-[0_0_15px_rgba(201,168,76,0.3)]">
-                  {slide.tag || 'VÆROX LUXURY'}
+                <span className="px-3.5 py-1 sm:px-4 sm:py-1.5 rounded-full text-xs font-semibold tracking-wide text-[#C9A84C] bg-black/85 backdrop-blur-md border border-[#C9A84C]/60 shadow-[0_0_15px_rgba(201,168,76,0.3)]">
+                  {slide.tag || 'Værox Luxury'}
                 </span>
               </div>
 
               {/* Title */}
               <motion.h1
-                className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#E8E0CC] mb-2 sm:mb-4 leading-[1.12] tracking-tight font-serif drop-shadow-[0_0_25px_rgba(201,168,76,0.4)]"
+                className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#E8E0CC] mb-2 sm:mb-4 leading-[1.15] drop-shadow-[0_0_25px_rgba(201,168,76,0.4)]"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
@@ -143,7 +143,7 @@ export const BannerCarousel = () => {
 
               {/* Subtitle */}
               <motion.p
-                className="text-xs sm:text-sm md:text-base text-[#E8E0CC]/90 mb-4 sm:mb-6 font-light leading-relaxed max-w-lg line-clamp-2 sm:line-clamp-none"
+                className="text-xs sm:text-sm md:text-base text-[#E8E0CC]/90 mb-4 sm:mb-6 font-normal leading-relaxed max-w-lg line-clamp-2 sm:line-clamp-none"
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25, duration: 0.4 }}
@@ -154,7 +154,7 @@ export const BannerCarousel = () => {
               {/* CTA Button */}
               <motion.button
                 onClick={() => navigate(slide.ctaLink || '/products')}
-                className="group relative px-6 py-2.5 sm:px-8 sm:py-3 md:py-3.5 bg-gradient-to-r from-[#C9A84C] via-[#D4B559] to-[#9B782B] rounded-full text-black font-extrabold text-[11px] sm:text-xs md:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] overflow-hidden transition-all duration-500 shadow-[0_0_20px_rgba(201,168,76,0.4)] hover:shadow-[0_0_35px_rgba(201,168,76,0.8)]"
+                className="group relative px-6 py-2.5 sm:px-8 sm:py-3 md:py-3.5 bg-gradient-to-r from-[#C9A84C] via-[#D4B559] to-[#9B782B] rounded-full text-black font-bold text-xs sm:text-sm tracking-wide overflow-hidden transition-all duration-500 shadow-[0_0_20px_rgba(201,168,76,0.4)] hover:shadow-[0_0_35px_rgba(201,168,76,0.8)]"
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35, duration: 0.4 }}
@@ -162,7 +162,7 @@ export const BannerCarousel = () => {
                 whileTap={{ scale: 0.97 }}
               >
                 <span className="relative z-10 flex items-center gap-2">
-                  {slide.ctaText || 'EXPLORE COLLECTION'}
+                  {slide.ctaText || 'Explore collection'}
                   <svg
                     className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1.5 transition-transform duration-300"
                     fill="none"

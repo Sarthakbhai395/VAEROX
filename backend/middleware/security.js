@@ -45,11 +45,24 @@ setInterval(() => {
  */
 exports.rateLimiter = (options = {}) => {
   const windowMs = options.windowMs || 15 * 60 * 1000; // 15 minutes default
-  const max = options.max || 100; // 100 requests limit per window default
+  const defaultMax = process.env.NODE_ENV === 'development' ? 50000 : 1000;
+  const max = options.max || defaultMax;
   const message = options.message || 'Too many requests from this IP, please try again later.';
 
   return (req, res, next) => {
+    // 1. NEVER rate-limit CORS preflight OPTIONS requests
+    if (req.method === 'OPTIONS') {
+      return next();
+    }
+
     const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown-ip';
+    const isLocal = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || ip === 'localhost';
+
+    // 2. In local development or on loopback, bypass rate limiting to prevent developer lockouts
+    if (process.env.NODE_ENV === 'development' || isLocal) {
+      return next();
+    }
+
     const key = `${req.baseUrl || req.path}:${ip}`;
     const now = Date.now();
 

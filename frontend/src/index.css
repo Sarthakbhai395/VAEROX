@@ -87,25 +87,24 @@ body {
   overflow-x: hidden;
   background-color: #000000 !important;
   color: #E8E0CC !important;
-  font-family: "Bodoni Moda", serif !important;
-  font-optical-sizing: auto;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  letter-spacing: 0.01em;
 }
 
 body {
   margin: 0;
-  font-family: "Bodoni Moda", serif !important;
-  font-optical-sizing: auto;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #000000 !important;
   color: #E8E0CC;
   min-height: 100vh;
+  letter-spacing: 0.01em;
 }
 
 .bodoni-moda {
-  font-family: "Bodoni Moda", serif;
-  font-optical-sizing: auto;
-  font-weight: 400;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 500;
   font-style: normal;
 }
 
@@ -116,15 +115,16 @@ body {
   overflow-x: hidden;
   background-color: #000000 !important;
   color: #E8E0CC;
-  font-family: "Bodoni Moda", serif;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: 0.01em;
 }
 
 /* Typography styles */
 h1, h2, h3, h4, h5, h6 {
-  font-family: "Bodoni Moda", serif;
-  font-optical-sizing: auto;
-  font-weight: 400;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 600;
   color: #FFF5D6;
+  letter-spacing: 0.01em;
 }
 
 /* Button styles */
@@ -899,7 +899,7 @@ img {
 
 /* Responsive navbar brand/logo */
 .navbar-container .font-display {
-  font-family: "Bodoni Moda", serif;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 /* Ensure navbar buttons have proper contrast */

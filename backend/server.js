@@ -1,4 +1,4 @@
-// Express Server Config - VÆROX Backend Engine v2
+// Express Server Config - VÆROX Backend Engine v2.2 (Port Binding Verified)
 const express = require('express');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
@@ -21,8 +21,66 @@ connectDB();
 // Initialize app
 const app = express();
 
-// Security Middlewares
-app.use(helmet());
+// Configure CORS with robust origin checking (localhost + Vercel/Netlify domains)
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'https://vaerox-alpha.vercel.app',
+  'https://your-netlify-app.netlify.app',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:5175'
+].filter(Boolean);
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like curl, postman, same-origin serverless calls, or mobile apps)
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      return origin === allowedOrigin || origin === allowedOrigin.replace(/\/$/, '');
+    }) || origin.endsWith('.vercel.app') || origin.endsWith('.netlify.app') || origin.includes('localhost') || origin.includes('127.0.0.1');
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Fallback allow in serverless environment to prevent blocked preflights
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers',
+    'x-content-type-options',
+    'X-Content-Type-Options',
+    'x-frame-options',
+    'X-Frame-Options',
+    'x-xss-protection',
+    'X-XSS-Protection'
+  ],
+  exposedHeaders: ['Set-Cookie'],
+  optionsSuccessStatus: 200
+};
+
+// 1. CORS Middleware MUST be first to answer preflight OPTIONS requests immediately
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
+
+// 2. Security Middlewares (Configured with crossOriginResourcePolicy for uploads and assets)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginEmbedderPolicy: false
+}));
 app.use(secureHeaders);
 app.use(morgan('dev'));
 app.use(express.json({ limit: '50mb' }));
@@ -65,39 +123,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Configure CORS with robust origin checking (localhost + Vercel/Netlify domains)
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  'https://vaerox-alpha.vercel.app',
-  'https://your-netlify-app.netlify.app',
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:5175'
-].filter(Boolean);
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like curl, postman, same-origin serverless calls, or mobile apps)
-    if (!origin) return callback(null, true);
-    
-    const isAllowed = allowedOrigins.some(allowedOrigin => {
-      return origin === allowedOrigin || origin === allowedOrigin.replace(/\/$/, '');
-    }) || origin.endsWith('.vercel.app') || origin.endsWith('.netlify.app') || origin.includes('localhost') || origin.includes('127.0.0.1');
-
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      callback(null, true); // Fallback allow in serverless environment to prevent blocked preflights
-    }
-  },
-  credentials: true,
-  optionsSuccessStatus: 200
-};
-
-app.use(cors(corsOptions));
-app.options(/(.*)/, cors());
-
 // Serve static files from uploads folder
 app.use('/uploads', cors(corsOptions), (req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
@@ -116,13 +141,20 @@ const paymentRoutes = require('./routes/payment');
 const sellerContactRoutes = require('./routes/sellerContact');
 const activityRoutes = require('./routes/activities');
 
-app.use(['/api/auth', '/auth'], authRoutes);
-app.use(['/api/users', '/users'], userRoutes);
-app.use(['/api/products', '/products'], productRoutes);
-app.use(['/api/contact', '/contact'], contactRoutes);
-app.use(['/api/payment', '/payment'], paymentRoutes);
-app.use(['/api/seller/contact', '/seller/contact'], sellerContactRoutes);
-app.use(['/api/activities', '/activities'], activityRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/users', userRoutes);
+app.use('/api/products', productRoutes);
+app.use('/products', productRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/contact', contactRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/payment', paymentRoutes);
+app.use('/api/seller/contact', sellerContactRoutes);
+app.use('/seller/contact', sellerContactRoutes);
+app.use('/api/activities', activityRoutes);
+app.use('/activities', activityRoutes);
 
 const { sendInvoiceEmail } = require('./utils/sendEmail');
 app.get('/api/test-email', async (req, res) => {
@@ -186,6 +218,11 @@ app.get('/api/test-email', async (req, res) => {
 
 
 
+// Root route health check
+app.get('/', (req, res) => {
+  res.json({ success: true, message: 'Akario Mart API is running...' });
+});
+
 // Serve frontend files in production
 if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '..', 'frontend', 'dist');
@@ -197,13 +234,13 @@ if (process.env.NODE_ENV === 'production') {
     app.get(/^(?!\/api\/).*$/, (req, res) => {
       res.sendFile(path.join(frontendPath, 'index.html'));
     });
-  } else {
-    // If the frontend is deployed separately and dist doesn't exist, provide a clean JSON fallback
-    app.get('/', (req, res) => {
-      res.json({ message: 'Akario Mart API is running...' });
-    });
   }
 }
+
+// 404 handler for unhandled /api/* routes
+app.use('/api', (req, res) => {
+  res.status(404).json({ success: false, error: `API route ${req.originalUrl} not found` });
+});
 
 // Error handler
 app.use(errorHandler);

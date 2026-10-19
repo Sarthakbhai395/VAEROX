@@ -22,7 +22,7 @@ export const getProductImageUrl = (imagePath) => {
 
   // Check if image is an external URL, base64 data URL, or blob URL
   if (
-    imagePath.startsWith('data:image/') ||
+    imagePath.startsWith('data:') ||
     imagePath.startsWith('blob:') ||
     imagePath.startsWith('http://') ||
     imagePath.startsWith('https://')

@@ -27,10 +27,11 @@ export default {
         'neutral': '#A39E93',
       },
       fontFamily: {
-        'sans': ['"Bodoni Moda"', 'serif'],
-        'serif': ['"Bodoni Moda"', 'serif'],
-        'display': ['"Bodoni Moda"', 'serif'],
-        'bodoni': ['"Bodoni Moda"', 'serif'],
+        'sans': ['"Segoe UI"', '-apple-system', 'BlinkMacSystemFont', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        'segoe': ['"Segoe UI"', '-apple-system', 'BlinkMacSystemFont', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        'serif': ['"Segoe UI"', '-apple-system', 'BlinkMacSystemFont', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        'display': ['"Segoe UI"', '-apple-system', 'BlinkMacSystemFont', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        'bodoni': ['"Segoe UI"', '-apple-system', 'BlinkMacSystemFont', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
       },
       boxShadow: {
         'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',

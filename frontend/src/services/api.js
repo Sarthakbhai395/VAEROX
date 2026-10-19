@@ -42,13 +42,15 @@ const apiRequest = async (url, options = {}) => {
       return cached.data
     }
 
-    // Auto-attach JWT authorization token and Cybersecurity Headers
+    // Auto-attach JWT authorization token and Security Headers
     const token = localStorage.getItem('token');
     const headers = {
-      'Content-Type': 'application/json',
       ...getSecurityHeaders(),
       ...options.headers
     };
+    if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
     if (token && !headers['Authorization']) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -263,21 +265,11 @@ export const productAPI = {
 // User API
 export const userAPI = {
   getUsers: async (token) => {
-    const res = await apiRequest('/api/users/admin', {
+    return apiRequest('/api/users/admin', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     })
-    if (!res.success) {
-      return {
-        success: true,
-        data: [
-          { _id: 'u1', name: 'Vikramaditya Sharma', email: 'vikram.sharma@executive.com', role: 'user', isBlocked: false, createdAt: new Date().toISOString() },
-          { _id: 'u2', name: 'Ananya Roy', email: 'ananya.roy@couture.com', role: 'user', isBlocked: false, createdAt: new Date().toISOString() }
-        ]
-      }
-    }
-    return res
   },
 
   getSellers: async (token) => {
@@ -445,21 +437,11 @@ export const userAPI = {
 // Activity API
 export const activityAPI = {
   getActivities: async (token) => {
-    const res = await apiRequest('/api/activities', {
+    return apiRequest('/api/activities', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     })
-    if (!res.success) {
-      return {
-        success: true,
-        data: [
-          { _id: 'act_1', action: 'Bespoke Tuxedo Order Created', user: 'Vikramaditya Sharma', timestamp: new Date().toISOString() },
-          { _id: 'act_2', action: 'New User Registered', user: 'Ananya Roy', timestamp: new Date(Date.now() - 3600000).toISOString() }
-        ]
-      }
-    }
-    return res
   }
 }
 
@@ -491,21 +473,12 @@ export const contactAPI = {
   },
 
   getAllMessages: async (token) => {
-    const res = await apiRequest('/api/contact', {
+    return apiRequest('/api/contact', {
       headers: {
         'Authorization': `Bearer ${token}`
       },
       bypassCache: true
     });
-    if (!res.success) {
-      return {
-        success: true,
-        data: [
-          { _id: 'msg_1', name: 'Rohan Mehta', email: 'rohan@executive.com', subject: 'Bespoke Suit Fitting Inquiry', message: 'I would like to schedule an in-person measurement session for 3 tailored blazers.', createdAt: new Date().toISOString() }
-        ]
-      }
-    }
-    return res;
   },
 
   replyMessage: async (id, replyMessage, token) => {

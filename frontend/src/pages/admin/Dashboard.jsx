@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 
 import { compressImage } from '../../utils/imageCompressor'
+import { getProductImageUrl as resolveProductImg } from '../../utils/imageUrl'
 
 const ROLES_LIST = [
   'CEO',
@@ -114,94 +115,28 @@ const AdminDashboard = () => {
   const [searchOrderQuery, setSearchOrderQuery] = useState('')
   const [searchQueryText, setSearchQueryText] = useState('')
 
-  // Fetch orders from localStorage or seed initial default executive orders
+  // Fetch orders placed by real users upon checkout/payment
   const fetchOrders = () => {
     const stored = localStorage.getItem('vaerox_admin_orders')
     if (stored) {
       try {
-        setOrders(JSON.parse(stored))
+        const parsed = JSON.parse(stored)
+        // Clean out legacy demo mock orders if any existed previously
+        const realOrders = Array.isArray(parsed)
+          ? parsed.filter(ord => 
+              ord.id !== 'VRX-849201' && 
+              ord.id !== 'VRX-639102' && 
+              ord.user?.email !== 'vikram.sharma@executive.com' && 
+              ord.user?.email !== 'ananya.roy@atelier.io'
+            )
+          : []
+        setOrders(realOrders)
+        localStorage.setItem('vaerox_admin_orders', JSON.stringify(realOrders))
       } catch (e) {
         setOrders([])
       }
     } else {
-      const defaultOrders = [
-        {
-          id: 'VRX-849201',
-          paymentId: 'pay_Nz82910482',
-          date: new Date(Date.now() - 3600000 * 4).toISOString(),
-          user: {
-            name: 'Vikramaditya Sharma',
-            email: 'vikram.sharma@executive.com',
-            phone: '+91 98765 43210',
-            address: '402 Regency Towers, Bandra Kurla Complex',
-            city: 'Mumbai',
-            state: 'Maharashtra',
-            zipCode: '400051'
-          },
-          items: [
-            {
-              id: 'p1',
-              name: 'VÆROX Executive Double-Breasted Wool Tuxedo',
-              image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=600&q=80',
-              price: 18499,
-              quantity: 1,
-              size: 'XL',
-              tier: 'premium',
-              category: 'men'
-            },
-            {
-              id: 'p2',
-              name: 'Bespoke Satin Silk Bowtie & Pocket Square',
-              image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80',
-              price: 2499,
-              quantity: 1,
-              size: 'Standard',
-              tier: 'premium',
-              category: 'accessories'
-            }
-          ],
-          subtotal: 20998,
-          tax: 1679.84,
-          totalAmount: 22677.84,
-          paymentMethod: 'Razorpay Secure (Online)',
-          paymentStatus: 'Paid',
-          orderStatus: 'Processing'
-        },
-        {
-          id: 'VRX-639102',
-          paymentId: 'pay_Kx91024810',
-          date: new Date(Date.now() - 86400000 * 2).toISOString(),
-          user: {
-            name: 'Ananya Roy',
-            email: 'ananya.roy@atelier.io',
-            phone: '+91 91234 56789',
-            address: '12-A Jubilee Hills, Road No. 36',
-            city: 'Hyderabad',
-            state: 'Telangana',
-            zipCode: '500033'
-          },
-          items: [
-            {
-              id: 'p3',
-              name: 'VÆROX Atelier Sculpted Velvet Blazer',
-              image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80',
-              price: 14999,
-              quantity: 1,
-              size: '34',
-              tier: 'premium',
-              category: 'women'
-            }
-          ],
-          subtotal: 14999,
-          tax: 1199.92,
-          totalAmount: 16198.92,
-          paymentMethod: 'Razorpay Secure (Online)',
-          paymentStatus: 'Paid',
-          orderStatus: 'Shipped'
-        }
-      ]
-      localStorage.setItem('vaerox_admin_orders', JSON.stringify(defaultOrders))
-      setOrders(defaultOrders)
+      setOrders([])
     }
   }
 
@@ -542,14 +477,8 @@ const AdminDashboard = () => {
     if (!product || !product.image) {
       return 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=200&h=200'
     }
-    const isSpecial =
-      product.image.startsWith('http://') ||
-      product.image.startsWith('https://') ||
-      product.image.startsWith('data:') ||
-      product.image.startsWith('blob:')
-    if (isSpecial) return product.image
-    if (product.image.startsWith('/uploads/')) return product.image
-    return `/uploads/${product.image}`
+    const resolved = resolveProductImg(product.image)
+    return resolved || 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=200&h=200'
   }
 
   const getUserAvatar = (user) => {
