@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import React, { useState, useEffect, useRef } from 'react'
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../contexts/CartContext'
 import { useWishlist } from '../contexts/WishlistContext'
@@ -20,6 +20,13 @@ const Navbar = () => {
   const { getCartCount } = useCart()
   const { wishlistItems } = useWishlist()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Auto-close drawers on any navigation change
+  useEffect(() => {
+    setIsMenuOpen(false)
+    setIsSearchOpen(false)
+  }, [location.pathname, location.search])
 
   useEffect(() => {
     const handleUpdate = () => setSiteAssets(getSiteAssets())
@@ -72,23 +79,36 @@ const Navbar = () => {
     return user.role === 'admin' ? 'Admin Panel' : 'User Panel'
   }
 
-  // Trigger animation when cart count changes
-  useEffect(() => {
-    setCartAnimation(true)
-    const timer = setTimeout(() => {
-      setCartAnimation(false)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [getCartCount()])
+  // Preload route chunk on hover/touch
+  const handlePreload = (path) => {
+    if (path === '/products') import('../pages/Products')
+    else if (path === '/about') import('../pages/About')
+    else if (path === '/contact') import('../pages/Contact')
+  }
 
-  // Trigger animation when wishlist count changes
+  // Trigger animation only when cart count actually changes (prevents re-render loops)
+  const cartCount = getCartCount()
+  const prevCartRef = useRef(cartCount)
   useEffect(() => {
-    setWishlistAnimation(true)
-    const timer = setTimeout(() => {
-      setWishlistAnimation(false)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [wishlistItems.length])
+    if (prevCartRef.current !== cartCount) {
+      prevCartRef.current = cartCount
+      setCartAnimation(true)
+      const timer = setTimeout(() => setCartAnimation(false), 500)
+      return () => clearTimeout(timer)
+    }
+  }, [cartCount])
+
+  // Trigger animation only when wishlist count actually changes
+  const wishlistLength = wishlistItems.length
+  const prevWishlistRef = useRef(wishlistLength)
+  useEffect(() => {
+    if (prevWishlistRef.current !== wishlistLength) {
+      prevWishlistRef.current = wishlistLength
+      setWishlistAnimation(true)
+      const timer = setTimeout(() => setWishlistAnimation(false), 500)
+      return () => clearTimeout(timer)
+    }
+  }, [wishlistLength])
 
   // Close menu when clicking outside (using drawer container check)
   useEffect(() => {
@@ -156,6 +176,8 @@ const Navbar = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onMouseEnter={() => handlePreload(item.path)}
+                onTouchStart={() => handlePreload(item.path)}
                 className={({ isActive }) =>
                   `relative text-xs font-extrabold tracking-[0.18em] uppercase transition-all duration-300 py-1.5 opacity-100 ${isActive
                     ? 'text-[#C9A84C]'

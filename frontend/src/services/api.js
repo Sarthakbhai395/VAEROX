@@ -29,15 +29,17 @@ import { getSecurityHeaders } from '../utils/security';
 // Helper function to make API requests
 const apiRequest = async (url, options = {}) => {
   try {
-    // Bypassing cache for mutations, admin requests, or when explicitly requested
-    const bypassCache = options.bypassCache || url.includes('/admin') || url.includes('/activities');
+    // Bypassing cache for mutations, admin requests, user-specific data, or when explicitly requested
+    const isMutation = options.method && options.method !== 'GET';
+    const isUserOrAuth = url.includes('/admin') || url.includes('/activities') || url.includes('/user') || url.includes('/cart') || url.includes('/wishlist') || url.includes('/auth');
+    const bypassCache = Boolean(options.bypassCache || isMutation || isUserOrAuth);
 
     // Check if we have a cached response
     const cacheKey = `${options.method || 'GET'}:${url}`
     const cached = apiCache.get(cacheKey)
 
     // If we have a valid cached response, return it
-    if (!bypassCache && cached && Date.now() - cached.timestamp < CACHE_DURATION && options.method !== 'POST' && options.method !== 'PUT' && options.method !== 'DELETE') {
+    if (!bypassCache && cached && Date.now() - cached.timestamp < CACHE_DURATION && !isMutation) {
       console.log(`Returning cached response for ${url}`)
       return cached.data
     }
@@ -110,6 +112,8 @@ const apiRequest = async (url, options = {}) => {
         data: result,
         timestamp: Date.now()
       })
+    } else if (isMutation && response.ok) {
+      apiCache.clear()
     }
 
     return result;

@@ -25,6 +25,17 @@ import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
 import IntroLoader from './components/IntroLoader'
+import ScrollToTop from './components/ScrollToTop'
+
+// Preload high-traffic secondary routes during idle time to eliminate navigation delay
+if (typeof window !== 'undefined') {
+  const schedulePreload = window.requestIdleCallback || ((cb) => setTimeout(cb, 1500));
+  schedulePreload(() => {
+    import('./pages/Products');
+    import('./pages/About');
+    import('./pages/Contact');
+  });
+}
 
 // Minimalist luxury fallback
 const PageFallback = () => (
@@ -41,6 +52,7 @@ const PageFallback = () => (
 function App() {
   return (
     <div className="App min-h-screen flex flex-col bg-black text-[#E8E0CC]">
+      <ScrollToTop />
       <IntroLoader />
       <Navbar />
       <main className="flex-grow">
