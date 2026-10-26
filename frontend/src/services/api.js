@@ -11,7 +11,7 @@ const getApiBaseUrl = () => {
       return 'http://localhost:5000';
     }
     // Production default: Real deployed Render backend API
-    return 'https://backend-1-tf17.onrender.com';
+    return 'https://vaerox.onrender.com';
   }
 
   return 'http://localhost:5000';
