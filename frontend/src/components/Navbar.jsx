@@ -138,7 +138,7 @@ const Navbar = () => {
               <Menu className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
             </button>
 
-            <Link to="/" className="flex items-center py-0.5 group shrink min-w-0 overflow-hidden">
+            <Link to="/" aria-label="VÆROX Home" className="flex items-center py-0.5 group shrink min-w-0 overflow-hidden">
               <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.2 }} className="flex items-center scale-80 xs:scale-90 sm:scale-100 origin-left">
                 <Logo layout="horizontal" size="sm" />
               </motion.div>

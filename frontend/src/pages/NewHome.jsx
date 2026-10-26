@@ -162,7 +162,7 @@ const NewHome = () => {
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C]/60 to-transparent pointer-events-none" />
 
           {/* Top Hero / Header Portion */}
-          <div className="relative z-10 p-5 sm:p-8 md:p-10 lg:p-12">
+          <div className={`relative z-10 p-5 sm:p-8 md:p-10 lg:p-12 ${isBespokeSliderOpen ? 'pb-3 sm:pb-4' : ''}`}>
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 md:gap-8">
               {/* Left / Main Text Block */}
               <div className="flex-1 text-left space-y-3.5 sm:space-y-4">
@@ -234,7 +234,7 @@ const NewHome = () => {
             </div>
           </div>
 
-          {/* ═══ EXPANDABLE BESPOKE ATELIER STUDIO (INSIDE THE MASTER CARD CONTAINER) ═══ */}
+          {/* ═══ EXPANDABLE BESPOKE ATELIER STUDIO (ONE UNIFIED SECTION) ═══ */}
           <AnimatePresence>
             {isBespokeSliderOpen && (
               <motion.div
@@ -242,9 +242,9 @@ const NewHome = () => {
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="overflow-hidden border-t border-[#C9A84C]/30 bg-gradient-to-b from-black/85 via-[#0A0907]/95 to-[#050505]"
+                className="overflow-hidden"
               >
-                <div className="p-4 sm:p-6 md:p-8 lg:p-10 relative">
+                <div className="px-5 sm:px-8 md:px-10 lg:px-12 pt-0 pb-6 sm:pb-10 relative">
                   {/* Subtle Grid Accent Pattern */}
                   <div
                     className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -255,7 +255,7 @@ const NewHome = () => {
                   />
 
                   {/* Modern Stepper / Progress Breadcrumbs */}
-                  <div className="relative z-10 mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-[#C9A84C]/20 flex flex-wrap items-center justify-between gap-3">
+                  <div className="relative z-10 mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2 sm:gap-3">
                       <button
                         onClick={() => setBespokeStep('main')}
@@ -318,20 +318,22 @@ const NewHome = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -15, scale: 0.98 }}
                         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                        className="max-w-4xl mx-auto"
+                        className="w-full"
                       >
                         <motion.div
-                          whileHover={{ y: -5, scale: 1.01 }}
+                          whileHover={{ y: -3, scale: 1.005 }}
                           whileTap={{ scale: 0.985 }}
                           onClick={() => setBespokeStep('gender')}
-                          className="group relative rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer bg-[#0F0D09] border border-[#C9A84C]/50 hover:border-[#C9A84C] shadow-[0_15px_40px_rgba(0,0,0,0.7)] hover:shadow-[0_0_50px_rgba(201,168,76,0.35)] transition-all duration-500 flex flex-col md:flex-row items-stretch"
+                          className="group relative rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer bg-black/40 hover:bg-black/60 shadow-[0_10px_35px_rgba(0,0,0,0.6)] transition-all duration-500 flex flex-col md:flex-row items-stretch"
                         >
                           {/* Left: Image with seamless edge blend */}
                           <div className="relative w-full md:w-[46%] min-h-[240px] md:min-h-[300px] overflow-hidden shrink-0 bg-[#0F0D09]">
                             <img
-                              src={(typeof siteAssets.premiumCardImage === 'string' ? siteAssets.premiumCardImage : siteAssets.premiumCardImage?.url) || "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=1000&q=80"}
+                              src={(typeof siteAssets.premiumCardImage === 'string' ? siteAssets.premiumCardImage : siteAssets.premiumCardImage?.url) || "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=800&q=75"}
                               alt="Vaerox Luxury & Standard Atelier"
                               className="w-full h-full object-cover object-center group-hover:scale-108 transition-transform duration-700 ease-out"
+                              loading="lazy"
+                              decoding="async"
                             />
                             <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-transparent via-[#0F0D09]/50 to-[#0F0D09] pointer-events-none" />
                             <div className="md:hidden absolute inset-0 bg-gradient-to-t from-[#0F0D09] via-[#0F0D09]/40 to-transparent pointer-events-none" />
@@ -419,9 +421,11 @@ const NewHome = () => {
                           >
                             <div className="relative w-full sm:w-[44%] min-h-[200px] sm:min-h-[240px] overflow-hidden shrink-0 bg-[#0F0D09]">
                               <img
-                                src={(typeof siteAssets.homeMensCard === 'string' ? siteAssets.homeMensCard : siteAssets.homeMensCard?.url) || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80"}
+                                src={(typeof siteAssets.homeMensCard === 'string' ? siteAssets.homeMensCard : siteAssets.homeMensCard?.url) || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=75"}
                                 alt="Men's Wear"
                                 className="w-full h-full object-cover object-top sm:object-center group-hover:scale-108 transition-transform duration-700 ease-out"
+                                loading="lazy"
+                                decoding="async"
                               />
                               <div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-transparent via-[#0F0D09]/40 to-[#0F0D09] pointer-events-none" />
                               <div className="sm:hidden absolute inset-0 bg-gradient-to-t from-[#0F0D09] via-[#0F0D09]/40 to-transparent pointer-events-none" />
@@ -466,9 +470,11 @@ const NewHome = () => {
                           >
                             <div className="relative w-full sm:w-[44%] min-h-[200px] sm:min-h-[240px] overflow-hidden shrink-0 bg-[#0F0D09]">
                               <img
-                                src={(typeof siteAssets.homeWomensCard === 'string' ? siteAssets.homeWomensCard : siteAssets.homeWomensCard?.url) || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80"}
+                                src={(typeof siteAssets.homeWomensCard === 'string' ? siteAssets.homeWomensCard : siteAssets.homeWomensCard?.url) || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=75"}
                                 alt="Women's Wear"
                                 className="w-full h-full object-cover object-top sm:object-center group-hover:scale-108 transition-transform duration-700 ease-out"
+                                loading="lazy"
+                                decoding="async"
                               />
                               <div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-transparent via-[#0F0D09]/40 to-[#0F0D09] pointer-events-none" />
                               <div className="sm:hidden absolute inset-0 bg-gradient-to-t from-[#0F0D09] via-[#0F0D09]/40 to-transparent pointer-events-none" />
@@ -537,9 +543,11 @@ const NewHome = () => {
                           >
                             <div className="relative w-full sm:w-[44%] min-h-[200px] sm:min-h-[240px] overflow-hidden shrink-0 bg-[#0F0D09]">
                               <img
-                                src={(typeof siteAssets.standardTierCardImage === 'string' ? siteAssets.standardTierCardImage : siteAssets.standardTierCardImage?.url) || "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=800&q=80"}
+                                src={(typeof siteAssets.standardTierCardImage === 'string' ? siteAssets.standardTierCardImage : siteAssets.standardTierCardImage?.url) || "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=600&q=75"}
                                 alt="Vaerox Standard"
                                 className="w-full h-full object-cover object-top sm:object-center group-hover:scale-108 transition-transform duration-700 ease-out"
+                                loading="lazy"
+                                decoding="async"
                               />
                               <div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-transparent via-[#0F0D09]/40 to-[#0F0D09] pointer-events-none" />
                               <div className="sm:hidden absolute inset-0 bg-gradient-to-t from-[#0F0D09] via-[#0F0D09]/40 to-transparent pointer-events-none" />
@@ -586,9 +594,11 @@ const NewHome = () => {
                           >
                             <div className="relative w-full sm:w-[44%] min-h-[200px] sm:min-h-[240px] overflow-hidden shrink-0 bg-[#0F0D09]">
                               <img
-                                src={(typeof siteAssets.luxuryTierCardImage === 'string' ? siteAssets.luxuryTierCardImage : siteAssets.luxuryTierCardImage?.url) || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80"}
+                                src={(typeof siteAssets.luxuryTierCardImage === 'string' ? siteAssets.luxuryTierCardImage : siteAssets.luxuryTierCardImage?.url) || "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=75"}
                                 alt="Vaerox Luxury"
                                 className="w-full h-full object-cover object-top sm:object-center group-hover:scale-108 transition-transform duration-700 ease-out"
+                                loading="lazy"
+                                decoding="async"
                               />
                               <div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-transparent via-[#0F0D09]/40 to-[#0F0D09] pointer-events-none" />
                               <div className="sm:hidden absolute inset-0 bg-gradient-to-t from-[#0F0D09] via-[#0F0D09]/40 to-transparent pointer-events-none" />

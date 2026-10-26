@@ -19,7 +19,7 @@ const getDeterministicRating = (productId) => {
   return { rating: parseFloat(rating.toFixed(1)), reviews };
 };
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, index = 0, priority = false }) => {
   const navigate = useNavigate()
   const { addToCart, isInCart } = useCart()
   const { addToWishlist, isInWishlist } = useWishlist()
@@ -117,6 +117,11 @@ const ProductCard = ({ product }) => {
           alt={product?.name || 'Product'} 
           className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105"
           onError={() => setImageError(true)}
+          loading={priority || index === 0 ? "eager" : "lazy"}
+          fetchpriority={priority || index === 0 ? "high" : "auto"}
+          decoding="async"
+          width="257"
+          height="321"
         />
         
         {images.length > 1 && (
@@ -128,6 +133,7 @@ const ProductCard = ({ product }) => {
                 setCurrentImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
               }}
               className="absolute left-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-black/80 hover:bg-black text-[#C9A84C] shadow-sm opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 z-10 border border-[#26241E]"
+              aria-label="Previous image"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -140,6 +146,7 @@ const ProductCard = ({ product }) => {
                 setCurrentImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
               }}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-black/80 hover:bg-black text-[#C9A84C] shadow-sm opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 z-10 border border-[#26241E]"
+              aria-label="Next image"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -150,6 +157,8 @@ const ProductCard = ({ product }) => {
               {images.map((_, idx) => (
                 <button
                   key={idx}
+                  type="button"
+                  aria-label={`View product image ${idx + 1}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -193,6 +202,7 @@ const ProductCard = ({ product }) => {
         )}
         <motion.button
           onClick={handleAddToWishlist}
+          aria-label={isInWishlist(productId) ? "Remove from wishlist" : "Add to wishlist"}
           className={`absolute top-2.5 right-3 w-7 h-7 flex items-center justify-center rounded-full shadow-md transition-all duration-300 z-20 ${
             isInWishlist(productId)
               ? 'text-[#C9A84C] bg-black border border-[#C9A84C]'

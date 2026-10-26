@@ -605,6 +605,7 @@ const Products = () => {
                     <select
                       value={sort}
                       onChange={(e) => setSort(e.target.value)}
+                      aria-label="Sort products by"
                       className="px-3 py-1.5 bg-[#121212] border border-[#C9A84C]/40 rounded-xl text-xs text-[#FFF5D6] font-bold focus:outline-none cursor-pointer font-sans"
                     >
                       <option value="name">Name (A - Z)</option>
@@ -630,11 +631,16 @@ const Products = () => {
                 <div className={`flex flex-col ${isLuxuryView ? 'lg:flex-row' : ''} gap-6 md:gap-8 items-start relative`}>
 
                   {/* PRODUCTS GRID */}
-                  <div className="flex-1 w-full order-2 lg:order-1">
+                  <div className="flex-1 w-full order-2 lg:order-1 min-h-[500px]">
                     {sortedProducts.length > 0 ? (
                       <div className={`grid grid-cols-1 sm:grid-cols-2 ${isLuxuryView ? 'xl:grid-cols-3' : 'lg:grid-cols-3 xl:grid-cols-4'} gap-4 md:gap-5`}>
-                        {sortedProducts.map((product) => (
-                          <ProductCard key={product._id || product.id} product={product} />
+                        {sortedProducts.map((product, idx) => (
+                          <ProductCard 
+                            key={product._id || product.id} 
+                            product={product} 
+                            index={idx}
+                            priority={idx === 0}
+                          />
                         ))}
                       </div>
                     ) : (

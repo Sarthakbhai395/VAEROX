@@ -3,7 +3,7 @@
 const INITIAL_BANNERS = [
   {
     id: 'hero-1',
-    image: 'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=1920&q=80',
+    image: 'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=1280&q=75',
     tag: 'VÆROX ATELIER 2026',
     title: 'FASHION THAT MOVES WITH YOU',
     subtitle: 'Redefining Classical Elegance & Modern High-Couture Luxury',
@@ -13,7 +13,7 @@ const INITIAL_BANNERS = [
   },
   {
     id: 'hero-2',
-    image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1920&q=80',
+    image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1280&q=75',
     tag: 'VÆROX BESPOKE TAILORING',
     title: 'THE ART OF POWER SUITING',
     subtitle: 'Handcrafted Precision Formal Wear For Discerning Gentlemen & Women',
@@ -23,7 +23,7 @@ const INITIAL_BANNERS = [
   },
   {
     id: 'hero-3',
-    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1920&q=80',
+    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1280&q=75',
     tag: 'EXCLUSIVE ATELIER RELEASE',
     title: 'COUTURE WITHOUT COMPROMISE',
     subtitle: 'Step Into Utter Distinction With Signature VÆROX Eveningwear',

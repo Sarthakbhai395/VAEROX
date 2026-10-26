@@ -103,6 +103,8 @@ export const BannerCarousel = () => {
             alt={slide.title}
             className="w-full h-full object-cover"
             draggable={false}
+            fetchpriority="high"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-black/20 md:to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/30" />
@@ -214,8 +216,12 @@ export const BannerCarousel = () => {
                 <div className="absolute inset-0 bg-[#C9A84C]/30 rounded-full" />
                 {idx === currentSlide && (
                   <div
-                    className="absolute inset-y-0 left-0 bg-[#C9A84C] rounded-full transition-[width] duration-100 ease-linear shadow-[0_0_8px_rgba(201,168,76,0.8)]"
-                    style={{ width: `${progress}%` }}
+                    className="absolute inset-y-0 left-0 right-0 bg-[#C9A84C] rounded-full shadow-[0_0_8px_rgba(201,168,76,0.8)] will-change-transform"
+                    style={{
+                      transform: `scaleX(${progress / 100})`,
+                      transformOrigin: 'left',
+                      transition: 'transform 100ms linear',
+                    }}
                   />
                 )}
               </button>

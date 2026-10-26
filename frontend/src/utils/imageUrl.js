@@ -27,6 +27,17 @@ export const getProductImageUrl = (imagePath) => {
     imagePath.startsWith('http://') ||
     imagePath.startsWith('https://')
   ) {
+    if (imagePath.includes('images.unsplash.com')) {
+      try {
+        const url = new URL(imagePath);
+        url.searchParams.set('w', '500');
+        url.searchParams.set('q', '75');
+        url.searchParams.set('auto', 'format');
+        return url.toString();
+      } catch (e) {
+        return imagePath;
+      }
+    }
     return imagePath;
   }
 

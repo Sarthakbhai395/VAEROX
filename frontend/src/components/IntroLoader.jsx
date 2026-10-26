@@ -2,40 +2,54 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogoEmblem } from './Logo';
 
-// Fashion & Haute Couture montage images for Marvel-style page flip sequence
+// Fashion & Haute Couture montage images for Marvel-style page flip sequence (optimized webp payloads)
 const MARVEL_PAGES = [
-  'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=600&q=80',
+  'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=400&q=70',
+  'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=400&q=70',
+  'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=400&q=70',
+  'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=400&q=70',
+  'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=70',
+  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=400&q=70',
 ];
 
 const IntroLoader = ({ onComplete }) => {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(() => {
+    try {
+      return !sessionStorage.getItem('vaerox_intro_seen');
+    } catch {
+      return false;
+    }
+  });
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
   useEffect(() => {
+    if (!isVisible) return;
+
     // Fast flipping Marvel-style comic montage interval
     const flipInterval = setInterval(() => {
       setCurrentPageIndex((prev) => (prev + 1) % MARVEL_PAGES.length);
-    }, 120);
+    }, 110);
 
-    // Complete overall single animation in 3.6 seconds
+    // Complete animation cleanly in 1.8 seconds and persist session flag
     const timer = setTimeout(() => {
       setIsVisible(false);
+      try {
+        sessionStorage.setItem('vaerox_intro_seen', 'true');
+      } catch {}
       if (onComplete) onComplete();
-    }, 3600);
+    }, 1800);
 
     return () => {
       clearInterval(flipInterval);
       clearTimeout(timer);
     };
-  }, [onComplete]);
+  }, [isVisible, onComplete]);
 
   const handleSkip = () => {
     setIsVisible(false);
+    try {
+      sessionStorage.setItem('vaerox_intro_seen', 'true');
+    } catch {}
     if (onComplete) onComplete();
   };
 

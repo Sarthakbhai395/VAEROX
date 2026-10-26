@@ -66,10 +66,10 @@ const Footer = () => {
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 sm:gap-8 lg:gap-12">
           {/* Brand Column */}
           <div className="col-span-2 sm:col-span-2 md:col-span-4 lg:col-span-2 flex flex-col items-start">
-            <Link to="/" className="inline-block mb-4">
+            <Link to="/" className="inline-block mb-4" aria-label="VÆROX Home">
               <Logo layout="horizontal" size="md" />
             </Link>
-            <p className="text-xs text-[#E8E0CC]/70 leading-relaxed mb-6 max-w-sm font-light">
+            <p className="text-xs text-[#E8E0CC]/80 leading-relaxed mb-6 max-w-sm font-light">
               VÆROX is a premiere haute couture fashion atelier crafting custom, handmade luxury formal wear & bespoke classic garments. Engineered for those who demand distinction.
             </p>
 
@@ -79,7 +79,7 @@ const Footer = () => {
                 <a
                   key={social.label}
                   href={social.href}
-                  className="px-3 py-1.5 rounded-xl bg-[#0A0A0A] border border-[#26241E] text-[10px] sm:text-[11px] font-semibold text-[#E8E0CC]/80 hover:bg-[#C9A84C] hover:text-black hover:border-[#C9A84C] transition-all duration-300 shadow-md uppercase tracking-wider"
+                  className="px-3 py-1.5 rounded-xl bg-[#0A0A0A] border border-[#26241E] text-[10px] sm:text-[11px] font-semibold text-[#E8E0CC]/90 hover:bg-[#C9A84C] hover:text-black hover:border-[#C9A84C] transition-all duration-300 shadow-md uppercase tracking-wider"
                 >
                   {social.label}
                 </a>
@@ -89,15 +89,15 @@ const Footer = () => {
 
           {/* Shop Links */}
           <div>
-            <h4 className="text-[#C9A84C] font-bold text-xs uppercase tracking-[0.25em] mb-4 font-serif">
+            <h3 className="text-[#C9A84C] font-bold text-xs uppercase tracking-[0.25em] mb-4 font-serif">
               Collections
-            </h4>
+            </h3>
             <ul className="space-y-2.5">
               {footerLinks.shop.map((link) => (
                 <li key={link.label}>
                   <Link
                     to={link.to}
-                    className="text-xs text-[#E8E0CC]/70 hover:text-[#C9A84C] transition-colors duration-200"
+                    className="text-xs text-[#E8E0CC]/80 hover:text-[#C9A84C] transition-colors duration-200"
                   >
                     {link.label}
                   </Link>
@@ -108,15 +108,15 @@ const Footer = () => {
 
           {/* Support Links */}
           <div>
-            <h4 className="text-[#C9A84C] font-bold text-xs uppercase tracking-[0.25em] mb-4 font-serif">
+            <h3 className="text-[#C9A84C] font-bold text-xs uppercase tracking-[0.25em] mb-4 font-serif">
               Client Service
-            </h4>
+            </h3>
             <ul className="space-y-2.5">
               {footerLinks.support.map((link) => (
                 <li key={link.label}>
                   <Link
                     to={link.to}
-                    className="text-xs text-[#E8E0CC]/70 hover:text-[#C9A84C] transition-colors duration-200"
+                    className="text-xs text-[#E8E0CC]/80 hover:text-[#C9A84C] transition-colors duration-200"
                   >
                     {link.label}
                   </Link>
@@ -127,15 +127,15 @@ const Footer = () => {
 
           {/* Account Links */}
           <div>
-            <h4 className="text-[#C9A84C] font-bold text-xs uppercase tracking-[0.25em] mb-4 font-serif">
+            <h3 className="text-[#C9A84C] font-bold text-xs uppercase tracking-[0.25em] mb-4 font-serif">
               Membership
-            </h4>
+            </h3>
             <ul className="space-y-2.5">
               {footerLinks.account.map((link) => (
                 <li key={link.label}>
                   <Link
                     to={link.to}
-                    className="text-xs text-[#E8E0CC]/70 hover:text-[#C9A84C] transition-colors duration-200"
+                    className="text-xs text-[#E8E0CC]/80 hover:text-[#C9A84C] transition-colors duration-200"
                   >
                     {link.label}
                   </Link>
@@ -150,7 +150,7 @@ const Footer = () => {
       <div className="border-t border-[#26241E] bg-[#050505]">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-[11px] text-[#E8E0CC]/50 text-center md:text-left tracking-widest uppercase font-light">
+            <p className="text-[11px] text-[#E8E0CC]/85 text-center md:text-left tracking-widest uppercase font-normal">
               © {currentYear} VÆROX • HIGH LUXURY HANDMADE CLOTHING. ALL RIGHTS RESERVED.
             </p>
 
