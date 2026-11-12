@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { getJwtSecret } = require('../utils/jwtSecret');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -46,6 +47,10 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpire: Date,
   otpCode: String,
   otpExpire: Date,
+  otpAttempts: {
+    type: Number,
+    default: 0
+  },
   cart: [
     {
       product: {
@@ -58,6 +63,27 @@ const userSchema = new mongoose.Schema({
         required: true,
         default: 1,
         min: 1
+      },
+      selectedSize: {
+        type: String,
+        default: 'L'
+      },
+      selectedSizeType: {
+        type: String,
+        enum: ['alpha', 'numeric', 'custom'],
+        default: 'alpha'
+      },
+      customMeasurements: {
+        chest: { type: String, default: '' },
+        shoulder: { type: String, default: '' },
+        waist: { type: String, default: '' },
+        thigh: { type: String, default: '' },
+        torso: { type: String, default: '' },
+        hips: { type: String, default: '' },
+        fitPreference: { type: String, default: '' },
+        confirmed: { type: Boolean, default: false },
+        confirmedAt: { type: Date },
+        policyAccepted: { type: Boolean, default: false }
       }
     }
   ],
@@ -91,7 +117,7 @@ userSchema.methods.getSignedJwtToken = function() {
     const days = parseInt(expiresIn.replace('d', ''));
     expiresIn = days * 24 * 60 * 60; // Convert to seconds
   }
-  const secret = process.env.JWT_SECRET || 'MIg901i9s9LCrhOG2ScH58sj2miUwIr262ZQnrY2K7H';
+  const secret = getJwtSecret();
   return jwt.sign({ id: this._id }, secret, {
     expiresIn: expiresIn
   });
@@ -125,8 +151,9 @@ userSchema.methods.generateOTP = function() {
   // Hash OTP and store it
   this.otpCode = crypto.createHash('sha256').update(otp).digest('hex');
 
-  // Set expiry to 10 minutes
+  // Set expiry to 10 minutes and reset brute-force counter
   this.otpExpire = Date.now() + 10 * 60 * 1000;
+  this.otpAttempts = 0;
 
   return otp;
 };

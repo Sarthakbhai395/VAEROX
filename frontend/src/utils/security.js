@@ -9,24 +9,18 @@
  */
 
 /**
- * Escapes & sanitizes dangerous HTML / JS injection strings to prevent XSS attacks.
+ * Sanitizes string values against script/handler injection while preserving valid
+ * plain-text characters for React state and localStorage (React escapes JSX output).
  * @param {string} input 
  * @returns {string} Sanitized string
  */
 export const sanitizeInput = (input) => {
   if (typeof input !== 'string') return input;
   return input
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;')
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<\/?script[^>]*>/gi, '')
     .replace(/javascript:/gi, '')
-    .replace(/onload=/gi, '')
-    .replace(/onerror=/gi, '')
-    .replace(/onclick=/gi, '')
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    .replace(/\bon\w+\s*=/gi, '');
 };
 
 /**

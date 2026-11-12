@@ -43,6 +43,15 @@ const contactSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isSellerResponse: {
+    type: Boolean,
+    default: false
+  },
+  response: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Contact',
+    required: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

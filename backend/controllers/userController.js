@@ -72,13 +72,26 @@ exports.getUser = async (req, res, next) => {
 // @access  Private/Admin
 exports.createUser = async (req, res, next) => {
   try {
-    const user = await User.create(req.body);
+    const allowedPayload = {};
+    for (const field of ['name', 'email', 'password', 'role', 'phone', 'address', 'isBlocked']) {
+      if (req.body[field] !== undefined) {
+        allowedPayload[field] = req.body[field];
+      }
+    }
+
+    const user = await User.create(allowedPayload);
 
     res.status(201).json({
       success: true,
       data: user
     });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        error: 'An account with this email already exists'
+      });
+    }
     if (err.name === 'ValidationError') {
       const messages = Object.values(err.errors).map(val => val.message);
       return res.status(400).json({
@@ -99,7 +112,14 @@ exports.createUser = async (req, res, next) => {
 // @access  Private/Admin
 exports.updateUser = async (req, res, next) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+    const allowedUpdate = {};
+    for (const field of ['name', 'email', 'role', 'phone', 'address', 'isBlocked']) {
+      if (req.body[field] !== undefined) {
+        allowedUpdate[field] = req.body[field];
+      }
+    }
+
+    const user = await User.findByIdAndUpdate(req.params.id, allowedUpdate, {
       new: true,
       runValidators: true
     });
@@ -116,6 +136,12 @@ exports.updateUser = async (req, res, next) => {
       data: user
     });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        error: 'An account with this email already exists'
+      });
+    }
     if (err.name === 'ValidationError') {
       const messages = Object.values(err.errors).map(val => val.message);
       return res.status(400).json({
@@ -173,13 +199,13 @@ exports.deleteUser = async (req, res, next) => {
 // @access  Private
 exports.updateProfile = async (req, res, next) => {
   try {
-    // Allow updating name, email, phone, and address
-    const fieldsToUpdate = {
-      name: req.body.name,
-      email: req.body.email,
-      phone: req.body.phone,
-      address: req.body.address
-    };
+    // Allow updating defined values among name, email, phone, and address only
+    const fieldsToUpdate = {};
+    for (const field of ['name', 'email', 'phone', 'address']) {
+      if (req.body[field] !== undefined) {
+        fieldsToUpdate[field] = req.body[field];
+      }
+    }
 
     const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
       new: true,
@@ -198,6 +224,12 @@ exports.updateProfile = async (req, res, next) => {
       data: user
     });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        error: 'An account with this email already exists'
+      });
+    }
     if (err.name === 'ValidationError') {
       const messages = Object.values(err.errors).map(val => val.message);
       return res.status(400).json({

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const Product = require('../models/Product');
+const { validateCustomMeasurements } = require('../utils/customFitValidation');
 
 // Helper to safely find a valid Product in MongoDB
 const findValidProduct = async (productId) => {
@@ -24,7 +25,7 @@ const findValidProduct = async (productId) => {
 // @access  Private
 exports.getCart = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).populate('cart.product', 'name price discount image category');
+    const user = await User.findById(req.user.id).populate('cart.product', 'name price discount image category tier');
     if (!user) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
@@ -47,7 +48,7 @@ exports.getCart = async (req, res, next) => {
 // @access  Private
 exports.addToCart = async (req, res, next) => {
   try {
-    const { productId, quantity = 1 } = req.body;
+    const { productId, quantity = 1, selectedSize, selectedSizeType, customMeasurements } = req.body;
 
     const numQuantity = parseInt(quantity, 10);
     if (isNaN(numQuantity) || numQuantity <= 0) {
@@ -65,6 +66,35 @@ exports.addToCart = async (req, res, next) => {
       });
     }
 
+    const isCustomFit = selectedSizeType === 'custom' || selectedSize === 'Custom Fit';
+    let sizeToSave = selectedSize || 'L';
+    let sizeTypeToSave = ['alpha', 'numeric', 'custom'].includes(selectedSizeType) ? selectedSizeType : 'alpha';
+    let measurementsToSave = undefined;
+
+    if (isCustomFit) {
+      const validation = validateCustomMeasurements(customMeasurements, { requireConfirmed: true });
+      if (!validation.valid) {
+        return res.status(400).json({
+          success: false,
+          error: validation.error
+        });
+      }
+      sizeToSave = 'Custom Fit';
+      sizeTypeToSave = 'custom';
+      measurementsToSave = {
+        chest: validation.normalized.chest,
+        shoulder: validation.normalized.shoulder,
+        waist: validation.normalized.waist,
+        thigh: validation.normalized.thigh,
+        torso: validation.normalized.torso,
+        hips: validation.normalized.hips,
+        fitPreference: validation.normalized.fitPreference,
+        confirmed: true,
+        confirmedAt: validation.normalized.confirmedAt,
+        policyAccepted: true
+      };
+    }
+
     const validProductId = product._id;
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -78,19 +108,33 @@ exports.addToCart = async (req, res, next) => {
       user.cart = [];
     }
     
-    // Check if product already in cart
+    // Check if product with the same size variant already exists in cart
     const existingItemIndex = user.cart.findIndex(
-      item => item.product && item.product.toString() === validProductId.toString()
+      item =>
+        item.product &&
+        item.product.toString() === validProductId.toString() &&
+        (item.selectedSize || 'L') === sizeToSave
     );
     
     if (existingItemIndex > -1) {
       user.cart[existingItemIndex].quantity += numQuantity;
+      user.cart[existingItemIndex].selectedSize = sizeToSave;
+      user.cart[existingItemIndex].selectedSizeType = sizeTypeToSave;
+      if (measurementsToSave) {
+        user.cart[existingItemIndex].customMeasurements = measurementsToSave;
+      }
     } else {
-      user.cart.push({ product: validProductId, quantity: numQuantity });
+      user.cart.push({
+        product: validProductId,
+        quantity: numQuantity,
+        selectedSize: sizeToSave,
+        selectedSizeType: sizeTypeToSave,
+        ...(measurementsToSave ? { customMeasurements: measurementsToSave } : {})
+      });
     }
     
     await user.save();
-    await user.populate('cart.product', 'name price discount image category');
+    await user.populate('cart.product', 'name price discount image category tier');
     
     res.status(200).json({
       success: true,
@@ -126,10 +170,12 @@ exports.updateCart = async (req, res, next) => {
     }
     
     const existingItemIndex = user.cart.findIndex(
-      item => item.product && (
-        item.product.toString() === productId || 
-        (mongoose.Types.ObjectId.isValid(productId) && item.product.toString() === productId.toString())
-      )
+      item =>
+        (item._id && item._id.toString() === String(productId)) ||
+        (item.product && (
+          item.product.toString() === productId ||
+          (mongoose.Types.ObjectId.isValid(productId) && item.product.toString() === productId.toString())
+        ))
     );
     
     if (existingItemIndex > -1) {
@@ -148,7 +194,7 @@ exports.updateCart = async (req, res, next) => {
     }
     
     await user.save();
-    await user.populate('cart.product', 'name price discount image category');
+    await user.populate('cart.product', 'name price discount image category tier');
     
     res.status(200).json({
       success: true,
@@ -175,11 +221,13 @@ exports.removeFromCart = async (req, res, next) => {
     }
 
     user.cart = user.cart.filter(
-      item => item.product && item.product.toString() !== productId
+      item =>
+        !(item._id && item._id.toString() === productId) &&
+        !(item.product && item.product.toString() === productId)
     );
     
     await user.save();
-    await user.populate('cart.product', 'name price discount image category');
+    await user.populate('cart.product', 'name price discount image category tier');
     
     res.status(200).json({
       success: true,

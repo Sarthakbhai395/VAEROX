@@ -3,12 +3,21 @@
  * Protects against NoSQL Injection, Brute-Force Attacks, DoS, and Parameter Tampering.
  */
 
-// 1. NoSQL Injection Sanitization Helper
+// 1. NoSQL Injection & Prototype Pollution Sanitization Helper
+const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
 const sanitizeValue = (data) => {
-  if (data instanceof Object) {
-    for (const key in data) {
-      if (key.startsWith('$') || key.includes('.')) {
-        console.warn(`SECURITY ALERT: Removed suspicious NoSQL operator key: ${key}`);
+  if (Array.isArray(data)) {
+    for (let i = 0; i < data.length; i += 1) {
+      data[i] = sanitizeValue(data[i]);
+    }
+    return data;
+  }
+
+  if (data !== null && typeof data === 'object') {
+    for (const key of Object.keys(data)) {
+      if (FORBIDDEN_KEYS.has(key) || key.startsWith('$') || key.includes('.')) {
+        console.warn(`SECURITY ALERT: Removed suspicious key: ${key}`);
         delete data[key];
       } else {
         data[key] = sanitizeValue(data[key]);
@@ -21,8 +30,8 @@ const sanitizeValue = (data) => {
 // NoSQL Injection Prevention Middleware
 exports.mongoSanitize = (req, res, next) => {
   if (req.body) req.body = sanitizeValue(req.body);
-  if (req.query) req.query = sanitizeValue(req.query);
-  if (req.params) req.params = sanitizeValue(req.params);
+  if (req.query) sanitizeValue(req.query);
+  if (req.params) sanitizeValue(req.params);
   next();
 };
 
@@ -55,11 +64,11 @@ exports.rateLimiter = (options = {}) => {
       return next();
     }
 
-    const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown-ip';
+    const ip = req.ip || req.socket.remoteAddress || 'unknown-ip';
     const isLocal = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || ip === 'localhost';
 
-    // 2. In local development or on loopback, bypass rate limiting to prevent developer lockouts
-    if (process.env.NODE_ENV === 'development' || isLocal) {
+    // 2. In local development or on loopback, bypass rate limiting unless explicitly enforced
+    if (process.env.ENFORCE_RATE_LIMIT !== 'true' && (process.env.NODE_ENV === 'development' || isLocal)) {
       return next();
     }
 

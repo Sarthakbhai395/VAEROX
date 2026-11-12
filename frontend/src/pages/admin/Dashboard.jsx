@@ -5,7 +5,8 @@ import Sidebar from './components/Sidebar'
 import { HeroBannerManager } from './components/HeroBannerManager'
 import SiteAssetsManager from './components/SiteAssetsManager'
 import FAQManager from './components/FAQManager'
-import { productAPI, userAPI, activityAPI, contactAPI } from '../../services/api'
+import UserCustomFitManager from './components/UserCustomFitManager'
+import { productAPI, userAPI, activityAPI, contactAPI, customFitAPI, paymentAPI } from '../../services/api'
 import {
   ShoppingBag,
   Users,
@@ -27,6 +28,7 @@ import {
   Layers,
   Upload,
   MessageSquare,
+  Ruler,
 } from 'lucide-react'
 
 import { compressImage } from '../../utils/imageCompressor'
@@ -52,6 +54,7 @@ const AdminDashboard = () => {
   const [products, setProducts] = useState([])
   const [users, setUsers] = useState([])
   const [orders, setOrders] = useState([])
+  const [customFitsCount, setCustomFitsCount] = useState(0)
   const [contactQueries, setContactQueries] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -67,15 +70,19 @@ const AdminDashboard = () => {
   const [cancellationReason, setCancellationReason] = useState('')
 
   // Order status management
-  const handleUpdateOrderStatus = (orderId, newStatus) => {
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
     const updated = orders.map(ord => ord.id === orderId ? { ...ord, orderStatus: newStatus } : ord)
     setOrders(updated)
     localStorage.setItem('vaerox_admin_orders', JSON.stringify(updated))
+    const token = localStorage.getItem('token')
+    if (token) {
+      await paymentAPI.updateOrderStatus(orderId, { orderStatus: newStatus }, token)
+    }
     setSuccess(`Order ${orderId} status updated to ${newStatus}`)
     setTimeout(() => setSuccess(''), 3000)
   }
 
-  const handleConfirmOrderCancellation = (e) => {
+  const handleConfirmOrderCancellation = async (e) => {
     e.preventDefault()
     if (!cancelModalOrder || !cancellationReason.trim()) return
 
@@ -84,6 +91,10 @@ const AdminDashboard = () => {
     const updated = orders.map(ord => ord.id === orderId ? { ...ord, orderStatus: 'Cancelled', cancelReason: reasonText } : ord)
     setOrders(updated)
     localStorage.setItem('vaerox_admin_orders', JSON.stringify(updated))
+    const token = localStorage.getItem('token')
+    if (token) {
+      await paymentAPI.updateOrderStatus(orderId, { orderStatus: 'Cancelled', cancelReason: reasonText }, token)
+    }
 
     // Send inbox notification to user inbox
     const inboxMessages = JSON.parse(localStorage.getItem('vaerox_user_inbox_messages') || '[]')
@@ -115,14 +126,26 @@ const AdminDashboard = () => {
   const [searchOrderQuery, setSearchOrderQuery] = useState('')
   const [searchQueryText, setSearchQueryText] = useState('')
 
-  // Fetch orders placed by real users upon checkout/payment
-  const fetchOrders = () => {
+  // Fetch orders placed by real users upon checkout/payment (synced from MongoDB + localStorage)
+  const fetchOrders = async (token) => {
+    let dbOrders = []
+    if (token) {
+      try {
+        const res = await paymentAPI.getAdminOrders(token)
+        if (res && res.success && Array.isArray(res.data)) {
+          dbOrders = res.data
+        }
+      } catch (e) {
+        // Fallback to local orders below
+      }
+    }
+
+    let localOrders = []
     const stored = localStorage.getItem('vaerox_admin_orders')
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
-        // Clean out legacy demo mock orders if any existed previously
-        const realOrders = Array.isArray(parsed)
+        localOrders = Array.isArray(parsed)
           ? parsed.filter(ord => 
               ord.id !== 'VRX-849201' && 
               ord.id !== 'VRX-639102' && 
@@ -130,13 +153,37 @@ const AdminDashboard = () => {
               ord.user?.email !== 'ananya.roy@atelier.io'
             )
           : []
-        setOrders(realOrders)
-        localStorage.setItem('vaerox_admin_orders', JSON.stringify(realOrders))
       } catch (e) {
-        setOrders([])
+        localOrders = []
       }
-    } else {
-      setOrders([])
+    }
+
+    const merged = [...dbOrders, ...localOrders]
+    const seenIds = new Set()
+    const deduplicated = merged.filter((ord) => {
+      if (!ord || !ord.id) return false
+      if (seenIds.has(ord.id)) return false
+      seenIds.add(ord.id)
+      return true
+    })
+
+    setOrders(deduplicated)
+    try {
+      localStorage.setItem('vaerox_admin_orders', JSON.stringify(deduplicated))
+    } catch (e) {
+      // Ignore storage quota errors
+    }
+  }
+
+  const fetchCustomFitsCount = async (token) => {
+    try {
+      if (!token) return
+      const res = await customFitAPI.getAdminCustomFits(token)
+      if (res && res.success) {
+        setCustomFitsCount(Array.isArray(res.data) ? res.data.length : 0)
+      }
+    } catch (e) {
+      // Silent count refresh failure
     }
   }
 
@@ -272,7 +319,8 @@ const AdminDashboard = () => {
     }
 
     const loadData = (isSilent = false) => {
-      fetchOrders()
+      fetchOrders(token)
+      fetchCustomFitsCount(token)
       switch (activeSection) {
         case 'products':
           fetchProducts(token, isSilent)
@@ -282,6 +330,8 @@ const AdminDashboard = () => {
           break
         case 'queries':
           fetchContactQueries(token, isSilent)
+          break
+        case 'custom-fit':
           break
         default:
           fetchProducts(token, isSilent)
@@ -1033,6 +1083,9 @@ const AdminDashboard = () => {
         )
       }
 
+      case 'custom-fit':
+        return <UserCustomFitManager onCountChange={setCustomFitsCount} />
+
       case 'hero':
         return <HeroBannerManager />
 
@@ -1156,11 +1209,11 @@ const AdminDashboard = () => {
                   <Users className="w-4 h-4 text-[#C9A84C]" />
                 </button>
                 <button
-                  onClick={() => setActiveSection('hero')}
+                  onClick={() => setActiveSection('custom-fit')}
                   className="flex items-center justify-between p-4 bg-[#121212] border border-[#26241E] rounded-xl hover:border-[#C9A84C] transition-all text-xs font-bold text-[#FFF5D6] uppercase tracking-wider"
                 >
-                  <span>Hero Banners</span>
-                  <Layers className="w-4 h-4 text-[#C9A84C]" />
+                  <span>User Custom Fit</span>
+                  <Ruler className="w-4 h-4 text-[#C9A84C]" />
                 </button>
               </div>
             </div>
@@ -1224,6 +1277,7 @@ const AdminDashboard = () => {
           products: products.length,
           users: users.length,
           orders: orders.length,
+          customFits: customFitsCount,
           queries: contactQueries.filter(q => !q.isReplied).length,
         }}
       />
@@ -1237,7 +1291,11 @@ const AdminDashboard = () => {
                 ADMINISTRATOR PORTAL
               </span>
               <h1 className="text-xl sm:text-2xl font-serif font-bold text-[#FFF5D6] tracking-tight capitalize">
-                {activeSection === 'dashboard' ? 'Overview Dashboard' : `${activeSection} Management`}
+                {activeSection === 'dashboard'
+                  ? 'Overview Dashboard'
+                  : activeSection === 'custom-fit'
+                    ? 'User Custom Fit'
+                    : `${activeSection} Management`}
               </h1>
             </div>
 

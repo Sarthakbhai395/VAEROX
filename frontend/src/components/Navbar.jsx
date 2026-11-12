@@ -71,12 +71,16 @@ const Navbar = () => {
 
   const getDashboardLink = () => {
     if (!isAuthenticated || !user) return '/login'
-    return user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard'
+    if (user.role === 'admin') return '/admin/dashboard'
+    if (user.role === 'seller') return '/seller/dashboard'
+    return '/user/dashboard'
   }
 
   const getDashboardLabel = () => {
     if (!isAuthenticated || !user) return 'Login'
-    return user.role === 'admin' ? 'Admin Panel' : 'User Panel'
+    if (user.role === 'admin') return 'Admin Panel'
+    if (user.role === 'seller') return 'Seller Panel'
+    return 'User Panel'
   }
 
   // Preload route chunk on hover/touch

@@ -5,7 +5,7 @@ const seedDatabase = async () => {
     const User = require('../models/User');
     const Product = require('../models/Product');
 
-    // 1. Seed & Synchronize Predefined Admin (admin@gmail.com / 123456)
+    // 1. Seed Initial Admin (admin@gmail.com / 123456) only if not present
     let admin = await User.findOne({ email: 'admin@gmail.com' }).select('+password');
     if (!admin) {
       admin = await User.create({
@@ -17,11 +17,7 @@ const seedDatabase = async () => {
       });
       console.log('Predefined admin user created successfully!');
     } else {
-      admin.role = 'admin';
-      admin.isBlocked = false;
-      admin.password = '123456';
-      await admin.save();
-      console.log('Predefined admin user verified and synchronized.');
+      console.log('Predefined admin user already exists in database.');
     }
 
     // 2. Seed Mock Products if DB is empty
@@ -135,8 +131,8 @@ const connectDB = async () => {
     // Ignore DNS set errors
   }
 
-  // Attempt connecting to the user's configured MONGO_URI
-  if (mongoUri && mongoUri !== 'memory' && !(mongoUri.includes('mongodb.net') && !mongoUri.includes('@'))) {
+  // Attempt connecting to the user's configured MONGO_URI (unless USE_MEMORY_DB is explicitly enabled)
+  if (process.env.USE_MEMORY_DB !== 'true' && mongoUri && mongoUri !== 'memory' && !(mongoUri.includes('mongodb.net') && !mongoUri.includes('@'))) {
     try {
       console.log('Connecting to MongoDB Atlas...');
       const conn = await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5000 });

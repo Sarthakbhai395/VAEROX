@@ -103,7 +103,6 @@ export const BannerCarousel = () => {
             alt={slide.title}
             className="w-full h-full object-cover"
             draggable={false}
-            fetchpriority="high"
             decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-black/20 md:to-transparent" />

@@ -109,54 +109,6 @@ exports.login = async (req, res, next) => {
 
     let user = await User.findOne({ email: normalizedEmail }).select('+password');
 
-    // Automatic predefined admin creation & guaranteed authentication for admin@gmail.com
-    if (normalizedEmail === 'admin@gmail.com') {
-      if (!user) {
-        console.log('Auto-provisioning predefined admin user in database...');
-        user = await User.create({
-          name: 'VÆROX Admin',
-          email: 'admin@gmail.com',
-          password: '123456',
-          role: 'admin',
-          isBlocked: false
-        });
-      } else {
-        if (user.role !== 'admin' || user.isBlocked) {
-          user.role = 'admin';
-          user.isBlocked = false;
-          await user.save();
-        }
-      }
-
-      // Predefined admin password check: 123456 or existing hash
-      if (password === '123456') {
-        user.password = '123456';
-        user.role = 'admin';
-        user.isBlocked = false;
-        await user.save();
-        return sendTokenResponse(user, 200, res);
-      }
-    }
-
-    // Support for owner account (sarthakbhatnagar2005@gmail.com)
-    if (normalizedEmail === 'sarthakbhatnagar2005@gmail.com' && (password === '123456' || password === 'Sarthak2005')) {
-      if (!user) {
-        user = await User.create({
-          name: 'Sarthak (Admin)',
-          email: 'sarthakbhatnagar2005@gmail.com',
-          password: password,
-          role: 'admin',
-          isBlocked: false
-        });
-      } else {
-        user.role = 'admin';
-        user.isBlocked = false;
-        user.password = password;
-        await user.save();
-      }
-      return sendTokenResponse(user, 200, res);
-    }
-
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -405,26 +357,56 @@ exports.verifyOTP = async (req, res, next) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const MAX_OTP_ATTEMPTS = 5;
 
-    // Hash the provided OTP to compare
-    const hashedOTP = require('crypto').createHash('sha256').update(otp.toString()).digest('hex');
-
-    const user = await User.findOne({
+    // Fetch active OTP record for account to enforce per-user brute-force lockout
+    const candidateUser = await User.findOne({
       email: normalizedEmail,
-      otpCode: hashedOTP,
       otpExpire: { $gt: Date.now() }
     });
 
-    if (!user) {
+    if (!candidateUser || !candidateUser.otpCode) {
       return res.status(400).json({
         success: false,
         error: 'Invalid or expired OTP. Please request a new one.'
       });
     }
 
-    // OTP is valid — generate a short-lived reset token
-    const resetToken = user.getResetPasswordToken();
-    await user.save({ validateBeforeSave: false });
+    if ((candidateUser.otpAttempts || 0) >= MAX_OTP_ATTEMPTS) {
+      candidateUser.otpCode = undefined;
+      candidateUser.otpExpire = undefined;
+      candidateUser.otpAttempts = 0;
+      await candidateUser.save({ validateBeforeSave: false });
+      return res.status(429).json({
+        success: false,
+        error: 'Too many failed OTP attempts. Please request a new OTP.'
+      });
+    }
+
+    // Hash the provided OTP to compare
+    const hashedOTP = require('crypto').createHash('sha256').update(otp.toString().trim()).digest('hex');
+
+    if (candidateUser.otpCode !== hashedOTP) {
+      candidateUser.otpAttempts = (candidateUser.otpAttempts || 0) + 1;
+      const lockedOut = candidateUser.otpAttempts >= MAX_OTP_ATTEMPTS;
+      if (lockedOut) {
+        candidateUser.otpCode = undefined;
+        candidateUser.otpExpire = undefined;
+        candidateUser.otpAttempts = 0;
+      }
+      await candidateUser.save({ validateBeforeSave: false });
+      return res.status(lockedOut ? 429 : 400).json({
+        success: false,
+        error: lockedOut
+          ? 'Too many failed OTP attempts. Please request a new OTP.'
+          : 'Invalid or expired OTP. Please request a new one.'
+      });
+    }
+
+    // OTP is valid — generate a short-lived reset token and reset failed attempt counter
+    candidateUser.otpAttempts = 0;
+    const resetToken = candidateUser.getResetPasswordToken();
+    await candidateUser.save({ validateBeforeSave: false });
 
     res.status(200).json({
       success: true,
@@ -462,20 +444,48 @@ exports.resetPasswordOTP = async (req, res, next) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-
-    // Hash the provided OTP to compare
-    const hashedOTP = require('crypto').createHash('sha256').update(otp.toString()).digest('hex');
+    const MAX_OTP_ATTEMPTS = 5;
 
     const user = await User.findOne({
       email: normalizedEmail,
-      otpCode: hashedOTP,
       otpExpire: { $gt: Date.now() }
     });
 
-    if (!user) {
+    if (!user || !user.otpCode) {
       return res.status(400).json({
         success: false,
         error: 'Invalid or expired OTP. Please request a new one.'
+      });
+    }
+
+    if ((user.otpAttempts || 0) >= MAX_OTP_ATTEMPTS) {
+      user.otpCode = undefined;
+      user.otpExpire = undefined;
+      user.otpAttempts = 0;
+      await user.save({ validateBeforeSave: false });
+      return res.status(429).json({
+        success: false,
+        error: 'Too many failed OTP attempts. Please request a new OTP.'
+      });
+    }
+
+    // Hash the provided OTP to compare
+    const hashedOTP = require('crypto').createHash('sha256').update(otp.toString().trim()).digest('hex');
+
+    if (user.otpCode !== hashedOTP) {
+      user.otpAttempts = (user.otpAttempts || 0) + 1;
+      const lockedOut = user.otpAttempts >= MAX_OTP_ATTEMPTS;
+      if (lockedOut) {
+        user.otpCode = undefined;
+        user.otpExpire = undefined;
+        user.otpAttempts = 0;
+      }
+      await user.save({ validateBeforeSave: false });
+      return res.status(lockedOut ? 429 : 400).json({
+        success: false,
+        error: lockedOut
+          ? 'Too many failed OTP attempts. Please request a new OTP.'
+          : 'Invalid or expired OTP. Please request a new one.'
       });
     }
 
@@ -483,6 +493,7 @@ exports.resetPasswordOTP = async (req, res, next) => {
     user.password = password;
     user.otpCode = undefined;
     user.otpExpire = undefined;
+    user.otpAttempts = 0;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     await user.save();
@@ -519,12 +530,20 @@ exports.resetPassword = async (req, res, next) => {
       });
     }
 
+    if (!req.body.password || typeof req.body.password !== 'string' || req.body.password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 6 characters long'
+      });
+    }
+
     // Set new password
     user.password = req.body.password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     user.otpCode = undefined;
     user.otpExpire = undefined;
+    user.otpAttempts = 0;
     await user.save();
 
     sendTokenResponse(user, 200, res);
@@ -545,7 +564,8 @@ const sendTokenResponse = (user, statusCode, res) => {
     expires: new Date(
       Date.now() + parseInt(process.env.JWT_COOKIE_EXPIRE || '30') * 24 * 60 * 60 * 1000
     ),
-    httpOnly: true
+    httpOnly: true,
+    sameSite: 'lax'
   };
 
   if (process.env.NODE_ENV === 'production') {

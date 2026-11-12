@@ -15,8 +15,13 @@ const Cart = () => {
 
   // Coupon State
   const [couponInput, setCouponInput] = useState('')
-  const [appliedCoupon, setAppliedCoupon] = useState('')
-  const [couponDiscount, setCouponDiscount] = useState(0)
+  const [appliedCoupon, setAppliedCoupon] = useState(() => {
+    try {
+      return sessionStorage.getItem('vaerox_applied_coupon') || ''
+    } catch {
+      return ''
+    }
+  })
   const [couponError, setCouponError] = useState('')
   const [couponSuccess, setCouponSuccess] = useState('')
 
@@ -43,7 +48,14 @@ const Cart = () => {
   const cartTotal = subtotalOriginal - discountTotal
   const totalItemCount = cartItems.reduce((count, item) => count + (item.quantity || 0), 0)
 
-  // Recalculate if coupon is applied
+  // Derive coupon discount dynamically so quantity updates keep totals accurate
+  const couponRate =
+    appliedCoupon === 'WELCOME10'
+      ? 0.1
+      : (appliedCoupon === 'AKARIO20' || appliedCoupon === 'VAEROX20')
+        ? 0.2
+        : 0
+  const couponDiscount = Number((cartTotal * couponRate).toFixed(2))
   const finalTotal = Math.max(0, cartTotal - couponDiscount)
 
   const handleApplyCoupon = (e) => {
@@ -55,15 +67,13 @@ const Cart = () => {
     if (!code) return
 
     if (code === 'WELCOME10') {
-      const discount = cartTotal * 0.1
-      setCouponDiscount(discount)
       setAppliedCoupon('WELCOME10')
+      try { sessionStorage.setItem('vaerox_applied_coupon', 'WELCOME10') } catch {}
       setCouponSuccess('Coupon WELCOME10 (10% OFF) applied!')
       setCouponInput('')
     } else if (code === 'AKARIO20' || code === 'VAEROX20') {
-      const discount = cartTotal * 0.2
-      setCouponDiscount(discount)
       setAppliedCoupon('VAEROX20')
+      try { sessionStorage.setItem('vaerox_applied_coupon', 'VAEROX20') } catch {}
       setCouponSuccess('Coupon VAEROX20 (20% OFF) applied!')
       setCouponInput('')
     } else {
@@ -73,7 +83,7 @@ const Cart = () => {
 
   const handleRemoveCoupon = () => {
     setAppliedCoupon('')
-    setCouponDiscount(0)
+    try { sessionStorage.removeItem('vaerox_applied_coupon') } catch {}
     setCouponSuccess('')
     setCouponError('')
   }
@@ -220,7 +230,7 @@ const Cart = () => {
                   <motion.button 
                     whileHover={{ scale: 1.02, y: -1 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate('/checkout')}
+                    onClick={() => navigate('/checkout', { state: { couponCode: appliedCoupon } })}
                     className="bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-xs sm:text-sm px-8 py-3.5 rounded-xl shadow-xl uppercase tracking-widest transition duration-150 cursor-pointer inline-flex items-center gap-2"
                   >
                     Place Order
@@ -387,7 +397,7 @@ const Cart = () => {
           
           <motion.button
             whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/checkout')}
+            onClick={() => navigate('/checkout', { state: { couponCode: appliedCoupon } })}
             className="bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black text-xs font-extrabold px-7 py-3 rounded-xl shadow-xl uppercase tracking-wider cursor-pointer flex items-center gap-1.5"
           >
             Place Order

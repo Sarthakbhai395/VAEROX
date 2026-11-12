@@ -71,6 +71,8 @@ const Login = () => {
       const userRole = result.data?.role || activeRole
       if (userRole === 'admin' || normalizedEmail === 'admin@gmail.com' || normalizedEmail === 'sarthakbhatnagar2005@gmail.com') {
         navigate('/admin/dashboard')
+      } else if (userRole === 'seller') {
+        navigate('/seller/dashboard')
       } else {
         const from = location.state?.from?.pathname || '/'
         if (from !== '/' && from !== '/login') {
@@ -206,6 +208,7 @@ const Login = () => {
                 className="mt-1 block w-full pl-3 pr-10 py-3 text-sm border border-[#26241E] focus:outline-none focus:border-[#C9A84C] rounded-xl transition duration-300 bg-[#121212] text-[#E8E0CC]"
               >
                 <option value="user">User</option>
+                <option value="seller">Seller / Vendor</option>
                 <option value="admin">Administrator / Admin</option>
               </select>
             </div>

@@ -43,22 +43,45 @@ exports.getProduct = async (req, res, next) => {
   }
 };
 
+const ALLOWED_PRODUCT_FIELDS = [
+  'name',
+  'description',
+  'price',
+  'discount',
+  'category',
+  'tier',
+  'gender',
+  'role',
+  'image',
+  'images'
+];
+
+const pickProductFields = (body) => {
+  const payload = {};
+  for (const field of ALLOWED_PRODUCT_FIELDS) {
+    if (body[field] !== undefined) {
+      payload[field] = body[field];
+    }
+  }
+  return payload;
+};
+
 // @desc    Create new product
 // @route   POST /api/products
 // @access  Private (Sellers and Admins)
 exports.createProduct = async (req, res, next) => {
   try {
-    // Add seller to req.body
-    req.body.seller = req.user.id;
+    const productData = pickProductFields(req.body);
+    productData.seller = req.user.id;
 
     // Sync image and images fields
-    if (req.body.images && Array.isArray(req.body.images)) {
-      req.body.image = req.body.images.length > 0 ? req.body.images[0] : '/uploads/no-photo.jpg';
-    } else if (req.body.image) {
-      req.body.images = [req.body.image];
+    if (productData.images && Array.isArray(productData.images)) {
+      productData.image = productData.images.length > 0 ? productData.images[0] : '/uploads/no-photo.jpg';
+    } else if (productData.image) {
+      productData.images = [productData.image];
     }
 
-    const product = await Product.create(req.body);
+    const product = await Product.create(productData);
     
     // Log activity
     await Activity.create({
@@ -95,20 +118,22 @@ exports.updateProduct = async (req, res, next) => {
 
     // Check if user is product seller or admin
     if (product.seller.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(401).json({
+      return res.status(403).json({
         success: false,
         error: 'Not authorized to update this product'
       });
     }
 
+    const updateData = pickProductFields(req.body);
+
     // Sync image and images fields
-    if (req.body.images && Array.isArray(req.body.images)) {
-      req.body.image = req.body.images.length > 0 ? req.body.images[0] : '/uploads/no-photo.jpg';
-    } else if (req.body.image) {
-      req.body.images = [req.body.image];
+    if (updateData.images && Array.isArray(updateData.images)) {
+      updateData.image = updateData.images.length > 0 ? updateData.images[0] : '/uploads/no-photo.jpg';
+    } else if (updateData.image) {
+      updateData.images = [updateData.image];
     }
 
-    product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    product = await Product.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true
     });
@@ -146,7 +171,7 @@ exports.deleteProduct = async (req, res, next) => {
 
     // Check if user is product seller or admin
     if (product.seller.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(401).json({
+      return res.status(403).json({
         success: false,
         error: 'Not authorized to delete this product'
       });
@@ -188,7 +213,7 @@ exports.productPhotoUpload = async (req, res, next) => {
 
     // Check if user is product seller or admin
     if (product.seller.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(401).json({
+      return res.status(403).json({
         success: false,
         error: 'Not authorized to update this product'
       });

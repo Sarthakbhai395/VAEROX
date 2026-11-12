@@ -4,9 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { productAPI } from '../services/api'
 import { useCart } from '../contexts/CartContext'
 import { useWishlist } from '../contexts/WishlistContext'
+import { useNotification } from '../contexts/NotificationContext'
 import { formatCurrency } from '../utils/format'
 import { getProductImageUrl } from '../utils/imageUrl'
 import ProductCard from '../components/product/ProductCard'
+import CustomFitConfirmModal from '../components/product/CustomFitConfirmModal'
 import {
   ShoppingBag,
   Heart,
@@ -21,12 +23,32 @@ import {
   ChevronRight,
   HelpCircle,
   Feather,
-  Award
+  Award,
+  CheckCircle2,
+  RotateCcw
 } from 'lucide-react'
 
 // Alpha & Numeric Size Options
 const ALPHA_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL']
 const NUMERIC_SIZES = ['28', '30', '32', '34', '36', '38', '40', '42', '44']
+
+const DEFAULT_CUSTOM_MEASUREMENTS = {
+  chest: '',
+  shoulder: '',
+  waist: '',
+  thigh: '',
+  torso: '',
+  hips: '',
+  fitPreference: 'Tailored Fit'
+}
+
+const REQUIRED_MEASUREMENT_KEYS = ['chest', 'shoulder', 'waist', 'thigh', 'torso', 'hips']
+
+const isValidMeasurementValue = (val) => {
+  if (val === undefined || val === null || String(val).trim() === '') return false
+  const num = Number(val)
+  return Number.isFinite(num) && num > 0 && num <= 120
+}
 
 const ProductDetail = () => {
   const { id } = useParams()
@@ -42,16 +64,11 @@ const ProductDetail = () => {
   const [showSizeModal, setShowSizeModal] = useState(false)
 
   // Custom Fit Measurement States
-  const [customMeasurements, setCustomMeasurements] = useState({
-    chest: '40',
-    shoulder: '18',
-    waist: '34',
-    thigh: '24',
-    torso: '29',
-    hips: '38',
-    fitPreference: 'Tailored'
-  })
-  const [showCustomFitForm, setShowCustomFitForm] = useState(false)
+  const [customMeasurements, setCustomMeasurements] = useState({ ...DEFAULT_CUSTOM_MEASUREMENTS })
+  const [measurementsConfirmed, setMeasurementsConfirmed] = useState(false)
+  const [confirmedAt, setConfirmedAt] = useState(null)
+  const [showCustomFitConfirmModal, setShowCustomFitConfirmModal] = useState(false)
+  const [customFitError, setCustomFitError] = useState('')
 
   // Image Zoom & Lightbox States
   const [showLightbox, setShowLightbox] = useState(false)
@@ -68,12 +85,107 @@ const ProductDetail = () => {
     setZoomPos({ x: 50, y: 50, isHovering: false })
   }
 
+  const getCustomFitDraftKey = (prodId) => `vaerox_custom_fit_draft_${prodId}`
+
+  const clearCustomFitDraft = (prodId = id) => {
+    try {
+      if (prodId) localStorage.removeItem(getCustomFitDraftKey(prodId))
+    } catch (e) {
+      // Ignore storage errors
+    }
+  }
+
   const handleCustomMeasurementChange = (e) => {
     const { name, value } = e.target
     setCustomMeasurements(prev => ({
       ...prev,
       [name]: value
     }))
+    if (measurementsConfirmed) {
+      setMeasurementsConfirmed(false)
+      setConfirmedAt(null)
+      clearCustomFitDraft()
+    }
+    if (customFitError) setCustomFitError('')
+  }
+
+  const handleFitPreferenceChange = (pref) => {
+    setCustomMeasurements(prev => ({ ...prev, fitPreference: pref }))
+    if (measurementsConfirmed) {
+      setMeasurementsConfirmed(false)
+      setConfirmedAt(null)
+      clearCustomFitDraft()
+    }
+    if (customFitError) setCustomFitError('')
+  }
+
+  const areAllRequiredMeasurementsFilled =
+    REQUIRED_MEASUREMENT_KEYS.every((key) => isValidMeasurementValue(customMeasurements[key])) &&
+    Boolean(customMeasurements.fitPreference && customMeasurements.fitPreference.trim())
+
+  const hasInvalidEnteredMeasurement = REQUIRED_MEASUREMENT_KEYS.some((key) => {
+    const raw = customMeasurements[key]
+    return String(raw ?? '').trim() !== '' && !isValidMeasurementValue(raw)
+  })
+
+  const handleOpenConfirmModal = () => {
+    if (!areAllRequiredMeasurementsFilled) {
+      setCustomFitError('Please fill all required measurements with valid values (1 - 120 inches).')
+      return
+    }
+    setCustomFitError('')
+    setShowCustomFitConfirmModal(true)
+  }
+
+  const handleConfirmCustomMeasurements = () => {
+    if (!areAllRequiredMeasurementsFilled) {
+      setCustomFitError('Please fill all required measurements with valid values (1 - 120 inches).')
+      setShowCustomFitConfirmModal(false)
+      return
+    }
+
+    const nowIso = new Date().toISOString()
+    const normalizedPayload = {
+      chest: String(Number(Number(customMeasurements.chest).toFixed(2))),
+      shoulder: String(Number(Number(customMeasurements.shoulder).toFixed(2))),
+      waist: String(Number(Number(customMeasurements.waist).toFixed(2))),
+      thigh: String(Number(Number(customMeasurements.thigh).toFixed(2))),
+      torso: String(Number(Number(customMeasurements.torso).toFixed(2))),
+      hips: String(Number(Number(customMeasurements.hips).toFixed(2))),
+      fitPreference: customMeasurements.fitPreference
+    }
+
+    setCustomMeasurements(normalizedPayload)
+    setMeasurementsConfirmed(true)
+    setConfirmedAt(nowIso)
+    setShowCustomFitConfirmModal(false)
+    setCustomFitError('')
+
+    try {
+      localStorage.setItem(
+        getCustomFitDraftKey(id),
+        JSON.stringify({
+          measurements: normalizedPayload,
+          confirmed: true,
+          confirmedAt: nowIso,
+          policyAccepted: true
+        })
+      )
+    } catch (e) {
+      // Ignore storage errors
+    }
+
+    addNotification('Custom fit measurements confirmed and saved!', 'success')
+  }
+
+  const handleCancelCustomMeasurements = () => {
+    setShowCustomFitConfirmModal(false)
+    setMeasurementsConfirmed(false)
+    setConfirmedAt(null)
+    setCustomFitError('')
+    setCustomMeasurements({ ...DEFAULT_CUSTOM_MEASUREMENTS })
+    clearCustomFitDraft()
+    addNotification('Measurement confirmation cancelled and fields reset.', 'info')
   }
 
   // Active info tab: 'materials' | 'benefits' | 'description' | 'care'
@@ -88,10 +200,41 @@ const ProductDetail = () => {
 
   const { addToCart, clearCart, loading: cartLoading } = useCart()
   const { addToWishlist, isInWishlist, loading: wishlistLoading } = useWishlist()
+  const { addNotification, addModalNotification } = useNotification()
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
   useEffect(() => {
+    // Restore confirmed custom fit draft for this product if present, otherwise reset to default
+    try {
+      const savedDraft = localStorage.getItem(getCustomFitDraftKey(id))
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft)
+        if (parsed?.confirmed && parsed?.measurements) {
+          setCustomMeasurements({ ...DEFAULT_CUSTOM_MEASUREMENTS, ...parsed.measurements })
+          setMeasurementsConfirmed(true)
+          setConfirmedAt(parsed.confirmedAt || null)
+          setSizeType('custom')
+          setSelectedSize('Custom Fit')
+        } else {
+          setCustomMeasurements({ ...DEFAULT_CUSTOM_MEASUREMENTS })
+          setMeasurementsConfirmed(false)
+          setConfirmedAt(null)
+        }
+      } else {
+        setCustomMeasurements({ ...DEFAULT_CUSTOM_MEASUREMENTS })
+        setMeasurementsConfirmed(false)
+        setConfirmedAt(null)
+        setSizeType('alpha')
+        setSelectedSize('L')
+      }
+    } catch (e) {
+      setCustomMeasurements({ ...DEFAULT_CUSTOM_MEASUREMENTS })
+      setMeasurementsConfirmed(false)
+      setConfirmedAt(null)
+    }
+    setCustomFitError('')
+    setShowCustomFitConfirmModal(false)
     fetchProduct()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [id])
@@ -172,15 +315,43 @@ const ProductDetail = () => {
     }
   }
 
+  const buildConfirmedCustomPayload = () => ({
+    ...customMeasurements,
+    confirmed: true,
+    confirmedAt: confirmedAt || new Date().toISOString(),
+    policyAccepted: true
+  })
+
+  const validateCustomFitBeforeCart = () => {
+    const isCustom = sizeType === 'custom' || selectedSize === 'Custom Fit'
+    if (!isCustom) return true
+
+    if (!areAllRequiredMeasurementsFilled) {
+      const msg = 'Please fill in all required custom fit measurements (Chest, Shoulder, Waist, Thigh, Torso, Hips).'
+      setCustomFitError(msg)
+      addModalNotification('Measurements Required', msg, 'warning')
+      return false
+    }
+
+    if (!measurementsConfirmed) {
+      setCustomFitError('Please click "Confirm Measurements" and accept the custom fit policy before continuing.')
+      setShowCustomFitConfirmModal(true)
+      return false
+    }
+
+    return true
+  }
+
   const handleAddToCart = async () => {
     if (product) {
+      if (!validateCustomFitBeforeCart()) return
       try {
         const isCustom = sizeType === 'custom' || selectedSize === 'Custom Fit'
         const productWithSize = {
           ...product,
           selectedSize: isCustom ? 'Custom Fit' : selectedSize,
           selectedSizeType: sizeType,
-          customMeasurements: isCustom ? customMeasurements : null
+          customMeasurements: isCustom ? buildConfirmedCustomPayload() : null
         }
         await addToCart(productWithSize, quantity)
       } catch (err) {
@@ -201,13 +372,14 @@ const ProductDetail = () => {
 
   const handleBuyNow = async () => {
     if (product) {
+      if (!validateCustomFitBeforeCart()) return
       try {
         const isCustom = sizeType === 'custom' || selectedSize === 'Custom Fit'
         const productWithSize = {
           ...product,
           selectedSize: isCustom ? 'Custom Fit' : selectedSize,
           selectedSizeType: sizeType,
-          customMeasurements: isCustom ? customMeasurements : null
+          customMeasurements: isCustom ? buildConfirmedCustomPayload() : null
         }
         await clearCart()
         await addToCart(productWithSize, quantity)
@@ -467,9 +639,12 @@ const ProductDetail = () => {
 
                   <div className="grid grid-cols-2 gap-2.5 text-xs">
                     <div>
-                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Chest / Bust (in)</label>
+                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Chest / Bust (in) *</label>
                       <input
                         type="number"
+                        step="0.5"
+                        min="1"
+                        max="120"
                         name="chest"
                         value={customMeasurements.chest}
                         onChange={handleCustomMeasurementChange}
@@ -478,9 +653,12 @@ const ProductDetail = () => {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Shoulder Width (in)</label>
+                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Shoulder Width (in) *</label>
                       <input
                         type="number"
+                        step="0.5"
+                        min="1"
+                        max="120"
                         name="shoulder"
                         value={customMeasurements.shoulder}
                         onChange={handleCustomMeasurementChange}
@@ -489,9 +667,12 @@ const ProductDetail = () => {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Waist Size (in)</label>
+                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Waist Size (in) *</label>
                       <input
                         type="number"
+                        step="0.5"
+                        min="1"
+                        max="120"
                         name="waist"
                         value={customMeasurements.waist}
                         onChange={handleCustomMeasurementChange}
@@ -500,9 +681,12 @@ const ProductDetail = () => {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Thigh Size (in)</label>
+                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Thigh Size (in) *</label>
                       <input
                         type="number"
+                        step="0.5"
+                        min="1"
+                        max="120"
                         name="thigh"
                         value={customMeasurements.thigh}
                         onChange={handleCustomMeasurementChange}
@@ -511,9 +695,12 @@ const ProductDetail = () => {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Torso / Length (in)</label>
+                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Torso / Length (in) *</label>
                       <input
                         type="number"
+                        step="0.5"
+                        min="1"
+                        max="120"
                         name="torso"
                         value={customMeasurements.torso}
                         onChange={handleCustomMeasurementChange}
@@ -522,9 +709,12 @@ const ProductDetail = () => {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Hips Size (in)</label>
+                      <label className="text-[10px] text-[#A39E93] font-serif uppercase block mb-1">Hips Size (in) *</label>
                       <input
                         type="number"
+                        step="0.5"
+                        min="1"
+                        max="120"
                         name="hips"
                         value={customMeasurements.hips}
                         onChange={handleCustomMeasurementChange}
@@ -541,8 +731,8 @@ const ProductDetail = () => {
                         <button
                           key={pref}
                           type="button"
-                          onClick={() => setCustomMeasurements(prev => ({ ...prev, fitPreference: pref }))}
-                          className={`py-1 text-[10px] font-bold rounded-lg transition-all border ${customMeasurements.fitPreference === pref
+                          onClick={() => handleFitPreferenceChange(pref)}
+                          className={`py-1 text-[10px] font-bold rounded-lg transition-all border cursor-pointer ${customMeasurements.fitPreference === pref
                               ? 'bg-[#C9A84C] text-black border-[#C9A84C]'
                               : 'bg-[#121212] text-[#A39E93] border-[#26241E]'
                             }`}
@@ -552,6 +742,68 @@ const ProductDetail = () => {
                       ))}
                     </div>
                   </div>
+
+                  {/* Validation Error Hint */}
+                  {(hasInvalidEnteredMeasurement || customFitError) && (
+                    <div className="text-[11px] font-semibold text-rose-300 bg-rose-950/40 border border-rose-500/40 rounded-lg px-3 py-2">
+                      {customFitError || 'Please enter valid measurements between 1 and 120 inches.'}
+                    </div>
+                  )}
+
+                  {/* Confirmed Status Badge OR Confirm Measurements Button (shown ONLY after all required fields are filled) */}
+                  <AnimatePresence mode="wait">
+                    {measurementsConfirmed ? (
+                      <motion.div
+                        key="confirmed-banner"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        className="pt-2 border-t border-[#26241E] space-y-2"
+                      >
+                        <div className="flex items-center justify-between gap-2 bg-emerald-950/35 border border-emerald-500/45 rounded-xl px-3 py-2.5">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-bold text-emerald-300 uppercase tracking-wider">
+                                Measurements Confirmed
+                              </p>
+                              <p className="text-[10px] text-[#A39E93] truncate">
+                                Policy accepted • Ready to add to cart or checkout
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleCancelCustomMeasurements}
+                            title="Reset Measurements"
+                            className="p-1.5 rounded-lg bg-[#141414] border border-[#26241E] text-[#A39E93] hover:text-rose-300 hover:border-rose-500/40 transition-colors cursor-pointer flex-shrink-0"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ) : areAllRequiredMeasurementsFilled ? (
+                      <motion.div
+                        key="confirm-btn"
+                        initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                        transition={{ duration: 0.25 }}
+                        className="pt-2 border-t border-[#26241E]"
+                      >
+                        <motion.button
+                          type="button"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleOpenConfirmModal}
+                          className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black font-extrabold text-xs uppercase tracking-widest shadow-[0_8px_24px_rgba(201,168,76,0.3)] hover:shadow-[0_10px_28px_rgba(201,168,76,0.45)] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                          Confirm Measurements
+                        </motion.button>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
                 </motion.div>
               )}
 
@@ -1138,6 +1390,14 @@ const ProductDetail = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* ANIMATED 3D CUSTOM FIT MEASUREMENT CONFIRMATION MODAL */}
+      <CustomFitConfirmModal
+        isOpen={showCustomFitConfirmModal}
+        productName={product?.name}
+        measurements={customMeasurements}
+        onConfirm={handleConfirmCustomMeasurements}
+        onCancel={handleCancelCustomMeasurements}
+      />
     </div>
   )
 }

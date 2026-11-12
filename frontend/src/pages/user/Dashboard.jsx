@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCart } from '../../contexts/CartContext'
 import { useWishlist } from '../../contexts/WishlistContext'
-import { contactAPI, userAPI } from '../../services/api'
+import { contactAPI, userAPI, paymentAPI } from '../../services/api'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNotification } from '../../contexts/NotificationContext'
 import { formatCurrency } from '../../utils/format'
@@ -46,12 +46,21 @@ const UserDashboard = () => {
     loadUserOrders()
   }, [user])
 
-  const loadUserOrders = () => {
+  const loadUserOrders = async () => {
     try {
+      const token = localStorage.getItem('token')
+      let apiOrders = []
+      if (token) {
+        const res = await paymentAPI.getMyOrders(token)
+        if (res && res.success && Array.isArray(res.data)) {
+          apiOrders = res.data
+        }
+      }
+
       const uOrders = JSON.parse(localStorage.getItem('vaerox_user_orders') || '[]')
       const aOrders = JSON.parse(localStorage.getItem('vaerox_admin_orders') || '[]')
       
-      let combined = [...uOrders, ...aOrders]
+      let combined = [...apiOrders, ...uOrders, ...aOrders]
       const seen = new Set()
       combined = combined.filter(o => {
         if (!o || !o.id) return false
@@ -61,59 +70,14 @@ const UserDashboard = () => {
       })
 
       if (user?.email) {
-        const userFiltered = combined.filter(o => o.user?.email?.toLowerCase() === user.email.toLowerCase())
-        if (userFiltered.length > 0) {
-          setUserOrders(userFiltered)
-          return
-        }
+        const normalizedEmail = user.email.toLowerCase()
+        const userFiltered = combined.filter(
+          (o) => !o.user?.email || o.user.email.toLowerCase() === normalizedEmail
+        )
+        setUserOrders(userFiltered)
+      } else {
+        setUserOrders(apiOrders)
       }
-
-      if (combined.length > 0) {
-        setUserOrders(combined)
-        return
-      }
-
-      // Default sample order if no orders in localstorage
-      const sampleOrder = {
-        id: 'VRX-458629',
-        paymentId: 'pay_btjbjz9ex5',
-        date: new Date().toISOString(),
-        user: {
-          name: user?.name || 'Sarthak Bhatnagar',
-          email: user?.email || 'sb1258954@gmail.com',
-          phone: '+91 98785 43210',
-          address: 'Baad Post - Kakua gwalior road agra',
-          city: 'Agra',
-          state: 'Uttar Pradesh',
-          zipCode: '282009'
-        },
-        items: [
-          {
-            id: 'p1',
-            name: 'VÆROX Executive Double-Breasted Wool Tuxedo',
-            image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=600&q=80',
-            price: 18499,
-            quantity: 1,
-            size: 'XL',
-            tier: 'Bespoke Executive',
-            category: 'Luxury Apparel',
-            customMeasurements: {
-              chest: '42',
-              waist: '34',
-              hips: '40',
-              torso: '29',
-              fitPreference: 'Tailored Slim'
-            }
-          }
-        ],
-        subtotal: 18499,
-        tax: 0,
-        totalAmount: 18499,
-        paymentMethod: 'Razorpay Secure (Online)',
-        paymentStatus: 'Paid',
-        orderStatus: 'Processing'
-      }
-      setUserOrders([sampleOrder])
     } catch (e) {
       console.error('Error loading orders:', e)
     }
@@ -533,7 +497,7 @@ const UserDashboard = () => {
                                       <div className="mt-2 text-[11px] text-[#D4B559] bg-[#141414] p-2.5 rounded-lg border-l-2 border-[#C9A84C] space-y-0.5 font-sans">
                                         <span className="font-serif font-bold block text-[10px] text-[#C9A84C] uppercase">Bespoke Custom Measurements:</span>
                                         <p className="text-[10px]">
-                                          Chest: {item.customMeasurements.chest || '-'}", Waist: {item.customMeasurements.waist || '-'}", Hips: {item.customMeasurements.hips || '-'}", Torso: {item.customMeasurements.torso || '-'} ({item.customMeasurements.fitPreference || 'Tailored'})
+                                          Chest: {item.customMeasurements.chest || '-'}", Shoulder: {item.customMeasurements.shoulder || '-'}", Waist: {item.customMeasurements.waist || '-'}", Thigh: {item.customMeasurements.thigh || '-'}", Torso: {item.customMeasurements.torso || '-'}", Hips: {item.customMeasurements.hips || '-'} ({item.customMeasurements.fitPreference || 'Tailored Fit'})
                                         </p>
                                       </div>
                                     )}

@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Link } from 'react-router-dom'
 import './App.css'
 
 // Route-based code splitting for all pages
@@ -14,6 +14,7 @@ const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'))
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'))
 const UserDashboard = lazy(() => import('./pages/user/Dashboard'))
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'))
+const SellerDashboard = lazy(() => import('./pages/seller/Dashboard'))
 const Products = lazy(() => import('./pages/Products'))
 const ProductDetail = lazy(() => import('./pages/ProductDetail'))
 const Cart = lazy(() => import('./pages/user/Cart'))
@@ -106,6 +107,32 @@ function App() {
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminDashboard />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/seller/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['seller']}>
+                  <SellerDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="*"
+              element={
+                <div className="min-h-[70vh] flex flex-col items-center justify-center bg-black px-4 text-center">
+                  <p className="text-xs font-bold tracking-[0.35em] text-[#C9A84C] uppercase mb-3">404</p>
+                  <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#FFF5D6] mb-3">Page Not Found</h1>
+                  <p className="text-sm text-[#A39E93] max-w-md mb-6">
+                    The collection or page you requested could not be found.
+                  </p>
+                  <Link
+                    to="/"
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#FFF5D6] via-[#C9A84C] to-[#9B782B] text-black text-xs font-extrabold uppercase tracking-widest"
+                  >
+                    Return Home
+                  </Link>
+                </div>
               }
             />
           </Routes>

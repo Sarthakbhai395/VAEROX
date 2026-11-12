@@ -29,16 +29,24 @@ import { getSecurityHeaders } from '../utils/security';
 // Helper function to make API requests
 const apiRequest = async (url, options = {}) => {
   try {
-    // Bypassing cache for mutations, admin requests, or when explicitly requested
-    const bypassCache = options.bypassCache || url.includes('/admin') || url.includes('/activities');
+    // Bypassing cache for mutations, user-scoped endpoints, admin requests, or when explicitly requested
+    const method = (options.method || 'GET').toUpperCase();
+    const isUserScoped =
+      url.includes('/admin') ||
+      url.includes('/activities') ||
+      url.includes('/custom-fits') ||
+      url.includes('/users/') ||
+      url.includes('/payment/') ||
+      url.includes('/contact') ||
+      url.includes('/auth/');
+    const bypassCache = options.bypassCache || isUserScoped || method !== 'GET';
 
     // Check if we have a cached response
-    const cacheKey = `${options.method || 'GET'}:${url}`
+    const cacheKey = `${method}:${url}`
     const cached = apiCache.get(cacheKey)
 
     // If we have a valid cached response, return it
-    if (!bypassCache && cached && Date.now() - cached.timestamp < CACHE_DURATION && options.method !== 'POST' && options.method !== 'PUT' && options.method !== 'DELETE') {
-      console.log(`Returning cached response for ${url}`)
+    if (!bypassCache && cached && Date.now() - cached.timestamp < CACHE_DURATION) {
       return cached.data
     }
 
@@ -55,10 +63,19 @@ const apiRequest = async (url, options = {}) => {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      ...options,
-      headers
-    });
+    const controller = !options.signal ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), options.timeoutMs || 20000) : null;
+
+    let response;
+    try {
+      response = await fetch(`${API_BASE_URL}${url}`, {
+        ...options,
+        headers,
+        signal: options.signal || controller.signal
+      });
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+    }
 
     // Centralized 401 Unauthorized handling for protected endpoints
     if (response.status === 401 && !url.includes('/auth/login') && !url.includes('/auth/register') && !url.includes('/auth/forgotpassword')) {
@@ -330,15 +347,22 @@ export const userAPI = {
     })
   },
 
-  addToCart: async (productId, quantity, token) => {
+  addToCart: async (productId, quantity, token, productData = {}) => {
     clearCache('/api/users/cart', 'GET')
+    const payload = {
+      productId,
+      quantity,
+      ...(productData?.selectedSize ? { selectedSize: productData.selectedSize } : {}),
+      ...(productData?.selectedSizeType ? { selectedSizeType: productData.selectedSizeType } : {}),
+      ...(productData?.customMeasurements ? { customMeasurements: productData.customMeasurements } : {})
+    }
     return apiRequest('/api/users/cart', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ productId, quantity })
+      body: JSON.stringify(payload)
     })
   },
 
@@ -566,6 +590,48 @@ export const paymentAPI = {
       method: 'POST',
       body: JSON.stringify(paymentData)
     })
+  },
+  getMyOrders: async (token) => {
+    return apiRequest('/api/payment/orders/my', {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      bypassCache: true
+    })
+  },
+  getAdminOrders: async (token) => {
+    return apiRequest('/api/payment/orders/admin', {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      bypassCache: true
+    })
+  },
+  updateOrderStatus: async (orderId, payload, token) => {
+    return apiRequest(`/api/payment/orders/admin/${encodeURIComponent(orderId)}/status`, {
+      method: 'PATCH',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      body: JSON.stringify(payload),
+      bypassCache: true
+    })
+  }
+}
+
+// Custom Fit API (Admin Management of Checked-Out Confirmed Custom Fit Orders)
+export const customFitAPI = {
+  getAdminCustomFits: async (token, params = {}) => {
+    const queryParams = new URLSearchParams()
+    if (params.search) queryParams.set('search', params.search)
+    if (params.status && params.status !== 'all') queryParams.set('status', params.status)
+    const qs = queryParams.toString()
+    return apiRequest(`/api/custom-fits/admin${qs ? `?${qs}` : ''}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      bypassCache: true
+    })
+  },
+  updateTailoringStatus: async (id, tailoringStatus, token) => {
+    return apiRequest(`/api/custom-fits/admin/${id}/status`, {
+      method: 'PATCH',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      body: JSON.stringify({ tailoringStatus }),
+      bypassCache: true
+    })
   }
 }
 
@@ -577,6 +643,7 @@ export default {
   contactAPI,
   sellerContactAPI,
   paymentAPI,
+  customFitAPI,
   clearCache,
   clearAllCache
 }

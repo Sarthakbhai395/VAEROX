@@ -15,40 +15,56 @@ const cors = require('cors');
 dotenv.config();
 
 
-// Connect to database
-connectDB();
+// Connect to database unless caller handles connection explicitly
+if (process.env.SKIP_DB_AUTOCONNECT !== 'true') {
+  connectDB();
+}
 
 // Initialize app
 const app = express();
 
-// Configure CORS with robust origin checking (localhost + Vercel/Netlify domains)
+// Configure CORS with strict origin validation (explicit allowlist + local dev hosts)
 const allowedOrigins = [
   process.env.CLIENT_URL,
   'https://vaerox-alpha.vercel.app',
   'https://your-netlify-app.netlify.app',
   'http://localhost:3000',
+  'http://localhost:4173',
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
   'http://127.0.0.1:3000',
+  'http://127.0.0.1:4173',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:5174',
   'http://127.0.0.1:5175'
 ].filter(Boolean);
 
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  const normalized = origin.replace(/\/$/, '');
+  if (allowedOrigins.some((o) => normalized === o.replace(/\/$/, ''))) {
+    return true;
+  }
+  try {
+    const parsed = new URL(origin);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    const host = parsed.hostname.toLowerCase();
+    if (host === 'localhost' || host === '127.0.0.1') return true;
+    if (host.endsWith('.vercel.app') && host.includes('vaerox')) return true;
+  } catch (e) {
+    return false;
+  }
+  return false;
+};
+
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like curl, postman, same-origin serverless calls, or mobile apps)
-    if (!origin) return callback(null, true);
-    
-    const isAllowed = allowedOrigins.some(allowedOrigin => {
-      return origin === allowedOrigin || origin === allowedOrigin.replace(/\/$/, '');
-    }) || origin.endsWith('.vercel.app') || origin.endsWith('.netlify.app') || origin.includes('localhost') || origin.includes('127.0.0.1');
-
-    if (isAllowed) {
+    // Allow requests with no origin (same-origin calls, curl/server-to-server)
+    if (isOriginAllowed(origin)) {
       callback(null, true);
     } else {
-      callback(null, true); // Fallback allow in serverless environment to prevent blocked preflights
+      callback(null, false);
     }
   },
   credentials: true,
@@ -140,6 +156,7 @@ const contactRoutes = require('./routes/contact');
 const paymentRoutes = require('./routes/payment');
 const sellerContactRoutes = require('./routes/sellerContact');
 const activityRoutes = require('./routes/activities');
+const customFitRoutes = require('./routes/customFits');
 
 app.use('/api/auth', authRoutes);
 app.use('/auth', authRoutes);
@@ -155,9 +172,12 @@ app.use('/api/seller/contact', sellerContactRoutes);
 app.use('/seller/contact', sellerContactRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/activities', activityRoutes);
+app.use('/api/custom-fits', customFitRoutes);
+app.use('/custom-fits', customFitRoutes);
 
+const { protect, authorize } = require('./middleware/auth');
 const { sendInvoiceEmail } = require('./utils/sendEmail');
-app.get('/api/test-email', async (req, res) => {
+app.get('/api/test-email', protect, authorize('admin'), async (req, res) => {
   try {
     const targetEmail = req.query.email || process.env.SMTP_EMAIL || 'sb1258954@gmail.com';
     const targetName = req.query.name || 'Sarthak Bhatnagar';
@@ -247,7 +267,7 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-if (!process.env.VERCEL && !process.env.NETLIFY) {
+if (require.main === module && !process.env.VERCEL && !process.env.NETLIFY) {
   const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   });

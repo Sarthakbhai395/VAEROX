@@ -13,8 +13,14 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
   // Access product details from the nested product object (backend format) or directly (local format)
   const product = item?.product || item
   
-  // Get the product ID (use _id if available, otherwise id)
+  // Get the product ID (for navigation) and cart item target ID (supports multiple sizes of same product)
   const productId = product?._id || product?.id || item?._id || item?.id
+  const cartActionId = item?._id || productId
+  const selectedSize = item?.selectedSize || product?.selectedSize
+  const customMeasurements = item?.customMeasurements || product?.customMeasurements
+  const isCustomFitConfirmed =
+    (selectedSize === 'Custom Fit' || item?.selectedSizeType === 'custom') &&
+    customMeasurements?.confirmed
 
   const discountedPrice = product?.discount 
     ? product.price * (1 - product.discount / 100)
@@ -29,9 +35,9 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
 
   const handleQuantityChange = (newQuantity) => {
     if (newQuantity < 1) {
-      onRemove(productId)
+      onRemove(cartActionId)
     } else {
-      onUpdateQuantity(productId, newQuantity)
+      onUpdateQuantity(cartActionId, newQuantity)
     }
   }
 
@@ -39,7 +45,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
     e.stopPropagation()
     try {
       await addToWishlist(product)
-      onRemove(productId)
+      onRemove(cartActionId)
     } catch (error) {
       // Handled by context
     }
@@ -133,7 +139,22 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
                 </span>
               </>
             ) : null}
+            {selectedSize && (
+              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border ${
+                isCustomFitConfirmed
+                  ? 'bg-emerald-950/50 text-emerald-300 border-emerald-500/40'
+                  : 'bg-[#141414] text-[#C9A84C] border-[#C9A84C]/30'
+              }`}>
+                {isCustomFitConfirmed ? 'Custom Fit ✓ Confirmed' : `Size: ${selectedSize}`}
+              </span>
+            )}
           </div>
+
+          {isCustomFitConfirmed && (
+            <div className="mt-1.5 text-[10px] text-[#D4B559] bg-[#141414] px-2.5 py-1.5 rounded-lg border border-[#C9A84C]/30 font-mono">
+              Chest {customMeasurements.chest}" • Shoulder {customMeasurements.shoulder}" • Waist {customMeasurements.waist}" • Thigh {customMeasurements.thigh}" • Torso {customMeasurements.torso}" • Hips {customMeasurements.hips}" ({customMeasurements.fitPreference || 'Tailored Fit'})
+            </div>
+          )}
         </div>
 
         {/* Action Row */}
@@ -163,7 +184,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
             <motion.button 
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => onRemove(productId)}
+              onClick={() => onRemove(cartActionId)}
               className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-[10px] sm:text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-950/30 hover:bg-rose-900/50 rounded-lg border border-rose-500/30 transition-all duration-200 cursor-pointer group uppercase tracking-wider"
               title="Remove item"
             >

@@ -26,6 +26,6 @@ router.route('/:id/reply')
   .put(protect, authorize('admin'), replyContactMessage);
 
 router.route('/debug')
-  .get(debugAllContacts);
+  .get(protect, authorize('admin'), debugAllContacts);
 
 module.exports = router;

@@ -5,10 +5,9 @@ const Contact = require('../models/Contact');
 // @access  Private (Seller only)
 exports.getSellerContactMessages = async (req, res, next) => {
   try {
-    // Get all contact messages that are original messages from users (not seller responses)
-    // and populate both the user and response fields
+    // Get original contact inquiries (identified cleanly via isSellerResponse flag)
     const contacts = await Contact.find({ 
-      name: { $not: { $regex: 'Seller Response', $options: 'i' } } 
+      isSellerResponse: { $ne: true } 
     })
       .populate('user', 'name email')
       .populate('response')
@@ -52,6 +51,7 @@ exports.sendContactResponse = async (req, res, next) => {
       email: req.user.email,
       subject: `Re: ${contact.subject}`,
       message: responseMessage,
+      isSellerResponse: true,
       // Always associate response with the user who sent the original message
       user: contact.user ? contact.user._id : null
     });
@@ -91,9 +91,9 @@ exports.sendContactResponse = async (req, res, next) => {
 // @access  Private (Seller only)
 exports.getSellerContactResponses = async (req, res, next) => {
   try {
-    // Get all contact messages that were sent by the seller (have the seller response marker)
+    // Get all contact messages created as seller responses
     const responses = await Contact.find({ 
-      name: { $regex: 'Seller Response', $options: 'i' } 
+      isSellerResponse: true 
     })
     .populate('user', 'name email')
     .sort({ createdAt: -1 });

@@ -8,12 +8,13 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    // Check if we have user data in localStorage
+    // Check if we have a complete persisted session waiting to hydrate into context
     const savedUser = localStorage.getItem('user')
     const savedAuthState = localStorage.getItem('isAuthenticated')
+    const savedToken = localStorage.getItem('token')
     
-    if (savedUser && savedAuthState === 'true') {
-      // User data exists but context hasn't loaded yet, don't redirect
+    if (savedUser && savedAuthState === 'true' && savedToken) {
+      // User data exists and context hasn't hydrated yet
       return <div>Loading...</div>
     }
     

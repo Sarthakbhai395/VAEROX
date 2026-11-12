@@ -118,7 +118,6 @@ const ProductCard = ({ product, index = 0, priority = false }) => {
           className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105"
           onError={() => setImageError(true)}
           loading={priority || index === 0 ? "eager" : "lazy"}
-          fetchpriority={priority || index === 0 ? "high" : "auto"}
           decoding="async"
           width="257"
           height="321"

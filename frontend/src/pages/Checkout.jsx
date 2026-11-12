@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useCart } from '../contexts/CartContext'
 import { formatCurrency } from '../utils/format'
@@ -12,9 +12,16 @@ const Checkout = () => {
   const { cartItems, getCartTotal, clearCart } = useCart()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [loading, setLoading] = useState(false)
   const [orderPlaced, setOrderPlaced] = useState(false)
   const [paymentError, setPaymentError] = useState('')
+  const appliedCoupon = (() => {
+    const raw = location.state?.couponCode || (() => {
+      try { return sessionStorage.getItem('vaerox_applied_coupon') || '' } catch { return '' }
+    })()
+    return String(raw).trim().toUpperCase()
+  })()
   
   // Form state
   const [formData, setFormData] = useState({
@@ -39,7 +46,15 @@ const Checkout = () => {
     }
   }, [user])
 
-  const subtotal = getCartTotal()
+  const rawSubtotal = getCartTotal()
+  const couponRate =
+    appliedCoupon === 'WELCOME10'
+      ? 0.1
+      : (appliedCoupon === 'AKARIO20' || appliedCoupon === 'VAEROX20')
+        ? 0.2
+        : 0
+  const couponDiscount = Number((rawSubtotal * couponRate).toFixed(2))
+  const subtotal = Number(Math.max(0, rawSubtotal - couponDiscount).toFixed(2))
   const tax = Number((subtotal * 0.08).toFixed(2))
   const total = Number((subtotal + tax).toFixed(2))
 
@@ -145,6 +160,23 @@ const Checkout = () => {
       return
     }
 
+    // Ensure any custom-fit items in cart have confirmed measurements and accepted policy
+    const unconfirmedCustomItem = cartItems.find((item) => {
+      const product = item.product || item
+      const itemSize = item.selectedSize || product.selectedSize
+      const itemSizeType = item.selectedSizeType || product.selectedSizeType
+      const measurements = item.customMeasurements || product.customMeasurements
+      const isCustom = itemSize === 'Custom Fit' || itemSizeType === 'custom'
+      return isCustom && !(measurements?.confirmed === true && measurements?.policyAccepted === true)
+    })
+
+    if (unconfirmedCustomItem) {
+      const product = unconfirmedCustomItem.product || unconfirmedCustomItem
+      setPaymentError(`Please confirm custom fit measurements for "${product.name}" on the product page before checking out.`)
+      setLoading(false)
+      return
+    }
+
     try {
       const isLoaded = await loadRazorpay()
       if (!isLoaded) {
@@ -183,19 +215,24 @@ const Checkout = () => {
               },
               items: cartItems.map(item => {
                 const product = item.product || item
+                const itemSize = item.selectedSize || product.selectedSize || 'L'
+                const itemSizeType = item.selectedSizeType || product.selectedSizeType || (itemSize === 'Custom Fit' ? 'custom' : 'alpha')
+                const itemMeasurements = item.customMeasurements || product.customMeasurements || null
                 return {
                   id: product._id || product.id,
                   name: product.name,
                   image: getProductImageUrl(product.image),
                   price: product.discount ? product.price * (1 - product.discount / 100) : product.price,
                   quantity: item.quantity || 1,
-                  size: product.selectedSize || item.selectedSize || 'L',
-                  customMeasurements: product.customMeasurements || item.customMeasurements || null,
+                  size: itemSize,
+                  sizeType: itemSizeType,
+                  customMeasurements: itemMeasurements,
                   tier: product.tier || 'standard',
                   category: product.category || 'clothes'
                 }
               }),
               subtotal,
+              couponCode: appliedCoupon || undefined,
               tax,
               totalAmount: total,
               paymentMethod: 'Razorpay Secure (Online)',
@@ -211,15 +248,27 @@ const Checkout = () => {
             });
 
             if (verifyRes.success) {
+              const finalOrderRecord = verifyRes.order || newOrderRecord
+
+              // Clear any saved custom fit drafts for purchased products
+              try {
+                newOrderRecord.items.forEach((it) => {
+                  if (it.id) localStorage.removeItem(`vaerox_custom_fit_draft_${it.id}`)
+                })
+              } catch (e) {
+                // Ignore storage errors
+              }
+
               const existingOrders = JSON.parse(localStorage.getItem('vaerox_admin_orders') || '[]')
-              existingOrders.unshift(newOrderRecord)
+              existingOrders.unshift(finalOrderRecord)
               localStorage.setItem('vaerox_admin_orders', JSON.stringify(existingOrders))
 
               const userOrders = JSON.parse(localStorage.getItem('vaerox_user_orders') || '[]')
-              userOrders.unshift(newOrderRecord)
+              userOrders.unshift(finalOrderRecord)
               localStorage.setItem('vaerox_user_orders', JSON.stringify(userOrders))
 
               setOrderPlaced(true);
+              try { sessionStorage.removeItem('vaerox_applied_coupon') } catch {}
               clearCart();
               setTimeout(() => {
                 navigate('/user/dashboard');
@@ -493,8 +542,14 @@ const Checkout = () => {
               <div className="space-y-4 mb-6 text-xs sm:text-sm text-[#E8E0CC]/80">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span className="font-semibold text-[#FFF5D6]">{formatCurrency(subtotal)}</span>
+                  <span className="font-semibold text-[#FFF5D6]">{formatCurrency(rawSubtotal)}</span>
                 </div>
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span>Coupon ({appliedCoupon})</span>
+                    <span className="font-bold text-emerald-400">-{formatCurrency(couponDiscount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Shipping</span>
                   <span className="text-emerald-400 font-bold uppercase">Free</span>
@@ -514,13 +569,18 @@ const Checkout = () => {
                 <div className="space-y-3 max-h-60 overflow-y-auto divide-y divide-[#26241E]">
                   {cartItems.map((item) => {
                     const product = item.product || item
+                    const itemSize = item.selectedSize || product.selectedSize || 'L'
+                    const itemMeasurements = item.customMeasurements || product.customMeasurements
+                    const isCustomConfirmed =
+                      (itemSize === 'Custom Fit' || item.selectedSizeType === 'custom') &&
+                      itemMeasurements?.confirmed
                     const itemTotal = (product.discount 
                       ? product.price * (1 - product.discount / 100)
                       : product.price) * (item.quantity || 1)
                     
                     return (
-                      <div key={product._id || product.id} className="flex items-center justify-between text-xs py-2.5">
-                        <div className="flex items-center gap-3">
+                      <div key={item._id || product._id || product.id} className="flex items-start justify-between text-xs py-2.5 gap-2">
+                        <div className="flex items-start gap-3 min-w-0">
                           <div className="w-10 h-10 bg-[#050505] border border-[#26241E] p-1 rounded-lg flex items-center justify-center flex-shrink-0">
                             <img 
                               src={getProductImageUrl(product.image)} 
@@ -531,12 +591,26 @@ const Checkout = () => {
                               }}
                             />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <p className="font-semibold text-[#E8E0CC] line-clamp-1">{product.name}</p>
-                            <p className="text-[#A39E93] text-[10px]">Qty: {item.quantity || 1}</p>
+                            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                              <span className="text-[#A39E93] text-[10px]">Qty: {item.quantity || 1}</span>
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                                isCustomConfirmed
+                                  ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/40'
+                                  : 'bg-[#1A1813] text-[#C9A84C] border border-[#26241E]'
+                              }`}>
+                                {isCustomConfirmed ? 'Custom Fit ✓' : `Size: ${itemSize}`}
+                              </span>
+                            </div>
+                            {isCustomConfirmed && (
+                              <p className="text-[9.5px] text-[#D4B559] font-mono mt-1">
+                                C:{itemMeasurements.chest}" S:{itemMeasurements.shoulder}" W:{itemMeasurements.waist}" Th:{itemMeasurements.thigh}" T:{itemMeasurements.torso}" H:{itemMeasurements.hips}"
+                              </p>
+                            )}
                           </div>
                         </div>
-                        <span className="font-bold text-[#C9A84C]">{formatCurrency(itemTotal)}</span>
+                        <span className="font-bold text-[#C9A84C] flex-shrink-0">{formatCurrency(itemTotal)}</span>
                       </div>
                     )
                   })}

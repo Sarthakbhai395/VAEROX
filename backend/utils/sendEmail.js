@@ -1,5 +1,15 @@
 const nodemailer = require('nodemailer');
 
+const escapeHtml = (value) => {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
+
 /**
  * Creates and returns a configured Nodemailer transporter using SMTP credentials from .env
  */
@@ -56,14 +66,14 @@ const generateInvoiceHtml = (order) => {
     const itemTotal = itemPrice * itemQty;
     calculatedSubtotal += itemTotal;
 
-    const sizeBadge = item.size ? `<span style="display: inline-block; background: #1C1A14; color: #C9A84C; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid #C9A84C; text-transform: uppercase; font-family: 'Bodoni Moda', Georgia, serif;">SIZE: ${item.size}</span>` : '';
+    const sizeBadge = item.size ? `<span style="display: inline-block; background: #1C1A14; color: #C9A84C; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid #C9A84C; text-transform: uppercase; font-family: 'Bodoni Moda', Georgia, serif;">SIZE: ${escapeHtml(item.size)}</span>` : '';
     
     let customFit = '';
     if (item.customMeasurements) {
       const m = item.customMeasurements;
       customFit = `
         <div style="margin-top: 6px; font-size: 11px; color: #D4B559; background: #121212; padding: 6px 10px; border-radius: 6px; border-left: 2px solid #C9A84C; font-family: 'Bodoni Moda', Georgia, serif;">
-          <strong>Bespoke Custom Measurements:</strong> Chest ${m.chest || '-'}", Waist ${m.waist || '-'}", Hips ${m.hips || '-'}", Torso ${m.torso || '-'} (${m.fitPreference || 'Tailored'})
+          <strong>Bespoke Custom Measurements:</strong> Chest ${escapeHtml(m.chest || '-')}", Shoulder ${escapeHtml(m.shoulder || '-')}", Waist ${escapeHtml(m.waist || '-')}", Thigh ${escapeHtml(m.thigh || '-')}", Torso ${escapeHtml(m.torso || '-')}", Hips ${escapeHtml(m.hips || '-')} (${escapeHtml(m.fitPreference || 'Tailored Fit')})
         </div>
       `;
     }
@@ -71,7 +81,7 @@ const generateInvoiceHtml = (order) => {
     return `
       <tr style="border-bottom: 1px solid #24221C;">
         <td style="padding: 16px 12px; vertical-align: top;">
-          <div style="font-weight: 700; font-size: 15px; color: #FFF5D6; font-family: 'Bodoni Moda', Georgia, serif; line-height: 1.3;">${item.name || 'VÆROX Executive Collection Product'}</div>
+          <div style="font-weight: 700; font-size: 15px; color: #FFF5D6; font-family: 'Bodoni Moda', Georgia, serif; line-height: 1.3;">${escapeHtml(item.name || 'VÆROX Executive Collection Product')}</div>
           <div style="margin-top: 6px;">${sizeBadge}</div>
           ${customFit}
         </td>
@@ -128,11 +138,11 @@ const generateInvoiceHtml = (order) => {
           <table style="width: 100%; border-collapse: collapse; font-size: 13px; font-family: 'Bodoni Moda', Georgia, serif;">
             <tr>
               <td style="padding: 6px 0; color: #888; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; font-family: 'Bodoni Moda', Georgia, serif;">Order Reference:</td>
-              <td style="padding: 6px 0; color: #FFF5D6; text-align: right; font-weight: bold; font-family: 'Bodoni Moda', Georgia, serif; font-size: 14px;">${id}</td>
+              <td style="padding: 6px 0; color: #FFF5D6; text-align: right; font-weight: bold; font-family: 'Bodoni Moda', Georgia, serif; font-size: 14px;">${escapeHtml(id)}</td>
             </tr>
             <tr>
               <td style="padding: 6px 0; color: #888; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; font-family: 'Bodoni Moda', Georgia, serif;">Razorpay Payment ID:</td>
-              <td style="padding: 6px 0; color: #4ADE80; text-align: right; font-weight: bold; font-family: 'Bodoni Moda', Georgia, serif; font-size: 13px;">${paymentId}</td>
+              <td style="padding: 6px 0; color: #4ADE80; text-align: right; font-weight: bold; font-family: 'Bodoni Moda', Georgia, serif; font-size: 13px;">${escapeHtml(paymentId)}</td>
             </tr>
             <tr>
               <td style="padding: 6px 0; color: #888; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; font-family: 'Bodoni Moda', Georgia, serif;">Payment Status:</td>
@@ -140,7 +150,7 @@ const generateInvoiceHtml = (order) => {
             </tr>
             <tr>
               <td style="padding: 6px 0; color: #888; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; font-family: 'Bodoni Moda', Georgia, serif;">Date & Time:</td>
-              <td style="padding: 6px 0; color: #CCC; text-align: right; font-family: 'Bodoni Moda', Georgia, serif;">${formattedDate}</td>
+              <td style="padding: 6px 0; color: #CCC; text-align: right; font-family: 'Bodoni Moda', Georgia, serif;">${escapeHtml(formattedDate)}</td>
             </tr>
           </table>
         </div>
@@ -148,12 +158,12 @@ const generateInvoiceHtml = (order) => {
         <!-- Customer & Delivery Address -->
         <div style="padding: 24px; border-bottom: 1px solid #222; background: #0A0A0A; font-family: 'Bodoni Moda', Georgia, serif;">
           <h3 style="color: #C9A84C; font-size: 12px; font-family: 'Bodoni Moda', Georgia, serif; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 12px 0; border-bottom: 1px solid #26241E; padding-bottom: 6px;">Shipping & Delivery Details</h3>
-          <div style="font-size: 15px; color: #FFF; font-weight: 700; font-family: 'Bodoni Moda', Georgia, serif;">${user?.name || 'Sarthak Bhatnagar'}</div>
-          <div style="font-size: 13px; color: #4ADE80; font-family: 'Bodoni Moda', Georgia, serif; margin-top: 4px;">${user?.email || ''}</div>
-          <div style="font-size: 13px; color: #AAA; margin-top: 2px; font-family: 'Bodoni Moda', Georgia, serif;">Phone: ${user?.phone || 'N/A'}</div>
+          <div style="font-size: 15px; color: #FFF; font-weight: 700; font-family: 'Bodoni Moda', Georgia, serif;">${escapeHtml(user?.name || 'Valued Customer')}</div>
+          <div style="font-size: 13px; color: #4ADE80; font-family: 'Bodoni Moda', Georgia, serif; margin-top: 4px;">${escapeHtml(user?.email || '')}</div>
+          <div style="font-size: 13px; color: #AAA; margin-top: 2px; font-family: 'Bodoni Moda', Georgia, serif;">Phone: ${escapeHtml(user?.phone || 'N/A')}</div>
           <div style="font-size: 13px; color: #CCC; margin-top: 10px; line-height: 1.5; background: #121212; padding: 14px; border-radius: 10px; border: 1px solid #222; font-family: 'Bodoni Moda', Georgia, serif;">
             📍 <strong>Delivery Address:</strong><br/>
-            ${formattedAddress}
+            ${escapeHtml(formattedAddress)}
           </div>
           <div style="margin-top: 10px; font-size: 12px; color: #D4B559; font-family: 'Bodoni Moda', Georgia, serif;">
             🚚 <strong>Delivery Timeline:</strong> Order will be placed within 10-12 days.
