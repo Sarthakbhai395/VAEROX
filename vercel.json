@@ -3,15 +3,15 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://backend-1-tf17.onrender.com/api/$1"
+      "dest": "https://vaerox.onrender.com/api/$1"
     },
     {
       "src": "/api",
-      "dest": "https://backend-1-tf17.onrender.com/api"
+      "dest": "https://vaerox.onrender.com/api"
     },
     {
       "src": "/uploads/(.*)",
-      "dest": "https://backend-1-tf17.onrender.com/uploads/$1"
+      "dest": "https://vaerox.onrender.com/uploads/$1"
     },
     {
       "handle": "filesystem"

@@ -39,7 +39,7 @@ exports.mongoSanitize = (req, res, next) => {
 const rateLimitStore = new Map();
 
 // Periodic cleanup every 10 minutes to prevent memory leaks
-setInterval(() => {
+const cleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [key, record] of rateLimitStore.entries()) {
     if (now > record.resetTime) {
@@ -47,6 +47,9 @@ setInterval(() => {
     }
   }
 }, 10 * 60 * 1000);
+if (cleanupTimer && typeof cleanupTimer.unref === 'function') {
+  cleanupTimer.unref();
+}
 
 /**
  * Custom Rate Limiter Factory

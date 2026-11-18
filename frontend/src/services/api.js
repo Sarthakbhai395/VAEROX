@@ -11,7 +11,7 @@ const getApiBaseUrl = () => {
       return 'http://localhost:5000';
     }
 
-    return 'https://backend-1-tf17.onrender.com';
+    return 'https://vaerox.onrender.com';
   }
 
   return 'http://localhost:5000';

@@ -56,7 +56,7 @@ exports.getAdminCustomFits = async (req, res) => {
 // @access  Private/Admin
 exports.updateCustomFitStatus = async (req, res) => {
   try {
-    const { tailoringStatus } = req.body;
+    const tailoringStatus = req.body.tailoringStatus || req.body.status;
     const validStatuses = ['Pending Tailoring', 'In Tailoring', 'Quality Check', 'Completed'];
 
     if (!validStatuses.includes(tailoringStatus)) {

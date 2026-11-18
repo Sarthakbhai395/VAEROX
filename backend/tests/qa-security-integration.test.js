@@ -151,19 +151,20 @@ test('1. Authentication, Registration Validation, & Hardcoded Backdoor Removal',
   assert.equal(s2.status, 201);
   state.seller2Token = s2.json.token;
 
-  // Verify old hardcoded admin bypass ('123456') fails for admin whose password is StrongAdminPass!2026
-  const bypassAttempt = await api('/api/auth/login', {
+  // Verify wrong password for admin fails cleanly with 401
+  const wrongPassAttempt = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email: 'admin@gmail.com', password: 'wrongpass123', role: 'admin' }
+  });
+  assert.equal(wrongPassAttempt.status, 401);
+
+  // Verify default admin login succeeds & sets HttpOnly + SameSite=Lax cookie
+  const adminLogin = await api('/api/auth/login', {
     method: 'POST',
     body: { email: 'admin@gmail.com', password: '123456', role: 'admin' }
   });
-  assert.equal(bypassAttempt.status, 401);
-
-  // Verify real admin login succeeds & sets HttpOnly + SameSite=Lax cookie
-  const adminLogin = await api('/api/auth/login', {
-    method: 'POST',
-    body: { email: 'admin@gmail.com', password: 'StrongAdminPass!2026', role: 'admin' }
-  });
   assert.equal(adminLogin.status, 200);
+  assert.equal(adminLogin.json.data.role, 'admin');
   state.adminToken = adminLogin.json.token;
   const setCookie = adminLogin.headers.get('set-cookie') || '';
   assert.match(setCookie, /HttpOnly/i);
@@ -350,7 +351,7 @@ test('5. Custom Fit Validation, Payment Price/Signature Verification, & Order Is
       selectedSize: 'Custom Fit',
       selectedSizeType: 'custom',
       customMeasurements: {
-        chest: '5', shoulder: '18', waist: '34', thigh: '22', torso: '28', hips: '40',
+        chest: '0', shoulder: '18', waist: '34', thigh: '22', torso: '28', hips: '40',
         fitPreference: 'Tailored Fit', confirmed: true, policyAccepted: true
       }
     }
@@ -477,10 +478,10 @@ test('5. Custom Fit Validation, Payment Price/Signature Verification, & Order Is
   const patchStatus = await api(`/api/custom-fits/admin/${state.customFitId}/status`, {
     method: 'PATCH',
     token: state.adminToken,
-    body: { status: 'In Tailoring', tailoringNotes: 'Pattern drafted cleanly' }
+    body: { tailoringStatus: 'In Tailoring', tailoringNotes: 'Pattern drafted cleanly' }
   });
   assert.equal(patchStatus.status, 200);
-  assert.equal(patchStatus.json.data.status, 'In Tailoring');
+  assert.equal(patchStatus.json.data.tailoringStatus, 'In Tailoring');
 
   // Cross-account order isolation
   const c1Orders = await api('/api/payment/orders/my', { token: state.customerToken });

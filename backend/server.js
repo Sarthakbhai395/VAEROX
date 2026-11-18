@@ -51,7 +51,7 @@ const isOriginAllowed = (origin) => {
     if (!['http:', 'https:'].includes(parsed.protocol)) return false;
     const host = parsed.hostname.toLowerCase();
     if (host === 'localhost' || host === '127.0.0.1') return true;
-    if (host.endsWith('.vercel.app') && host.includes('vaerox')) return true;
+    if (host.endsWith('.vercel.app') || host.endsWith('.onrender.com') || host.endsWith('.netlify.app')) return true;
   } catch (e) {
     return false;
   }

